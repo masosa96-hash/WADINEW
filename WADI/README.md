@@ -1,5 +1,9 @@
 # 🧠 WADI — Asistente de Desarrollo e Infraestructura
 
+![WADI Status](https://img.shields.io/badge/status-EN%20LÍNEA-brightgreen?style=flat-square&logo=github)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/masosa96-hash/WADINEW/wadi-ci.yml?branch=master&label=CI&style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+
 **Versión:** 1.0  
 **Identidad:** WADI  
 **Estado:** Completamente operativo y en línea.  
