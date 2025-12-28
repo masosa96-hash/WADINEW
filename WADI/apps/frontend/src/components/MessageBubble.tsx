@@ -1,8 +1,10 @@
+import type { Attachment } from "../store/chatStore";
+
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   timestamp?: string;
-  attachments?: any[]; // Allow attachments support if needed
+  attachments?: Attachment[];
 }
 
 export function MessageBubble({

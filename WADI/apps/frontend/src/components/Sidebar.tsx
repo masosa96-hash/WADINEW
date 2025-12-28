@@ -30,7 +30,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       fetchConversations();
       fetchCriminalSummary();
     }
-  }, [user?.id]);
+  }, [user?.id, fetchConversations, fetchCriminalSummary]);
 
   const handleNewChat = () => {
     resetChat();

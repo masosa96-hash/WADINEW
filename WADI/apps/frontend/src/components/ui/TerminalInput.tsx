@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useChatStore, type Attachment } from "../../store/chatStore";
+import { type Attachment } from "../../store/chatStore";
 import { useScouter } from "../../hooks/useScouter";
-import { Send, Paperclip, X } from "lucide-react"; // Using lucid-react icons if available, else svgs
+import { Paperclip } from "lucide-react";
 
 // Fallback icons if lucide not imported/working in this context, but user mentioned "iconos minimalistas"
 const IconSend = () => (
