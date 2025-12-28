@@ -1,5 +1,14 @@
 # WADI Production Deployment Guide 🚀
 
+## 0. Repository Check (CRITICAL) 🚨
+
+Asegúrate de que el servicio en Render esté conectado al repositorio correcto:
+
+- **Repo Correcto**: `masosa96-hash/WADINEW`
+- **Branch**: `master`
+
+Si Render está apuntando a `masosa96-hash/WADI`, debes cambiar el repositorio en la configuración del servicio (Settings -> Repository) o crear un nuevo Static Site / Web Service apuntando a `WADINEW`.
+
 ## 1. Environment Configuration (Secrets) 🔐
 
 Antes de desplegar, debes configurar estas variables en tu proveedor (Railway/Render).
@@ -12,11 +21,11 @@ He generado claves seguras y aleatorias para ti. **Cópialas y guárdalas en un 
 | `WHATSAPP_VERIFY_TOKEN` | `1773993bfa7e4f497e09092cc8b0f22c`                              | Token para verificar Webhook de Meta |
 | `TELEGRAM_SECRET_TOKEN` | `68a4a187fda9e8bec935c38daa826ffdf5c1cc456d5177c49`             | Token secreto en headers de Telegram |
 
-### Pasos en Railway:
+### Pasos en Railway
 
-1.  Ve a tu proyecto -> `wadi-api`.
-2.  Pestaña **Variables**.
-3.  Añade las 3 variables con los valores de arriba. (O usa el CLI: `railway vars set ADMIN_KEY=...`)
+1. Ve a tu proyecto -> `wadi-api`.
+2. Pestaña **Variables**.
+3. Añade las 3 variables con los valores de arriba. (O usa el CLI: `railway vars set ADMIN_KEY=...`)
 
 ---
 
@@ -24,10 +33,10 @@ He generado claves seguras y aleatorias para ti. **Cópialas y guárdalas en un 
 
 ### WhatsApp Cloud API (Meta Developers)
 
-1.  Ve a [Developers.facebook.com](https://developers.facebook.com/) -> Tu App -> WhatsApp -> Configuration.
-2.  **Callback URL**: `https://<TU-DOMINIO-API-EN-RAILWAY>/webhooks/whatsapp`
-3.  **Verify Token**: `1773993bfa7e4f497e09092cc8b0f22c` (El valor de arriba).
-4.  Click **Verify and Save**. (Si falla, asegúrate de haber desplegado primero).
+1. Ve a [Developers.facebook.com](https://developers.facebook.com/) -> Tu App -> WhatsApp -> Configuration.
+2. **Callback URL**: `https://<TU-DOMINIO-API-EN-RAILWAY>/webhooks/whatsapp`
+3. **Verify Token**: `1773993bfa7e4f497e09092cc8b0f22c` (El valor de arriba).
+4. Click **Verify and Save**. (Si falla, asegúrate de haber desplegado primero).
 
 ### Telegram Bot API
 
