@@ -34,7 +34,7 @@ Abrí un issue o hablá con el mantenedor.
 
 ---
 
-## 🧠 WADI dice:
+## 🧠 WADI dice
 
 > "El respeto no es opcional. El código que funciona, tampoco."
 
