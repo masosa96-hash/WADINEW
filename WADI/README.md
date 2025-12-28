@@ -1,51 +1,118 @@
 # 🧠 WADI — Asistente de Desarrollo e Infraestructura
 
-**Versión:** 1.0
-**Identidad:** WADI
-**Estado:** Completamente operativo y en línea.
-**Modo Visual:** Tema 'Deep Bunker' (Dark Mode).
+**Versión:** 1.0  
+**Identidad:** WADI  
+**Estado:** Completamente operativo y en línea.  
+**Modo Visual:** Tema `Deep Bunker` (Dark Mode activado por defecto)
 
 ---
 
 ## 📋 Descripción
 
-Asistente de Desarrollo e Infraestructura optimizado para ambientes técnicos. Su misión es resolver problemas complejos con precisión técnica y honestidad brutal, eliminando el ruido y la validación innecesaria. Audio deshabilitado por defecto para máxima concentración.
+**WADI** es un asistente técnico diseñado para ambientes de desarrollo modernos. Su objetivo:  
+_resolver problemas complejos con precisión técnica y honestidad brutal_, sin ruido, sin validaciones forzadas, sin efectos de sonido innecesarios.
+
+> "WADI no es tu amigo. Es tu herramienta. Brutal, eficiente, y siempre funcional."
+
+---
 
 ## 🚀 Capacidades
 
 - **Interfaz Terminal:** Chat con entrada optimizada para comandos y texto técnico.
-- **Respuesta Contextual:** Motor `wadi-brain.js` con prompt personalizado para asistencia técnica cínica pero efectiva.
-- **Modo Oscuro:** Diseño visual "Deep Bunker" (`#0f111a`) para reducir la fatiga visual.
-- **Estructura Optimizada:** Sidebar reactivo, Layout limpio y navegación fluida.
-- **Soporte de Comandos:** Integración de comandos técnicos y gestión de estado desde el frontend.
-- **Silencio Total:** Sistema de audio neutralizado (funciones dummy) para evitar distracciones.
+- **Respuesta Contextual:** Motor `wadi-brain.js` con prompt personalizado.
+- **Modo Oscuro Profundo:** Estética 'Deep Bunker' (`#0f111a`) para sesiones largas.
+- **Estructura de UI Limpia:** Sidebar reactivo, Layout minimalista.
+- **Soporte de Comandos:** Integración de comandos desde el frontend hacia el backend.
+- **Silencio Total:** Sistema de audio neutralizado por diseño (funciones dummy).
+
+---
 
 ## 🛠 Entorno Técnico
 
-- **Frontend:** React + TypeScript + Vite.
-- **Estilos:** Custom Properties (`--wadi-*`) + TailwindCSS.
-- **Backend:** Node.js + Express (wadi-brain.js).
-- **Entrada:** `ChatPage.tsx`, `Sidebar.tsx`, `Layout.tsx`, `TerminalInput.tsx`.
+| Área          | Tecnología                                                       |
+| ------------- | ---------------------------------------------------------------- |
+| **Frontend**  | React + TypeScript + Vite                                        |
+| **Estilos**   | TailwindCSS + CSS Variables (`--wadi-*`)                         |
+| **Backend**   | Node.js + Express (`wadi-brain.js`)                              |
+| **Ruta base** | `ChatPage.tsx`, `Sidebar.tsx`, `Layout.tsx`, `TerminalInput.tsx` |
 
-## ⚠️ Restricciones del Sistema
+---
 
-1. **Branding Unificado:** No existen referencias a identidades anteriores ("Monday").
+## 🔐 Restricciones del Sistema
+
+1. **Branding Unificado:** No hay referencias a la identidad anterior ("Monday").
 2. **Audio Nulo:** No se cargan ni ejecutan sonidos.
-3. **Persistencia:** Evita reseteos por palabras clave simples ("hola").
-4. **Limpieza:** Código optimizado sin variables no referenciadas.
+3. **Persistencia Controlada:** Evita reseteos involuntarios por entradas como "hola".
+4. **Código Higiénico:** Linter limpio. Sin variables sin usar.
+5. **Accesibilidad Básica:** Todos los `input` tienen `id` y `name` definidos.
 
 ---
 
 ## 🧃 Filosofía
 
-"WADI no es tu amigo. Es tu herramienta. Brutal, eficiente, y siempre funcional."
-
-## 📦 Ejecución
-
-```bash
-npm run dev
-```
+- No valida emociones. Valida `props`.
+- No suena. Responde.
+- No se reinicia por cualquier "hola".
+- No pregunta si querés ayuda. Te la da (cuando la merecés).
 
 ---
 
-Sistema Central WADI v1.0
+## 📦 Ejecución Local
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar el entorno de desarrollo
+npm run dev
+```
+
+### 📁 Estructura Relevante
+
+```text
+apps/
+  frontend/
+    src/
+      components/
+        ui/
+          TerminalInput.tsx       # Input de terminal WADI
+          MondayButton.tsx        # Botón reutilizable
+          MondayCard.tsx          # Tarjetas estilizadas
+        Sidebar.tsx               # Navegación lateral
+        Layout.tsx                # Layout principal
+        MessageBubble.tsx         # Mensajes del chat
+      hooks/
+        useScouter.ts             # Audio neutralizado (dummy)
+      pages/
+        ChatPage.tsx              # Página principal
+    index.css                     # Tema 'Deep Bunker'
+    index.html                    # Favicon y meta
+  api/
+    src/
+      wadi-brain.js               # Motor principal de respuesta
+```
+
+### 🧪 Estado de QA
+
+- [x] Branding aplicado (WADI)
+- [x] Componentes eliminados (Brainstorming, etc.)
+- [x] Tema oscuro funcional
+- [x] Lint sin errores
+- [x] Audio neutralizado
+- [x] Input accesible (id y name)
+- [x] Favicon personalizado (wadi.svg)
+- [x] No más Monday
+
+### 🧠 Changelog
+
+#### v1.0 - Inicial
+
+- Reemplazo total de identidad visual y funcional.
+- Rediseño de UI con tema oscuro.
+- Refactor de componentes y limpieza de código.
+- Implementación de lógica WADI-brain para respuestas contextuales.
+- Elimincación de sonido y elementos innecesarios.
+
+---
+
+Made with 🧠 by un desarrollador que claramente odia el ruido.
