@@ -21,12 +21,6 @@ export default function Projects() {
   const { projects, fetchProjects, createProject, loading } =
     useProjectsStore();
 // ...
- // (inside render)
-                  {/* Smoke Index Calculation */}
-                    {(() => {
-                      const pWithMetrics = p as unknown as ProjectWithMetrics;
-                      const noise = pWithMetrics.noise_count || 0;
-                      const total = pWithMetrics.total_items_audited || 0;
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [isCreating, setIsCreating] = useState(false);
