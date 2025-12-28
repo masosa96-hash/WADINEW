@@ -4,7 +4,7 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build": "pnpm -r exec rimraf dist && pnpm run build --filter frontend && pnpm run build --filter wadi-api",
+    "build": "pnpm -r exec rimraf dist && pnpm --filter frontend run build && pnpm --filter wadi-api run build",
     "test:wadi": "node apps/tests/wadi-tests.js",
     "validate": "npm run build --workspaces && echo '✅ Build exitoso en Apps y API'",
     "test:smoke": "node scripts/smoke-test.js",
