@@ -163,13 +163,16 @@ export function TerminalInput({
           </button>
 
           <input
+            id="wadi-user-input"
+            name="userInput"
+            type="text"
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={
               activeFocus
                 ? "Estamos en un foco activo. ¿Qué opinás?"
-                : "Pregunta o instruye a WADI..."
+                : "Preguntá o instruye a WADI..."
             }
             className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-dim)] text-sm font-medium h-full min-h-[24px]"
             autoComplete="off"
