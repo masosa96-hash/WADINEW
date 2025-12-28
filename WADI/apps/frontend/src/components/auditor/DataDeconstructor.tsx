@@ -17,11 +17,11 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
   const getColor = (cat: string) => {
     switch (cat) {
       case "CRÍTICO":
-        return "text-[var(--monday-primary)] border-[var(--monday-primary)]";
+        return "text-[var(--wadi-primary)] border-[var(--wadi-primary)]";
       case "VULNERABILIDAD":
-        return "text-[var(--monday-red)] border-[var(--monday-red)]";
+        return "text-[var(--wadi-red)] border-[var(--wadi-red)]";
       default:
-        return "text-[var(--monday-gray)] border-[var(--monday-gray)]";
+        return "text-[var(--wadi-gray)] border-[var(--wadi-gray)]";
     }
   };
 
@@ -33,7 +33,7 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse font-mono text-xs">
           <thead>
-            <tr className="border-b border-[var(--monday-border)] text-[var(--monday-text-dim)]">
+            <tr className="border-b border-[var(--wadi-border)] text-[var(--wadi-text-dim)]">
               <th className="p-3 uppercase">Input Data</th>
               <th className="p-3 uppercase">Class</th>
               <th className="p-3 uppercase">System Verdict</th>
@@ -45,7 +45,7 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
                 key={idx}
                 className="border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)]"
               >
-                <td className="p-3 text-[var(--monday-text)]">{row.item}</td>
+                <td className="p-3 text-[var(--wadi-text)]">{row.item}</td>
                 <td className="p-3">
                   <span
                     className={`border px-2 py-0.5 text-[10px] font-bold ${getColor(row.category)}`}
@@ -53,7 +53,7 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
                     {row.category}
                   </span>
                 </td>
-                <td className="p-3 text-[var(--monday-text-dim)] italic">
+                <td className="p-3 text-[var(--wadi-text-dim)] italic">
                   "{row.verdict}"
                 </td>
               </tr>
@@ -61,7 +61,7 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
           </tbody>
         </table>
       </div>
-      <div className="p-2 border-t border-[var(--monday-border)] text-[10px] text-[var(--monday-text-dim)] flex justify-between">
+      <div className="p-2 border-t border-[var(--wadi-border)] text-[10px] text-[var(--wadi-text-dim)] flex justify-between">
         <span>TOTAL ITEMS: {items.length}</span>
         <button
           onClick={() => {
@@ -72,10 +72,10 @@ export const DataDeconstructor: React.FC<DataDeconstructorProps> = ({
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `MONDAY_PLAN_${Date.now()}.txt`;
+            a.download = `WADI_PLAN_${Date.now()}.txt`;
             a.click();
           }}
-          className="hover:text-[var(--monday-primary)] hover:underline cursor-pointer uppercase font-bold"
+          className="hover:text-[var(--wadi-primary)] hover:underline cursor-pointer uppercase font-bold"
         >
           [EXPORT_PLAN]
         </button>

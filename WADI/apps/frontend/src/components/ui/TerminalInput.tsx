@@ -155,7 +155,7 @@ export function TerminalInput({
 
           <button
             type="button"
-            className="p-2 text-gray-400 hover:text-purple-500 transition-colors rounded-full hover:bg-purple-50"
+            className="p-2 text-gray-400 hover:text-purple-500 transition-colors rounded-full hover:bg-[var(--wadi-surface-hover)]"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
           >
@@ -169,9 +169,9 @@ export function TerminalInput({
             placeholder={
               activeFocus
                 ? "Estamos en un foco activo. ¿Qué opinás?"
-                : "Pregunta o instruye a Monday..."
+                : "Pregunta o instruye a WADI..."
             }
-            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400 text-sm font-medium h-full min-h-[24px]"
+            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-dim)] text-sm font-medium h-full min-h-[24px]"
             autoComplete="off"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -186,8 +186,8 @@ export function TerminalInput({
             disabled={(!input.trim() && !selectedFile) || isLoading}
             className={`p-2 rounded-full transition-all duration-300 ${
               input.trim() || selectedFile
-                ? "bg-[var(--monday-primary)] text-white shadow-md hover:scale-105"
-                : "bg-gray-100 text-gray-300"
+                ? "bg-[var(--wadi-primary)] text-white shadow-md hover:scale-105"
+                : "bg-gray-100/10 text-gray-500"
             }`}
           >
             <IconSend />

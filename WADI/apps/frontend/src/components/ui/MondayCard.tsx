@@ -14,7 +14,7 @@ export const MondayCard: React.FC<MondayCardProps> = ({
   return (
     <div className={`monday-card flex flex-col ${className}`}>
       {title && (
-        <div className="absolute top-0 left-0 bg-[var(--monday-primary)] text-black px-2 py-0.5 text-[10px] font-bold font-mono uppercase tracking-widest">
+        <div className="absolute top-0 left-0 bg-[var(--wadi-primary)] text-black px-2 py-0.5 text-[10px] font-bold font-mono uppercase tracking-widest">
           {title}
         </div>
       )}

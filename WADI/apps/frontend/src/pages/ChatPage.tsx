@@ -99,43 +99,26 @@ export default function ChatPage() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col h-full relative z-10 transition-all duration-500">
           {!hasMessages ? (
-            // NEO-MODERN EMPTY STATE
+            // WADI MODERN EMPTY STATE
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-in fade-in zoom-in duration-500">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-white/50 backdrop-blur-xl border border-white/80 shadow-[0_0_40px_rgba(139,92,246,0.15)] flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
+                <div className="w-24 h-24 rounded-full bg-[var(--wadi-surface)] backdrop-blur-xl border border-[var(--wadi-border)] shadow-[0_0_40px_rgba(139,92,246,0.15)] flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#8B5CF6] to-[#38bdf8] opacity-80 animate-pulse-soft"></div>
                 </div>
               </div>
 
               <div className="text-center space-y-2 max-w-md">
-                <h1 className="text-3xl font-semibold text-slate-800 tracking-tight">
-                  Hola, soy Monday.
+                <h1 className="text-3xl font-semibold text-[var(--wadi-text)] tracking-tight">
+                  Hola, soy WADI.
                 </h1>
-                <p className="text-slate-500 text-lg font-light">
+                <p className="text-[var(--wadi-text-dim)] text-lg font-light">
                   ¿En qué plan estamos hoy?
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-                {[
-                  { label: "Brainstorming", icon: "✨" },
-                  { label: "Revisar Código", icon: "💻" },
-                  { label: "Plan de Negocio", icon: "📈" },
-                  { label: "Solo Charlar", icon: "☕" },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => handleSendMessage(item.label)}
-                    className="p-4 bg-white/60 hover:bg-white border border-white/50 shadow-sm rounded-2xl text-left transition-all hover:scale-[1.02] hover:shadow-md group"
-                  >
-                    <span className="text-xl mb-1 block group-hover:scale-110 transition-transform">
-                      {item.icon}
-                    </span>
-                    <span className="text-sm font-medium text-slate-700">
-                      {item.label}
-                    </span>
-                  </button>
-                ))}
+              {/* Minimalist Action Prompt - Buttons Removed per instruction */}
+              <div className="opacity-50 text-xs text-[var(--wadi-text-dim)] uppercase tracking-widest">
+                Esperando instrucción...
               </div>
             </div>
           ) : (

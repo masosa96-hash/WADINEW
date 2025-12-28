@@ -62,21 +62,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     <aside
       className={`sidebar-drawer ${
         isOpen ? "open" : ""
-      } flex flex-col h-full bg-white/50 backdrop-blur-xl border-r border-[var(--monday-border)] w-[280px] shadow-2xl z-50 transition-all duration-300`}
+      } flex flex-col h-full bg-[var(--wadi-surface)] backdrop-blur-xl border-r border-[var(--wadi-border)] w-[280px] shadow-2xl z-50 transition-all duration-300`}
     >
       {/* HEADER */}
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#38bdf8] flex items-center justify-center shadow-md text-white font-bold text-xs">
-            M
+            W
           </div>
-          <h1 className="font-['Outfit'] text-lg font-bold text-slate-800 tracking-tight">
-            Monday
+          <h1 className="font-['Outfit'] text-lg font-bold text-[var(--wadi-text)] tracking-tight">
+            WADI
           </h1>
         </div>
         <button
           onClick={handleNewChat}
-          className="p-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-lg shadow-sm text-slate-500 hover:text-[#8B5CF6] transition-all"
+          className="p-2 bg-[var(--wadi-surface)] hover:bg-[var(--wadi-surface-hover)] border border-[var(--wadi-border)] rounded-lg shadow-sm text-[var(--wadi-text-dim)] hover:text-[#8B5CF6] transition-all"
           title="Nuevo Chat"
         >
           <Plus size={18} />
@@ -85,7 +85,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 py-2">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2 mb-2">
+        <h3 className="text-xs font-semibold text-[var(--wadi-text-dim)] uppercase tracking-wider px-2 mb-2">
           Conversaciones
         </h3>
         {conversations && conversations.length > 0 ? (
@@ -97,8 +97,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={() => handleHistoryClick(c.id)}
                 className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${
                   isActive
-                    ? "bg-white shadow-sm border border-purple-100"
-                    : "hover:bg-white/60 hover:shadow-xs"
+                    ? "bg-[var(--wadi-surface-hover)] shadow-sm border border-[var(--wadi-border)]"
+                    : "hover:bg-[var(--wadi-surface-hover)] hover:shadow-xs border border-transparent"
                 }`}
               >
                 <MessageSquare
@@ -106,13 +106,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   className={
                     isActive
                       ? "text-[#8B5CF6]"
-                      : "text-slate-400 group-hover:text-slate-600"
+                      : "text-[var(--wadi-text-dim)] group-hover:text-[var(--wadi-text)]"
                   }
                 />
                 <div className="flex-1 overflow-hidden">
                   <p
                     className={`text-sm truncate ${
-                      isActive ? "font-medium text-slate-800" : "text-slate-600"
+                      isActive
+                        ? "font-medium text-[var(--wadi-text)]"
+                        : "text-[var(--wadi-text-muted)]"
                     }`}
                   >
                     {c.title || "Nueva Conversación"}
@@ -120,7 +122,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
                 <button
                   onClick={(e) => handleDelete(e, c.id)}
-                  className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 text-[var(--wadi-text-dim)] hover:text-red-400 transition-opacity"
                 >
                   ×
                 </button>
@@ -128,34 +130,34 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             );
           })
         ) : (
-          <div className="text-center py-10 text-slate-400 text-sm italic">
+          <div className="text-center py-10 text-[var(--wadi-text-dim)] text-sm italic">
             Sin chats recientes.
           </div>
         )}
       </div>
 
       {/* USER FOOTER */}
-      <div className="p-4 border-t border-slate-100 bg-white/30 backdrop-blur-md">
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/50 transition-colors">
-          <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+      <div className="p-4 border-t border-[var(--wadi-border)] bg-[var(--wadi-surface)] backdrop-blur-md">
+        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--wadi-surface-hover)] transition-colors">
+          <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-slate-300">
             <User size={16} />
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium text-slate-700 truncate">
+            <p className="text-sm font-medium text-[var(--wadi-text)] truncate">
               {user?.email?.split("@")[0] || "Usuario"}
             </p>
-            <p className="text-[10px] text-slate-400">En línea</p>
+            <p className="text-[10px] text-[var(--wadi-text-dim)]">En línea</p>
           </div>
           <div className="flex gap-1">
             <button
               onClick={() => setShowSettings(true)}
-              className="p-1.5 text-slate-400 hover:text-[#8B5CF6] hover:bg-purple-50 rounded-lg transition-colors"
+              className="p-1.5 text-[var(--wadi-text-dim)] hover:text-[#8B5CF6] hover:bg-purple-900/20 rounded-lg transition-colors"
             >
               <Settings size={16} />
             </button>
             <button
               onClick={() => signOut()}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1.5 text-[var(--wadi-text-dim)] hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <LogOut size={16} />
             </button>

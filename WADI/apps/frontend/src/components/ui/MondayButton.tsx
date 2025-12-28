@@ -1,8 +1,8 @@
 import React from "react";
 
 /**
- * MONDAY OS v3.0 ATOMIC BUTTON
- * Estética Y2K Mate.
+ * WADI BUTTON
+ * Estética Modern Dark.
  */
 interface MondayButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "danger" | "ghost";
@@ -20,11 +20,11 @@ export const MondayButton: React.FC<MondayButtonProps> = ({
 
   const variants = {
     primary:
-      "bg-[var(--monday-primary-glow)] border-[var(--monday-primary)] text-[var(--monday-primary)] hover:bg-[var(--monday-primary)] hover:text-white hover:shadow-[0_0_20px_var(--monday-primary-dim)]",
+      "bg-[var(--wadi-primary-glow)] border-[var(--wadi-primary)] text-[var(--wadi-primary)] hover:bg-[var(--wadi-primary)] hover:text-white hover:shadow-[0_0_20px_var(--wadi-primary-dim)]",
     danger:
-      "bg-red-900/20 border-[var(--monday-red)] text-[var(--monday-red)] hover:bg-[var(--monday-red)] hover:text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]",
+      "bg-red-900/20 border-[var(--wadi-red)] text-[var(--wadi-red)] hover:bg-[var(--wadi-red)] hover:text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]",
     ghost:
-      "bg-transparent border-transparent text-gray-500 hover:text-[var(--monday-text)]",
+      "bg-transparent border-transparent text-gray-500 hover:text-[var(--wadi-text)]",
   };
 
   return (
