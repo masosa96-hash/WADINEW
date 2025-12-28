@@ -119,4 +119,8 @@ apps/
 
 ---
 
+---
+
+[🧾 Contributing](CONTRIBUTING.md) • [📜 Code of Conduct](CODE_OF_CONDUCT.md)
+
 Made with 🧠 by un desarrollador que claramente odia el ruido.
