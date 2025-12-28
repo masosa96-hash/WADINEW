@@ -115,6 +115,17 @@ La documentación del proyecto (`/docs`) se sirve automáticamente mediante GitH
    - Asegúrate que `Custom domain` coincida con el contenido de tu archivo `CNAME`.
    - Marca la casilla **Enforce HTTPS**.
 
+### ⚠️ Notas Importantes (Troubleshooting)
+
+- **Punto final en DNS**: Algunos proveedores de DNS requieren un punto final en el registro CNAME => `masosa96-hash.github.io.`
+- **Visibilidad del Repo**: Para que GitHub Pages funcione en repositorios privados (como este), necesitas una cuenta Pro/Enterprise. Si no, el repositorio **debe ser público**.
+- **Propagación**:
+  - GitHub Pages: ~10 minutos.
+  - DNS: 30 min hasta 48hs.
+- **Acceso Directo**:
+  - GitHub: `https://masosa96-hash.github.io/WADINEW/`
+  - Custom: `https://wadi.tudominio.com`
+
 ---
 
 ## 🛑 CHECKLIST FINAL
