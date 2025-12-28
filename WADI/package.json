@@ -1,6 +1,8 @@
 {
   "name": "wadi",
-  "private": true,
+  "bin": {
+    "wadi": "./cli/index.js"
+  },
   "scripts": {
     "dev": "pnpm --filter frontend run dev",
     "cli": "node cli/index.js",
