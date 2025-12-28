@@ -1,11 +1,21 @@
+# Dependencies
 node_modules/
 WADI/node_modules/
 apps/frontend/node_modules/
 apps/api/node_modules/
+
+# Environment
 .env
 *.env
+
+# Builds
 dist/
 build/
+
+# Logs
 .pnpm-debug.log
+
+# Local tooling (NO va al repo)
 .tools/
 android-sdk/
+jdk-*
