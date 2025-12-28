@@ -4,7 +4,7 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build": "pnpm -r exec rm -rf dist && pnpm run build --filter frontend && pnpm run build --filter wadi-api",
+    "build": "pnpm -r exec rimraf dist && pnpm run build --filter frontend && pnpm run build --filter wadi-api",
     "test:wadi": "node apps/tests/wadi-tests.js",
     "validate": "npm run build --workspaces && echo '✅ Build exitoso en Apps y API'",
     "test:smoke": "node scripts/smoke-test.js",
@@ -30,6 +30,7 @@
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "prettier": "^3.7.4",
+    "rimraf": "^6.1.2",
     "typescript-eslint": "^8.48.1"
   },
   "version": "1.0.0",
