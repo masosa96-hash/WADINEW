@@ -8,6 +8,15 @@ We do what we want.
 
 ---
 
+## [2.0.0] - 2025-12-28
+
+### Added
+
+- **WADI CLI**: Herramienta de línea de comando local (`cli/`) para gestión del proyecto.
+- **CI/CD**: Workflow de GitHub Actions (`wadi-ci.yml`) para linting y build automático.
+- **Documentación Interna**: Nueva guía de onboarding `docs/USO.md`.
+- **Infraestructura**: Configuración preparada para dominios personalizados en `docs/CNAME`.
+
 ## [1.0.0] - 2025-12-28
 
 ### Added

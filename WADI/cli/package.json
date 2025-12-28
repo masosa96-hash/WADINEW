@@ -1,0 +1,12 @@
+{
+  "name": "wadi-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for WADI",
+  "main": "index.js",
+  "bin": {
+    "wadi": "./index.js"
+  },
+  "dependencies": {
+    "commander": "^11.1.0"
+  }
+}
