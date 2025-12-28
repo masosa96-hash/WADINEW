@@ -1,0 +1,4 @@
+[build]
+  base = "WADI"
+  publish = "docs"
+  command = "echo 'no build needed'"
