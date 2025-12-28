@@ -1,0 +1,6 @@
+packages:
+  - apps/api
+  - apps/frontend
+  - apps/kivo
+  - apps/kivo-brain-api
+  - packages/*

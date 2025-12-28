@@ -1,0 +1,2 @@
+echo "Running pre-commit hook..."
+node apps/tests/wadi-tests.js || (echo "❌ Test de personalidad WADI falló. No se puede commitear." && exit 1)

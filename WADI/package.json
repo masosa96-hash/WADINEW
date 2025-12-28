@@ -1,0 +1,40 @@
+{
+  "name": "wadi",
+  "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "build": "pnpm -r exec rm -rf dist && pnpm run build --filter frontend && pnpm run build --filter wadi-api",
+    "test:wadi": "node apps/tests/wadi-tests.js",
+    "validate": "npm run build --workspaces && echo '✅ Build exitoso en Apps y API'",
+    "test:smoke": "node scripts/smoke-test.js",
+    "postbuild": "ls -R apps/frontend/dist"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/frontend"
+  ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^6.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.48.1"
+  },
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

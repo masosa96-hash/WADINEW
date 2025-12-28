@@ -1,0 +1,12 @@
+**/node_modules/**
+**/dist/**
+**/coverage/**
+**/.git/**
+**/.vscode/**
+**/.agent/**
+apps/kivo/android/**
+apps/kivo/ios/**
+apps/kivo/www/*.min.js
+apps/kivo/www/assets/**
+pnpm-lock.yaml
+package-lock.json

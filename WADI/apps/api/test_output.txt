@@ -1,0 +1,76 @@
+Starting WADI Brain Tests...
+
+INPUT: "Estoy agotado de estar siempre para los demás y nunca para mí." (Topic: general)
+RESPONSE (670ms):
+Parece que estás cargado de responsabilidades al cuidar a los demás. ¿De quién se encargas exactamente? De familiares, amigos o tal vez colegas de trabajo? ¿Podrías decirme un poco más sobre esta sensación de estar agotado?
+--------------------------------------------------
+
+
+INPUT: "Analizá esto un poco más profundo: siento que no tengo lugar en ningún lado." (Topic: general)
+RESPONSE (2730ms):
+Entiendo que ese sentimiento de no tener lugar en ningún lado es un tema difícil de abordar. Decís que te siente como si no tuvieras una función, una voz o un espacio en la vida. ¿Podrías decirme un poco más sobre cuándo empezaste a sentir esto? Si es un sentimiento reciente o si ha ido creciendo con el tiempo.
+
+También me gustaría saber, ¿hay algún momento en particular en el que te sientes así? ¿Es cuando estás con otras personas, o más bien cuando estás solo? ¿Hay alguna situación o lugar específico que te haga sentir que no tienes lugar? 
+
+Quiero entender mejor lo que estás viviendo para poder ayudarte a explorar más a fondo.
+--------------------------------------------------
+
+
+INPUT: "Siento culpa cuando digo que no, ¿qué ves ahí?" (Topic: general)
+RESPONSE (9735ms):
+Entiendo que estás buscando profundizar en cómo te sientes al decir "no". Parece que la culpa es un sentimiento que te surge al rechazar algo o al no cumplir con las expectativas de alguien, ¿correcto?
+
+Decís que sientes culpa cuando digo que no, ¿te ocurre con personas específicas o con situaciones en general? ¿Te duele más cuando te preguntan por qué no puedes hacer algo, o cuando te sientes obligado a decir "no" a algo que realmente quieres?
+--------------------------------------------------
+
+
+INPUT: "Tengo este error en React: Cannot read property 'map' of undefined" (Topic: tech)
+RESPONSE (9869ms):
+¿Qué es lo que estás intentando hacer justo cuando te aparece este error? ¿Es algún array o lista que estás tratando de iterar?
+
+En general, este error `Cannot read property 'map' of undefined` sucede cuando estás tratando de utilizar el método `map()` sobre una_variable que no es un array (o no está definida). Te recomiendo verificar qué valor tiene la variable justo antes de llamar a `map()` y asegurarte de que sea un array válido.
+
+Podemos seguir una secuencia de preguntas para resolver esto paso a paso. Por ejemplo:
+
+1. ¿Qué tienes en la variable que estás tratando de mapear?
+2. ¿Podrías mostrarme el código relevante alrededor de la línea donde se produce el error?
+3. ¿Has estado trabajando con algún dato fetched desde una API o almacenado en el estado del componente?
+
+Con eso, podemos intentar ayudarte a localizar y resolver el problema.
+--------------------------------------------------
+
+
+INPUT: "Ayudame a ordenar mi semana de trabajo en pasos claros." (Topic: general)
+RESPONSE (9795ms):
+Una semana de trabajo organizada puede ser muy útil para mantener el ritmo y la productividad. Vamos a repasar juntos tus tareas y objetivos para crear un plan claro y realista.
+
+Pero antes, ¿podrías decirme más sobre tus tareas y responsabilidades? ¿Cuáles son tus objetivos principales a corto plazo? ¿Tienes algún proyecto importante que debes completar?
+
+Si no sabes desde dónde empezar, podemos comenzar con categorías generales. Por ejemplo, podemos dividir tus tareas en:
+
+1. Proyectos importantes
+2. Tareas regulares (como reportes, reuniones, etc.)
+3. Tareas administrativas (como finanzas, gestión de proyectos, etc.)
+4. Tareas creativas o innovadoras
+
+¿Te parece bien empezar con alguna de estas categorías?
+--------------------------------------------------
+
+
+INPUT: "Quiero ideas de marketing para vender servicios de fotografía." (Topic: biz)
+RESPONSE (9994ms):
+Interesante. Quieres ideas de marketing para vender servicios de fotografía. ¿Quieres enfocarte en un tipo de servicio en particular, como sesiones de boda o sesión de retrato infantil? O quizás tienes un público objetivo en mente, como jóvenes o empresarios.
+
+Antes de seguir adelante, ¿podrías darte una idea de qué es lo que te gustaría lograr con tus servicios de marketing de fotografía? Quiero decir, ¿qué es lo que deseas atraer al público y qué mensaje quieres transmitir?
+
+¿Quieres algo de esto?
+
+1. **Llegar a un público más amplio** y aumentar tus ventas.
+2. **Crear una imagen de marca** profesional y establecer tu presencia en la industria.
+3. **Vender tus servicios** específicos al público objetivo.
+4. **Establecer una comunidad** de leales clientes y fidelizarlos.
+
+¿Alguna de estas opciones te llama la atención, o tienes otra dirección en mente?
+--------------------------------------------------
+
+

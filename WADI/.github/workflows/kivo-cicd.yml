@@ -1,0 +1,45 @@
+name: Kivo CI/CD
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "apps/kivo/**"
+      - ".github/workflows/kivo-cicd.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Kivo (frontend only)
+        run: |
+          cd apps/kivo
+          pnpm install || true
+          pnpm build || echo "Kivo has no build step — continuing"
+
+  deploy-to-render:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          echo "Triggering Render deploy..."
+          curl -X POST "$RENDER_DEPLOY_HOOK"

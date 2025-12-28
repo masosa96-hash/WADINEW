@@ -1,0 +1,23 @@
+{
+  "name": "MONDAY OS",
+  "short_name": "MONDAY",
+  "description": "Sistema Operativo Forense - Nivel Táctico. Sin distracciones.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050816",
+  "theme_color": "#8B5CF6",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

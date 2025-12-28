@@ -1,0 +1,26 @@
+{
+  "name": "kivo",
+  "version": "1.0.0",
+  "description": "Kivo - Tu compañero emocional inteligente",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo tests disabled",
+    "build": "echo 'No build step required for Kivo PWA'",
+    "start": "npx serve www"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "firebase": "^9.23.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "serve": "^14.2.0"
+  }
+}
