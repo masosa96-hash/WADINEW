@@ -91,6 +91,32 @@ curl -H "x-admin-key: 9b03e6028bbb01b40aebfecdf86b6025a74c6513ec25cc1cae0f8c3597
 
 ---
 
+## 5. Documentation Deployment (GitHub Pages) 📚
+
+La documentación del proyecto (`/docs`) se sirve automáticamente mediante GitHub Pages.
+
+### Configuración de Dominio Personalizado
+
+1. **Editar CNAME**:
+   - Modifica el archivo `docs/CNAME` con tu dominio real (ej: `docs.midominio.com` o `wadi.com`).
+
+2. **Configurar DNS Provider**:
+   - Si usas un **Subdominio** (ej: `docs.midominio.com`):
+     - Crea un registro `CNAME` apuntando a `masosa96-hash.github.io`.
+   - Si usas el **Dominio Raíz** (ej: `midominio.com`):
+     - Crea 4 registros `A` apuntando a nuestras IPs de GitHub:
+       - `185.199.108.153`
+       - `185.199.109.153`
+       - `185.199.110.153`
+       - `185.199.111.153`
+
+3. **Activar en GitHub**:
+   - Ve a `Settings` -> `Pages`.
+   - Asegúrate que `Custom domain` coincida con el contenido de tu archivo `CNAME`.
+   - Marca la casilla **Enforce HTTPS**.
+
+---
+
 ## 🛑 CHECKLIST FINAL
 
 Marca estos pasos a medida que avanzas:
@@ -101,5 +127,6 @@ Marca estos pasos a medida que avanzas:
 - [ ] Smoke Test `/health` OK.
 - [ ] Smoke Test `/ready` OK.
 - [ ] Admin Access OK.
+- [ ] Documentación accesible en URL pública.
 
 ¡Buena suerte con el lanzamiento! 🚀
