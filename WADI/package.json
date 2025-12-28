@@ -2,6 +2,9 @@
   "name": "wadi",
   "private": true,
   "scripts": {
+    "dev": "pnpm --filter frontend run dev",
+    "cli": "node cli/index.js",
+    "start:api": "node apps/api/src/wadi-brain.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "build": "pnpm -r exec rimraf dist && pnpm --filter frontend run build && pnpm --filter wadi-api run build",
