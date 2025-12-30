@@ -6,15 +6,21 @@
 
 :root {
   /* WADI REFINED PALETTE (Midnight & Focus) */
-  --wadi-bg: #0f1115; /* Deep rich midnight, not pure black */
+  --wadi-bg: radial-gradient(
+    circle at 50% 0%,
+    #1a1d26 0%,
+    #0f1115 100%
+  ); /* Deep rich midnight with top light */
+  --wadi-bg-solid: #0f1115;
   --wadi-bg-subtle: #16181d;
 
   --wadi-surface: rgba(255, 255, 255, 0.03);
   --wadi-surface-active: rgba(255, 255, 255, 0.06);
-  --wadi-surface-glass: rgba(15, 17, 21, 0.7);
+  --wadi-surface-glass: rgba(15, 17, 21, 0.6); /* More transparent for blur */
 
   --wadi-border: rgba(255, 255, 255, 0.08);
   --wadi-border-hover: rgba(255, 255, 255, 0.15);
+  --wadi-glass-border: rgba(255, 255, 255, 0.1);
 
   --wadi-primary: #8b5cf6; /* Keep Lavender as Soul */
   --wadi-primary-dim: rgba(139, 92, 246, 0.15);
@@ -39,6 +45,7 @@
   body,
   #root {
     background: var(--wadi-bg);
+    background-attachment: fixed;
     color: var(--wadi-text);
     font-family: "Outfit", sans-serif;
     height: 100vh; /* Fallback */

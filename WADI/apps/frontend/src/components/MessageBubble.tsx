@@ -19,10 +19,10 @@ export function MessageBubble({
       className={`flex flex-col mb-4 w-full animate-enter ${isUser ? "items-end" : "items-start"}`}
     >
       <div
-        className={`max-w-[85%] p-4 rounded-2xl shadow-sm border text-sm leading-relaxed ${
+        className={`max-w-[85%] p-5 rounded-2xl shadow-lg border text-[0.95rem] leading-7 transition-all duration-300 ${
           isUser
-            ? "bg-[var(--wadi-surface-active)] border-[var(--wadi-border)] text-[var(--wadi-text)] rounded-tr-sm backdrop-blur-md"
-            : "bg-[var(--wadi-surface)] border-[var(--wadi-primary-dim)] text-[var(--wadi-text-secondary)] rounded-tl-sm backdrop-blur-sm"
+            ? "bg-[linear-gradient(135deg,rgba(139,92,246,0.1),rgba(139,92,246,0.05))] border-[var(--wadi-primary-dim)] text-[var(--wadi-text)] rounded-tr-sm backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(139,92,246,0.15)]"
+            : "bg-[var(--wadi-surface-glass)] border-[var(--wadi-glass-border)] text-[var(--wadi-text-secondary)] rounded-tl-sm backdrop-blur-xl hover:border-[var(--wadi-border-hover)]"
         }`}
       >
         {isUser ? (
@@ -36,11 +36,11 @@ export function MessageBubble({
                 const title = match[2].trim();
                 const body = block.replace(match[0], "").trim();
                 return (
-                  <div key={i} className="mb-4 last:mb-0">
-                    <div className="font-bold text-[1.05em] mb-1 text-[var(--wadi-primary)] tracking-wide">
+                  <div key={i} className="mb-5 last:mb-0 group">
+                    <div className="font-display font-semibold text-[1.1em] mb-2 text-[var(--wadi-text)] tracking-tight border-b border-[var(--wadi-primary-dim)] pb-1 w-fit group-hover:text-[var(--wadi-primary)] transition-colors">
                       {title}
                     </div>
-                    <div className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-secondary)] font-normal opacity-90">
+                    <div className="whitespace-pre-wrap text-[var(--wadi-text-secondary)] font-light opacity-95">
                       {body}
                     </div>
                   </div>

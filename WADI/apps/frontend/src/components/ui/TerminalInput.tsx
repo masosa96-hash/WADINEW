@@ -144,7 +144,7 @@ export function TerminalInput({
 
       {/* Main Input Capsule */}
       <form onSubmit={handleSend} className="relative w-full group">
-        <div className="w-full rounded-full bg-[var(--wadi-surface)] text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-border)] px-4 py-3 flex items-center gap-2 pr-2 overflow-hidden transition-all duration-300 focus-within:shadow-[0_0_20px_var(--wadi-primary-dim)] focus-within:border-[var(--wadi-primary-glow)] hover:border-[var(--wadi-border-hover)]">
+        <div className="w-full rounded-full bg-[var(--wadi-surface)]/80 backdrop-blur-xl text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-glass-border)] px-4 py-3 flex items-center gap-2 pr-2 overflow-hidden transition-all duration-300 focus-within:shadow-[0_0_20px_var(--wadi-primary-dim)] focus-within:border-[var(--wadi-primary-glow)] hover:border-[var(--wadi-border-hover)]">
           <input
             type="file"
             ref={fileInputRef}
