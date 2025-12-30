@@ -3,7 +3,7 @@ import { type Attachment } from "../../store/chatStore";
 import { useScouter } from "../../hooks/useScouter";
 import { Paperclip } from "lucide-react";
 
-// Fallback icons if lucide not imported/working in this context, but user mentioned "iconos minimalistas"
+// Fallback icons if lucide not imported/working in this context
 const IconSend = () => (
   <svg
     width="20"
@@ -128,13 +128,13 @@ export function TerminalInput({
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-2 relative mb-6">
       {/* File Preview Capsule */}
       {selectedFile && (
-        <div className="absolute -top-12 left-0 right-0 flex justify-center animate-in fade-in slide-in-from-bottom-2">
-          <div className="bg-white/90 backdrop-blur border border-purple-100 shadow-sm rounded-full px-4 py-1 flex items-center gap-2 text-xs text-purple-600 font-medium">
+        <div className="absolute -top-12 left-0 right-0 flex justify-center animate-enter">
+          <div className="bg-[var(--wadi-surface-active)] backdrop-blur border border-[var(--wadi-primary-dim)] shadow-sm rounded-full px-4 py-1 flex items-center gap-2 text-xs text-[var(--wadi-primary)] font-medium">
             <Paperclip size={12} className="opacity-50" />
             <span>{selectedFile.name}</span>
             <button
               onClick={() => setSelectedFile(null)}
-              className="ml-2 hover:bg-purple-50 rounded-full p-1 transition-colors"
+              className="ml-2 hover:bg-[var(--wadi-surface)] rounded-full p-1 transition-colors"
             >
               x
             </button>
@@ -143,8 +143,8 @@ export function TerminalInput({
       )}
 
       {/* Main Input Capsule */}
-      <form onSubmit={handleSend} className="relative w-full">
-        <div className="neo-capsule flex items-center gap-2 pr-2 overflow-hidden">
+      <form onSubmit={handleSend} className="relative w-full group">
+        <div className="w-full rounded-full bg-[var(--wadi-surface)] text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-border)] px-4 py-3 flex items-center gap-2 pr-2 overflow-hidden transition-all duration-300 focus-within:shadow-[0_0_20px_var(--wadi-primary-dim)] focus-within:border-[var(--wadi-primary-glow)] hover:border-[var(--wadi-border-hover)]">
           <input
             type="file"
             ref={fileInputRef}
@@ -155,9 +155,10 @@ export function TerminalInput({
 
           <button
             type="button"
-            className="p-2 text-gray-400 hover:text-purple-500 transition-colors rounded-full hover:bg-[var(--wadi-surface-hover)]"
+            className="p-2 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-primary)] transition-colors rounded-full hover:bg-[var(--wadi-surface-active)]"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
+            aria-label="Adjuntar archivo"
           >
             <IconAttach />
           </button>
@@ -172,9 +173,9 @@ export function TerminalInput({
             placeholder={
               activeFocus
                 ? "Estamos en un foco activo. ¿Qué opinás?"
-                : "Preguntá o instruye a WADI..."
+                : "Escribí tu instrucción..."
             }
-            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-dim)] text-sm font-medium h-full min-h-[24px]"
+            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-secondary)] text-base font-medium h-full min-h-[24px]"
             autoComplete="off"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -189,9 +190,10 @@ export function TerminalInput({
             disabled={(!input.trim() && !selectedFile) || isLoading}
             className={`p-2 rounded-full transition-all duration-300 ${
               input.trim() || selectedFile
-                ? "bg-[var(--wadi-primary)] text-white shadow-md hover:scale-105"
-                : "bg-gray-100/10 text-gray-500"
+                ? "bg-[var(--wadi-primary)] text-white shadow-md hover:scale-110"
+                : "bg-[var(--wadi-surface-active)] text-[var(--wadi-text-tertiary)]"
             }`}
+            aria-label="Enviar"
           >
             <IconSend />
           </button>

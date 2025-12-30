@@ -100,25 +100,23 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col h-full relative z-10 transition-all duration-500">
           {!hasMessages ? (
             // WADI MODERN EMPTY STATE
-            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-in fade-in zoom-in duration-500">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-enter">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-[var(--wadi-surface)] backdrop-blur-xl border border-[var(--wadi-border)] shadow-[0_0_40px_rgba(139,92,246,0.15)] flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#8B5CF6] to-[#38bdf8] opacity-80 animate-pulse-soft"></div>
+                <div className="w-24 h-24 rounded-full bg-[var(--wadi-surface)] backdrop-blur-xl border border-[var(--wadi-border)] shadow-[0_0_40px_var(--wadi-primary-dim)] flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--wadi-primary)] to-[var(--wadi-accent)] opacity-80 animate-pulse-soft"></div>
                 </div>
               </div>
 
-              <div className="text-center space-y-2 max-w-md">
-                <h1 className="text-3xl font-semibold text-[var(--wadi-text)] tracking-tight">
-                  Hola, soy WADI.
+              <div className="text-center space-y-3 max-w-md">
+                <h1 className="text-3xl md:text-4xl font-semibold text-[var(--wadi-text)] tracking-tight">
+                  WADI
                 </h1>
-                <p className="text-[var(--wadi-text-dim)] text-lg font-light">
-                  ¿En qué plan estamos hoy?
-                </p>
+                <p className="text-body">¿En qué plan estamos hoy?</p>
               </div>
 
-              {/* Minimalist Action Prompt - Buttons Removed per instruction */}
-              <div className="opacity-50 text-xs text-[var(--wadi-text-dim)] uppercase tracking-widest">
-                Esperando instrucción...
+              {/* Minimalist Action Prompt */}
+              <div className="opacity-40 text-xs text-[var(--wadi-text-secondary)] uppercase tracking-widest font-medium">
+                Esperando ingreso
               </div>
             </div>
           ) : (

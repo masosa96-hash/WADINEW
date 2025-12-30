@@ -7,97 +7,63 @@ export default function LandingPage() {
 
   const handleStart = () => {
     resetChat();
-    // Navigate to /chat to start fresh. The ChatPage logic handles ID creation or empty state.
-    // User requested "Crear conversación nueva, Navegar a /chat/:id".
-    // Since ChatPage handles "if (!conversationId && newId) navigate...", sending a message creates the ID.
-    // If I want to force a new ID immediately upon clicking "Nuevo Chat", I might need a store action for it,
-    // OR simply navigate to /chat and let the user type.
-    // User said: "👉 Al click en Nuevo chat: Crear conversación nueva, Navegar a /chat/:id, El input queda enfocado"
-    // If the store supports creating an empty conversation and getting an ID, I should use it.
-    // Looking at store: startNewConversation resets state (id=null).
-    // To actually GET an ID, usually a message must be sent or an endpoint called.
-    // However, the user demand is "Navegar a /chat/:id".
-    // If I cannot generate an ID without a message, I will navigate to /chat (which effectively is a new clean chat)
-    // and ensuring the UI looks like a "new chat".
-    // But let's check if we can create one. The store has `startNewConversation`.
-    // Let's stick to the simplest "reset and go to /chat" which functions as a new chat in this app's logic usually.
-    // If strict ID is required before message, I'd need backend changes or a createEmptyConversation endpoint.
-    // Assuming standard behavior for now: reset state -> navigate to /chat -> user types -> ID generated.
-    // If the user insists on "Navegar a /chat/:id" immediately, I might generate a UUID locally or call an API if available.
-    // But `useChatStore` doesn't seem to have `createEmptyConversation`.
-    // I will stick to navigate('/chat') which presents a new chat interface.
-
     navigate("/chat");
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        backgroundColor: "var(--color-bg)",
-        color: "var(--color-text-main)",
-        textAlign: "center",
-        padding: "1rem",
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "4rem",
-          fontWeight: 900,
-          margin: "0 0 0.5rem 0",
-          background: "var(--grad-main)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          lineHeight: 1.1,
-        }}
-      >
-        WADI
-      </h1>
-      <h2
-        style={{
-          fontSize: "1.5rem",
-          fontWeight: 600,
-          margin: "0 0 2rem 0",
-          color: "var(--color-text-main)",
-        }}
-      >
-        Del caos al plan
-      </h2>
+    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden selection:bg-[var(--wadi-primary-dim)]">
+      {/* Background Ambience */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-[var(--wadi-primary)] opacity-[0.03] blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-[var(--wadi-accent)] opacity-[0.03] blur-[100px] rounded-full pointer-events-none" />
 
-      <p
-        style={{
-          fontSize: "1.2rem",
-          color: "var(--color-text-soft)",
-          marginBottom: "3rem",
-          maxWidth: "400px",
-        }}
-      >
-        Acá se piensa. No hace magia.
-      </p>
+      <main className="wadi-container relative z-10 flex flex-col items-center text-center animate-enter">
+        {/* Brand Identity */}
+        <div className="mb-8">
+          <h1 className="text-display bg-gradient-to-b from-white to-[var(--wadi-text-secondary)] bg-clip-text text-transparent pb-2">
+            WADI
+          </h1>
+        </div>
 
-      <button
-        onClick={handleStart}
-        style={{
-          background: "var(--color-primary)",
-          color: "#FFFFFF",
-          border: "none",
-          padding: "1rem 2.5rem",
-          borderRadius: "9999px",
-          fontSize: "1.2rem",
-          fontWeight: 700,
-          cursor: "pointer",
-          boxShadow: "var(--shadow-lg)",
-          transition: "transform 0.1s",
-        }}
-        onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
-        onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-      >
-        + Nuevo chat
-      </button>
+        {/* Value Proposition */}
+        <div className="max-w-2xl space-y-6 mb-12">
+          <h2 className="text-2xl md:text-3xl font-light text-[var(--wadi-text)] tracking-tight">
+            Del caos al plan
+          </h2>
+          <p className="text-body mx-auto max-w-[480px]">
+            Un espacio de pensamiento ordenado. Sin ruido, sin magia
+            innecesaria. Solo vos y una estructura que te entiende.
+          </p>
+        </div>
+
+        {/* Action */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <button
+            onClick={handleStart}
+            className="wadi-btn wadi-btn-primary group"
+            aria-label="Iniciar nueva conversación"
+          >
+            <span>Empezar ahora</span>
+            <svg
+              className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Footer / Trust Signal */}
+        <div className="mt-20 opacity-30 text-xs tracking-widest uppercase text-[var(--wadi-text-tertiary)]">
+          Sistema Operativo de Mente
+        </div>
+      </main>
     </div>
   );
 }

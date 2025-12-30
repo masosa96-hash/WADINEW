@@ -5,25 +5,33 @@
 @tailwind utilities;
 
 :root {
-  /* WADI DARK MODE PALETTE */
-  --wadi-bg: #0f111a; /* Deep Bunker */
-  --wadi-surface: rgba(30, 41, 59, 0.6); /* Glass Slate */
-  --wadi-surface-hover: rgba(30, 41, 59, 0.9);
+  /* WADI REFINED PALETTE (Midnight & Focus) */
+  --wadi-bg: #0f1115; /* Deep rich midnight, not pure black */
+  --wadi-bg-subtle: #16181d;
 
-  --wadi-primary: #8b5cf6; /* Electric Lavender */
-  --wadi-primary-dim: rgba(139, 92, 246, 0.2);
-  --wadi-primary-glow: rgba(139, 92, 246, 0.1);
+  --wadi-surface: rgba(255, 255, 255, 0.03);
+  --wadi-surface-active: rgba(255, 255, 255, 0.06);
+  --wadi-surface-glass: rgba(15, 17, 21, 0.7);
 
-  --wadi-sky: #38bdf8; /* Digital Sky */
-  --wadi-amber: #fbbf24;
-  --wadi-red: #ef4444;
-  --wadi-gray: #64748b;
+  --wadi-border: rgba(255, 255, 255, 0.08);
+  --wadi-border-hover: rgba(255, 255, 255, 0.15);
 
-  --wadi-text: #f8fafc; /* Slate 50 */
-  --wadi-text-dim: #94a3b8; /* Slate 400 */
+  --wadi-primary: #8b5cf6; /* Keep Lavender as Soul */
+  --wadi-primary-dim: rgba(139, 92, 246, 0.15);
+  --wadi-primary-glow: rgba(139, 92, 246, 0.4);
 
-  --wadi-border: rgba(139, 92, 246, 0.2);
-  --wadi-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --wadi-accent: #38bdf8; /* Sky for clarity */
+  --wadi-alert: #fbbf24; /* Amber for checks */
+  --wadi-danger: #ef4444; /* Red for risks */
+
+  --wadi-text: #f1f5f9; /* Slate 100 - High legibility */
+  --wadi-text-secondary: #94a3b8; /* Slate 400 */
+  --wadi-text-tertiary: #64748b; /* Slate 500 */
+
+  /* Spacing & Radius */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 8px;
 }
 
 @layer base {
@@ -33,21 +41,29 @@
     background: var(--wadi-bg);
     color: var(--wadi-text);
     font-family: "Outfit", sans-serif;
-    height: 100vh;
+    height: 100vh; /* Fallback */
     height: 100dvh;
     width: 100vw;
     margin: 0;
     padding: 0;
     overflow: hidden;
-    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Smooth Scrolling */
-  * {
-    scroll-behavior: smooth;
+  /* Focus States for Accessibility */
+  :focus-visible {
+    outline: 2px solid var(--wadi-primary);
+    outline-offset: 2px;
   }
 
-  /* Custom Scrollbar (Subtle) */
+  /* Selection */
+  ::selection {
+    background: var(--wadi-primary-dim);
+    color: var(--wadi-text);
+  }
+
+  /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -56,33 +72,66 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.2);
+    background: var(--wadi-border);
     border-radius: 99px;
+    border: 2px solid transparent; /* adds padding effect */
+    background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.4);
+    background-color: var(--wadi-text-tertiary);
   }
 }
 
 @layer components {
-  /* GLASSMORPHISM UTILITIES */
-  .neo-glass {
-    @apply bg-[var(--wadi-surface)] backdrop-blur-md border border-[var(--wadi-border)] shadow-lg;
+  /* LAYOUT UTILITIES */
+  .wadi-container {
+    @apply max-w-7xl mx-auto px-4 md:px-6 w-full;
   }
 
-  .neo-capsule {
-    @apply rounded-full bg-[var(--wadi-surface)] text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-border)] px-6 py-3 transition-all hover:shadow-xl focus-within:shadow-xl focus-within:border-[var(--wadi-primary)] focus-within:ring-2 focus-within:ring-[var(--wadi-primary-dim)];
+  /* GLASS & SURFACE */
+  .wadi-glass {
+    @apply bg-[var(--wadi-surface-glass)] backdrop-blur-xl border border-[var(--wadi-border)];
+  }
+
+  .wadi-panel {
+    @apply bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-lg)] transition-all duration-300;
+  }
+
+  /* TYPOGRAPHY */
+  .text-display {
+    @apply font-bold tracking-tight text-[2.5rem] md:text-[3.5rem] leading-[1.1];
+  }
+
+  .text-body {
+    @apply text-[1.125rem] leading-relaxed text-[var(--wadi-text-secondary)];
+  }
+
+  /* BUTTONS */
+  .wadi-btn {
+    @apply inline-flex items-center justify-center px-8 py-4 rounded-full font-medium text-base transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
   }
 
   .wadi-btn-primary {
-    @apply relative px-6 py-3 rounded-2xl bg-[var(--wadi-primary)] text-white font-medium text-sm tracking-wide transition-all duration-300 hover:shadow-[0_4px_20px_var(--wadi-primary-dim)] hover:-translate-y-0.5 active:translate-y-0 shadow-lg;
+    @apply bg-[var(--wadi-text)] text-[var(--wadi-bg)] hover:bg-white hover:shadow-[0_0_30px_-5px_var(--wadi-primary-glow)] hover:-translate-y-0.5;
   }
 
-  .bubble-wadi {
-    @apply bg-purple-900/30 backdrop-blur-sm border border-purple-500/30 text-[var(--wadi-text)] text-sm p-4 my-2 max-w-[85%] rounded-2xl rounded-tl-sm shadow-sm;
+  .wadi-btn-secondary {
+    @apply bg-[var(--wadi-surface)] text-[var(--wadi-text)] border border-[var(--wadi-border)] hover:bg-[var(--wadi-surface-active)] hover:border-[var(--wadi-text-secondary)];
   }
 
-  .bubble-user {
-    @apply bg-slate-800/70 backdrop-blur-md border border-slate-700 text-[var(--wadi-text)] text-sm p-4 my-2 max-w-[80%] rounded-2xl rounded-tr-sm ml-auto shadow-sm;
+  /* ANIMATIONS */
+  .animate-enter {
+    animation: enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

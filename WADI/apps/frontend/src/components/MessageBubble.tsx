@@ -16,9 +16,15 @@ export function MessageBubble({
 
   return (
     <div
-      className={`flex flex-col mb-4 w-full ${isUser ? "items-end" : "items-start"}`}
+      className={`flex flex-col mb-4 w-full animate-enter ${isUser ? "items-end" : "items-start"}`}
     >
-      <div className={isUser ? "bubble-user" : "bubble-wadi"}>
+      <div
+        className={`max-w-[85%] p-4 rounded-2xl shadow-sm border text-sm leading-relaxed ${
+          isUser
+            ? "bg-[var(--wadi-surface-active)] border-[var(--wadi-border)] text-[var(--wadi-text)] rounded-tr-sm backdrop-blur-md"
+            : "bg-[var(--wadi-surface)] border-[var(--wadi-primary-dim)] text-[var(--wadi-text-secondary)] rounded-tl-sm backdrop-blur-sm"
+        }`}
+      >
         {isUser ? (
           <div className="whitespace-pre-wrap">{content}</div>
         ) : (
@@ -31,10 +37,10 @@ export function MessageBubble({
                 const body = block.replace(match[0], "").trim();
                 return (
                   <div key={i} className="mb-4 last:mb-0">
-                    <div className="font-bold text-[1.05em] mb-1 text-[var(--wadi-primary)]">
+                    <div className="font-bold text-[1.05em] mb-1 text-[var(--wadi-primary)] tracking-wide">
                       {title}
                     </div>
-                    <div className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-muted)] font-light">
+                    <div className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-secondary)] font-normal opacity-90">
                       {body}
                     </div>
                   </div>
@@ -43,7 +49,7 @@ export function MessageBubble({
               return (
                 <div
                   key={i}
-                  className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-muted)] font-light"
+                  className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-secondary)]"
                 >
                   {block.trim()}
                 </div>
@@ -54,7 +60,7 @@ export function MessageBubble({
       </div>
 
       {timestamp && (
-        <span className="text-[10px] text-[var(--wadi-text-dim)] px-2 mt-1">
+        <span className="text-[10px] text-[var(--wadi-text-tertiary)] px-2 mt-1 font-medium tracking-wide">
           {new Date(timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
