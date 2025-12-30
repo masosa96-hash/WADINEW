@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { type Attachment } from "../../store/chatStore";
-import { useScouter } from "../../hooks/useScouter";
+import { type Attachment } from "../store/chatStore";
+import { useScouter } from "../hooks/useScouter";
 import { Paperclip } from "lucide-react";
 
 // Fallback icons if lucide not imported/working in this context
