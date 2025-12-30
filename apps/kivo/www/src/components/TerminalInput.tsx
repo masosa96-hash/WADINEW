@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type FormEvent,
+  type ChangeEvent,
+} from "react";
 import { type Attachment } from "../store/chatStore";
 import { useScouter } from "../hooks/useScouter";
 import { Paperclip } from "lucide-react";
@@ -61,7 +67,7 @@ export function TerminalInput({
     }
   }, [isLoading, input, selectedFile]);
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = async (e?: FormEvent) => {
     e?.preventDefault();
     if ((!input.trim() && !selectedFile) || isLoading) return;
 
@@ -117,7 +123,7 @@ export function TerminalInput({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     playScanSound();

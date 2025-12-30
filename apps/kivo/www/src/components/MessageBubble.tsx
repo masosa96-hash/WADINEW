@@ -1,3 +1,4 @@
+import React from "react";
 import type { Attachment } from "../store/chatStore";
 
 interface MessageBubbleProps {
