@@ -1,28 +1,42 @@
-# Kivo V12
+# Kivo
 
-Tu espacio emocional, técnico y creativo. Este proyecto incluye:
+## ¿Qué es esta app?
 
-- Motor emocional adaptativo
-- Portada y menú de inicio
-- Firebase integrado
-- Estilos dinámicos según emoción y modo
-- Modo instalable (PWA)
+Esta es una de las **dos expresiones asistenciales** del sistema.  
+Aquí vive la voz **Kivo**, con su propia estética, tono y forma de interactuar.
 
-## 🚀 Cómo desplegar
+---
 
-1. Instalar Firebase CLI:
-   `npm install -g firebase-tools`
+## ¿En qué se diferencia?
 
-2. Iniciar sesión:
-   `firebase login`
+- **Kivo** y **WADI** (apps/frontend) son dos entidades que habitan el mismo núcleo funcional.
+- Comparten estructura, lógica y conocimiento.
+- Lo que cambia es la **personalidad que guía la experiencia**.
 
-3. Inicializar proyecto:
-   `firebase init`
+---
 
-4. Subir:
-   `firebase deploy`
+## Sobre esta carpeta
 
-## 📱 Cómo instalar como app
+Este módulo implementa la interfaz de **Kivo** en formato móvil y PWA.  
+Incluye configuraciones específicas para su despliegue táctil y offline.
 
-- Abrí en Chrome
-- Tocá “Agregar a pantalla de inicio”
+---
+
+## Qué no es
+
+- No es una versión reducida.
+- No es un experimento.
+- No es un reemplazo.
+
+---
+
+## Decisión de diseño
+
+Este sistema permite que el usuario elija con quién interactuar.  
+No se adapta al usuario: **se manifiesta con voces distintas**, cada una con su manera de asistir.
+
+---
+
+## Futuro
+
+Habrá selector de voz en el UI principal. Hasta entonces, cada carpeta representa una instancia completa.
