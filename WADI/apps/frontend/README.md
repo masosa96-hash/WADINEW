@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+# 🧠 WADI Frontend (Y)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Esta es la implementación principal de **WADI** ("Y"), la interfaz de escritorio enfocada en eficiencia técnica y honestidad brutal.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🏗 Arquitectura Técnica
 
-## React Compiler
+- **Framework:** React 18 + TypeScript.
+- **Build Tool:** Vite.
+- **Estilos:** TailwindCSS (con variables CSS para temas dinámicos).
+- **Estado:** Zustand (`chatStore.ts`) con persistencia local.
+- **Routing:** React Router DOM.
+- **Iconos:** Lucide React.
+- **PWA:** Service Worker registrado para funcionamiento offline básico.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🎨 Identidad Visual "Deep Bunker"
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+El diseño sigue una estricta paleta de colores oscuros para minimizar la fatiga visual en sesiones nocturnas.
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+- **Fondo:** Gradiente radial profundo (`#1a1d26` a `#0f1115`).
+- **Acento:** Lavanda (`#8b5cf6`) para indicar la "presencia" de la IA.
+- **Superficies:** Glassmorphism con alta transparencia y desenfoque (`backdrop-blur-xl`).
+- **Tipografía:** `Outfit` (sans-serif moderna) para UI, `JetBrains Mono` para código.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+## 🧩 Componentes Clave
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1.  **`ChatStore`**: El cerebro del frontend. Controla no solo los mensajes, sino el "Rango de Eficiencia" del usuario, la memoria de proyectos y la conexión con la API y Supabase.
+2.  **`TerminalInput`**: No es un simple textarea. Es una consola de comandos camuflada. Soporta entrada multinlínea y gestión de estados de carga.
+3.  **`WadiBrain` (Lógica remota)**: Aunque vive en el backend, el frontend renderiza las respuestas "cínicas" y procesa comandos especiales como `[CRISTALIZAR]`.
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+---
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+## 🚀 Scripts Disponibles
+
+- `npm run dev`: Inicia servidor de desarrollo.
+- `npm run build`: Genera bundle de producción en `dist/`.
+- `npm run lint`: Verifica calidad de código.
+- `npm run preview`: Previsualiza el build de producción.
+
+---
+
+> _"No busques validación aquí. Busca resultados."_ — WADI
