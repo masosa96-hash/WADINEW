@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "pnpm --filter frontend run dev",
-    "start:api": "node apps/api/src/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build": "pnpm run build -r"
+    "build": "pnpm install && pnpm --filter frontend build",
+    "start": "cd apps/api && node src/index.js"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
