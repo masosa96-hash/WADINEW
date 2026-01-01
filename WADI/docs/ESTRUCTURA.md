@@ -59,6 +59,13 @@ Punto de entrada. Monta React en el DOM, registra Service Workers y maneja la in
 
 ---
 
+## 📱 Infraestructura Nativa (Capacitor)
+
+Este proyecto ahora unifica la experiencia móvil en `android/` y `ios/` dentro de `apps/frontend`.
+
+- `capacitor.config.ts`: Configuración del puente nativo.
+- `android/`: Proyecto Gradle nativo generado.
+
 ## Reglas de Orden
 
 1.  **Colocación**: Si es un botón genérico → `ui/`. Si es específico del chat → `components/`.

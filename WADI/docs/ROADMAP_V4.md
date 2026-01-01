@@ -15,6 +15,7 @@ Estos elementos ya están implementados y no deben ser modificados salvo manteni
 - Navegación (React Router)
 - Crystallize Project (conversación → projects)
 - UI general (`Layout`, `ChatPage`, `Sidebar`, `TerminalInput`)
+- **Infraestructura Móvil:** Capacitor activo en `apps/frontend`.
 
 ---
 
@@ -22,26 +23,27 @@ Estos elementos ya están implementados y no deben ser modificados salvo manteni
 
 ### 1. 📁 Estructura y Documentación
 
-- [ ] Crear `docs/ESTRUCTURA.md` explicando cada carpeta en `apps/frontend`
-- [ ] Agregar `README.md` en `apps/frontend` con contexto técnico y visual
-- [ ] Agregar `README.md` en `apps/kivo` explicando su rol como "otra voz"
-- [ ] Crear `docs/PERSONALIDADES.md` con descripción de X (Kivo) e Y (WADI)
+- [x] Crear `docs/ESTRUCTURA.md` explicando cada carpeta en `apps/frontend`
+- [x] Agregar `README.md` en `apps/frontend` con contexto técnico y visual
+- [x] (Revertido) Agregar `README.md` en `apps/kivo` -> **Kivo Eliminado**.
+- [x] Crear `docs/PERSONALIDADES.md` con descripción de X (Kivo) e Y (WADI)
 
 ### 2. 📱 Interfaz y Visual QA
 
-- [ ] Test completo en móvil (375px y similares)
-- [ ] Confirmar funcionamiento táctil de:
+- [x] Test completo en móvil (375px y similares)
+- [x] Confirmar funcionamiento táctil de:
   - Botón CRISTALIZAR
   - TerminalInput
   - Sidebar
   - Scroll automático al enviar
-- [ ] Ajustes visuales mínimos para compatibilidad móvil
+- [x] Ajustes visuales mínimos para compatibilidad móvil (Capacitor integrado).
 
-### 3. 📦 apps/kivo (Estado de Modo X)
+### 3. 📦 Apps Móviles (Kivo/WADI Nativo)
 
-- [ ] Evaluar: migrar a React + Tailwind o mantener como contenedor separado
-- [ ] Si se mantiene: limpiar código legacy (JS vanilla + Firebase)
-- [ ] Si se migra: crear `apps/mobile` compartiendo lógica de `frontend`
+- [x] **Eliminar `apps/kivo` (legacy JS).**
+- [x] **Inicializar Capacitor en `apps/frontend`.**
+- [x] Generar proyecto Android (`npx cap add android`).
+- [ ] Validar build nativo (requires Android Studio / Xcode).
 
 ### 4. 🧼 Seguridad y Auth
 

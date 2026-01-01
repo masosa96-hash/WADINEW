@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WADI</string>
+    <string name="title_activity_main">WADI</string>
+    <string name="package_name">io.wadi.app</string>
+    <string name="custom_url_scheme">io.wadi.app</string>
+</resources>
