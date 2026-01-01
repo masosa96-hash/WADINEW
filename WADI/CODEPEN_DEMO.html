@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+      /* CONFIGURACIÓN TAILWIND + VARIABLES WADI */
+      :root {
+        /* WADI REFINED PALETTE */
+        --wadi-bg-solid: #0f1115;
+
+        --wadi-surface: rgba(255, 255, 255, 0.03);
+        --wadi-surface-active: rgba(255, 255, 255, 0.06);
+        --wadi-surface-glass: rgba(15, 17, 21, 0.6);
+
+        --wadi-border: rgba(255, 255, 255, 0.08);
+        --wadi-border-hover: rgba(255, 255, 255, 0.15);
+        --wadi-glass-border: rgba(255, 255, 255, 0.1);
+
+        --wadi-primary: #8b5cf6;
+        --wadi-primary-dim: rgba(139, 92, 246, 0.15);
+        --wadi-primary-glow: rgba(139, 92, 246, 0.4);
+
+        --wadi-text: #f1f5f9;
+        --wadi-text-secondary: #94a3b8;
+        --wadi-text-tertiary: #64748b;
+      }
+
+      body {
+        background: radial-gradient(circle at 50% 0%, #1a1d26 0%, #0f1115 100%);
+        background-attachment: fixed;
+        color: var(--wadi-text);
+        font-family: "Outfit", sans-serif;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      /* CUSTOM SCROLLBAR */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--wadi-border);
+        border-radius: 99px;
+      }
+
+      /* UTILITIES */
+      .animate-enter {
+        animation: enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes enter {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* GLASS CLASSES (Manually applied since @apply doesn't verify in raw CSS without processor) */
+      .wadi-glass {
+        background-color: var(--wadi-surface-glass);
+        backdrop-filter: blur(24px);
+        border: 1px solid var(--wadi-border);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- APP CONTAINER -->
+    <div id="app" class="flex flex-col h-full max-w-3xl mx-auto pt-4 relative">
+      <!-- HEADER -->
+      <header
+        class="absolute top-0 w-full z-20 flex justify-between px-6 py-4 opacity-70"
+      >
+        <span
+          class="font-mono text-[10px] tracking-[0.2em] text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-primary)] transition-colors cursor-default"
+          >WADI 4.0 // ONLINE</span
+        >
+        <span
+          class="font-mono text-[10px] tracking-[0.2em] text-[var(--wadi-text-tertiary)]"
+          >RANGO: GENERADOR_DE_HUMO</span
+        >
+      </header>
+
+      <!-- CONTENT AREA -->
+      <main
+        id="chat-container"
+        class="flex-1 overflow-y-auto px-4 pb-24 pt-16 scrollbar-hide"
+      >
+        <!-- EMPTY STATE (DEFAULT) -->
+        <div
+          id="empty-state"
+          class="h-full flex flex-col items-center justify-center space-y-8 animate-enter opacity-100 transition-opacity duration-500"
+        >
+          <div class="relative group">
+            <div
+              class="w-24 h-24 rounded-full bg-[var(--wadi-surface)] border border-[var(--wadi-border)] shadow-[0_0_40px_-5px_var(--wadi-primary-dim)] flex items-center justify-center transition-transform group-hover:scale-105 duration-500"
+            >
+              <div
+                class="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--wadi-primary)] to-cyan-500 opacity-80 animate-pulse"
+              ></div>
+            </div>
+          </div>
+
+          <div class="text-center space-y-4 max-w-md px-6">
+            <h1 class="text-3xl font-bold tracking-tight font-mono text-white">
+              WADI
+            </h1>
+            <p
+              class="text-base leading-relaxed text-[var(--wadi-text-secondary)] font-mono"
+            >
+              "Si buscás que te den la razón, ni te gastes. No nos vamos a
+              querer. ¿Qué sale?"
+            </p>
+          </div>
+        </div>
+
+        <!-- MESSAGES LIST (INJECTED JS) -->
+        <div id="messages-list" class="space-y-6 hidden"></div>
+      </main>
+
+      <!-- INPUT AREA -->
+      <div class="w-full px-4 pb-6 z-30">
+        <div
+          class="wadi-glass rounded-[24px] p-1 flex items-end transition-all duration-300 focus-within:border-[var(--wadi-primary-dim)] focus-within:shadow-[0_0_30px_-5px_var(--wadi-primary-dim)] relative overflow-hidden group"
+        >
+          <!-- Glow Effect -->
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--wadi-surface-active)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+          ></div>
+
+          <textarea
+            id="terminal-input"
+            class="w-full bg-transparent text-[var(--wadi-text)] placeholder-[var(--wadi-text-tertiary)] px-5 py-4 text-[15px] focus:outline-none resize-none font-mono leading-relaxed"
+            placeholder="Ingresar comando o descargo..."
+            rows="1"
+            style="min-height: 56px; max-height: 200px"
+          ></textarea>
+
+          <button
+            id="send-btn"
+            class="mb-2 mr-2 p-2 rounded-full text-[var(--wadi-text-secondary)] hover:text-white hover:bg-[var(--wadi-surface-active)] transition-colors"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- JS LOGIC ---
+      const input = document.getElementById("terminal-input");
+      const sendBtn = document.getElementById("send-btn");
+      const emptyState = document.getElementById("empty-state");
+      const messagesList = document.getElementById("messages-list");
+      const chatContainer = document.getElementById("chat-container");
+
+      // Auto-resize textarea
+      input.addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = this.scrollHeight + "px";
+      });
+
+      // Send Message Logic
+      function sendMessage() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Hide Empty State
+        if (!emptyState.classList.contains("hidden")) {
+          emptyState.classList.add("hidden");
+          messagesList.classList.remove("hidden");
+        }
+
+        // Add User Message
+        addMessage("user", text);
+        input.value = "";
+        input.style.height = "auto";
+
+        // Simulate WADI Thinking
+        addTypingIndicator();
+
+        // Simulate Response (Demo Only)
+        setTimeout(() => {
+          removeTypingIndicator();
+          const responses = [
+            "Recibido. Demasiado abstracto. ¿Tenés un plan o solo estás ventilando?",
+            "Procesando ruido... 80% entropía detectada. Simplificá.",
+            "Interesante. Pero técnicamente inviable sin refactorizar el núcleo. Desarrollá.",
+            "Anotado en el backlog de 'cosas que nunca vamos a hacer'.",
+            "Si eso es una feature, yo soy una tostadora.",
+          ];
+          const randomResponse =
+            responses[Math.floor(Math.random() * responses.length)];
+          addMessage("assistant", randomResponse);
+        }, 1500);
+      }
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      sendBtn.addEventListener("click", sendMessage);
+
+      function addMessage(role, content) {
+        const div = document.createElement("div");
+        div.className = `flex flex-col mb-4 w-full animate-enter ${role === "user" ? "items-end" : "items-start"}`;
+
+        const isUser = role === "user";
+        const bubbleClass = isUser
+          ? "bg-[rgba(139,92,246,0.1)] border border-[var(--wadi-primary-dim)] text-[var(--wadi-text)] rounded-2xl rounded-tr-sm"
+          : "bg-[var(--wadi-surface-glass)] border border-[var(--wadi-glass-border)] text-[var(--wadi-text-secondary)] rounded-2xl rounded-tl-sm";
+
+        div.innerHTML = `
+            <div class="max-w-[85%] p-5 shadow-lg backdrop-blur-xl text-[0.95rem] leading-7 ${bubbleClass}">
+                <div class="whitespace-pre-wrap">${content}</div>
+            </div>
+            <span class="text-[10px] text-[var(--wadi-text-tertiary)] px-2 mt-1 font-medium tracking-wide">
+                ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+        `;
+        messagesList.appendChild(div);
+        chatContainer.scrollTo({
+          top: chatContainer.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+
+      let typingDiv = null;
+
+      function addTypingIndicator() {
+        typingDiv = document.createElement("div");
+        typingDiv.className = "flex items-start mb-4 w-full animate-enter";
+        typingDiv.innerHTML = `
+            <div class="bg-[var(--wadi-surface-glass)] border border-[var(--wadi-glass-border)] p-4 rounded-2xl rounded-tl-sm">
+                <div class="flex space-x-2">
+                    <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+        `;
+        messagesList.appendChild(typingDiv);
+        chatContainer.scrollTo({
+          top: chatContainer.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+
+      function removeTypingIndicator() {
+        if (typingDiv) typingDiv.remove();
+      }
+    </script>
+  </body>
+</html>
