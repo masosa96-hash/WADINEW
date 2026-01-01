@@ -68,6 +68,6 @@ Este proyecto ahora unifica la experiencia móvil en `android/` y `ios/` dentro 
 
 ## Reglas de Orden
 
-1.  **Colocación**: Si es un botón genérico → `ui/`. Si es específico del chat → `components/`.
-2.  **Estado**: Todo el estado global va a `store/`. El estado UI local (ej. input value) se queda en el componente.
-3.  **Estilos**: TailwindCSS inline para casi todo. Clases complejas reutilizables en `index.css` via `@apply`.
+1. **Colocación**: Si es un botón genérico → `ui/`. Si es específico del chat → `components/`.
+2. **Estado**: Todo el estado global va a `store/`. El estado UI local (ej. input value) se queda en el componente.
+3. **Estilos**: TailwindCSS inline para casi todo. Clases complejas reutilizables en `index.css` via `@apply`.

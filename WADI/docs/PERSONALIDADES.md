@@ -34,19 +34,19 @@ El sistema WADI no es monolítico en su "voz". Se manifiesta a través de dos en
 **Dominio:** Móvil / Reflexión / Captura Rápida.  
 **Ubicación:** `apps/kivo`
 
-### Identidad
+### Identidad (Kivo)
 
 - **Nombre:** Kivo.
 - **Arquetipo:** Compañero Emocional / Adaptativo.
 - **Misión:** Asistir en el flujo mental y emocional del usuario donde sea que esté.
 
-### Comportamiento
+### Comportamiento (Kivo)
 
 - **Tono:** Empático, fluido, adaptable.
 - **Tolerancia:** Alta. Acompaña el proceso de pensamiento desordenado.
 - **Audio:** (Potencialmente) Sonidos suaves de feedback.
 
-### Estética
+### Estética (Kivo)
 
 - **Visual:** Limpia, ligera, táctil.
 - **UI:** Burbujas grandes, gestos, enfoque en una tarea a la vez.

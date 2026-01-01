@@ -29,9 +29,9 @@ El diseño sigue una estricta paleta de colores oscuros para minimizar la fatiga
 
 ## 🧩 Componentes Clave
 
-1.  **`ChatStore`**: El cerebro del frontend. Controla no solo los mensajes, sino el "Rango de Eficiencia" del usuario, la memoria de proyectos y la conexión con la API y Supabase.
-2.  **`TerminalInput`**: No es un simple textarea. Es una consola de comandos camuflada. Soporta entrada multinlínea y gestión de estados de carga.
-3.  **`WadiBrain` (Lógica remota)**: Aunque vive en el backend, el frontend renderiza las respuestas "cínicas" y procesa comandos especiales como `[CRISTALIZAR]`.
+1. **`ChatStore`**: El cerebro del frontend. Controla no solo los mensajes, sino el "Rango de Eficiencia" del usuario, la memoria de proyectos y la conexión con la API y Supabase.
+2. **`TerminalInput`**: No es un simple textarea. Es una consola de comandos camuflada. Soporta entrada multinlínea y gestión de estados de carga.
+3. **`WadiBrain` (Lógica remota)**: Aunque vive en el backend, el frontend renderiza las respuestas "cínicas" y procesa comandos especiales como `[CRISTALIZAR]`.
 
 ---
 
