@@ -145,8 +145,8 @@ app.get("/sw.js", (req, res) => {
   });
 });
 
-app.get("/manifest.webmanifest", (req, res) => {
-  res.sendFile(path.join(frontendPath, "manifest.webmanifest"), {
+app.get("/manifest.json", (req, res) => {
+  res.sendFile(path.join(frontendPath, "manifest.json"), {
     headers: { "Content-Type": "application/manifest+json" },
   });
 });

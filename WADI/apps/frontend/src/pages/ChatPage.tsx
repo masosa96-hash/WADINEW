@@ -107,11 +107,14 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              <div className="text-center space-y-3 max-w-md">
-                <h1 className="text-3xl md:text-4xl font-semibold text-[var(--wadi-text)] tracking-tight">
+              <div className="text-center space-y-4 max-w-md px-4">
+                <h1 className="text-2xl md:text-3xl font-bold text-[var(--wadi-text)] tracking-tight font-mono">
                   WADI
                 </h1>
-                <p className="text-body">¿En qué plan estamos hoy?</p>
+                <p className="text-sm md:text-base leading-relaxed text-[var(--wadi-text-secondary)] font-mono">
+                  "Si buscás que te den la razón, ni te gastes. No nos vamos a
+                  querer. ¿Qué sale?"
+                </p>
               </div>
 
               {/* Minimalist Action Prompt */}
