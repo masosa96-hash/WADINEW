@@ -1,11 +1,5 @@
-const CACHE_NAME = "monday-os-cache-v1";
-const ASSETS_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/manifest.webmanifest",
-  "/icon-192.svg",
-  "/icon-512.svg",
-];
+const CACHE_NAME = "wadi-cache-v2";
+const ASSETS_TO_CACHE = ["/", "/index.html", "/manifest.json", "/wadi.svg"];
 
 // Install Event: Pre-cache core assets
 self.addEventListener("install", (event) => {
