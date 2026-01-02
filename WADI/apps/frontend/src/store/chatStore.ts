@@ -515,19 +515,22 @@ export const useChatStore = create<ChatState>()(
       uploadFile: async (file: File) => {
         set({ isUploading: true });
         try {
+          const chatId = get().conversationId || "new";
           const fileExt = file.name.split(".").pop();
-          const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `${fileName}`;
+          const fileName = `${chatId}/${Date.now()}.${fileExt}`;
 
           const { error: uploadError } = await supabase.storage
-            .from("wadi-attachments")
-            .upload(filePath, file);
+            .from("attachments")
+            .upload(fileName, file, {
+              cacheControl: "3600",
+              upsert: false,
+            });
 
           if (uploadError) throw uploadError;
 
           const { data } = supabase.storage
-            .from("wadi-attachments")
-            .getPublicUrl(filePath);
+            .from("attachments")
+            .getPublicUrl(fileName);
 
           set({ isUploading: false });
 

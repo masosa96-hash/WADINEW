@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { type Attachment } from "../../store/chatStore";
+import { type Attachment, useChatStore } from "../../store/chatStore";
 import { useScouter } from "../../hooks/useScouter";
-import { Paperclip, X, Image as ImageIcon, Send } from "lucide-react";
+import { Paperclip, X, Send } from "lucide-react";
 
 interface TerminalInputProps {
   onSendMessage: (text: string, attachments: Attachment[]) => Promise<void>;
@@ -21,6 +21,8 @@ export function TerminalInput({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { playScanSound } = useScouter();
+  const uploadFile = useChatStore((state) => state.uploadFile);
+  const isUploadingStore = useChatStore((state) => state.isUploading);
 
   // FOCUS LAW: Keep input focused always
   useEffect(() => {
@@ -31,14 +33,15 @@ export function TerminalInput({
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if ((!input.trim() && !selectedFile) || isLoading) return;
+    if ((!input.trim() && !selectedFile) || isLoading || isUploadingStore)
+      return;
 
     let finalPrompt = input;
     const finalAttachments: Attachment[] = [];
 
     const prevInput = input;
-    setInput("");
-    setSelectedFile(null);
+    // Don't clear state yet, wait for upload success
+
     if (fileInputRef.current) fileInputRef.current.value = "";
 
     // Force focus back
@@ -59,23 +62,26 @@ export function TerminalInput({
           console.error("Error reading text file", err);
         }
       } else {
+        // UPLOAD TO SUPABASE
         try {
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedFile);
-          });
-          finalAttachments.push({
-            url: base64,
-            name: selectedFile.name,
-            type: selectedFile.type,
-          });
+          const uploadedAttachment = await uploadFile(selectedFile);
+          if (uploadedAttachment) {
+            finalAttachments.push(uploadedAttachment);
+          } else {
+            // Upload failed
+            console.error("Upload failed");
+            return; // Abort send
+          }
         } catch (err) {
-          console.error("Error converting file to base64", err);
+          console.error("Error uploading file", err);
+          return; // Abort
         }
       }
     }
+
+    // Clear state only if proceeding
+    setInput("");
+    setSelectedFile(null);
 
     try {
       await onSendMessage(finalPrompt, finalAttachments);

@@ -1,4 +1,5 @@
 import type { Attachment } from "../store/chatStore";
+import { Paperclip } from "lucide-react";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -11,6 +12,7 @@ export function MessageBubble({
   role,
   content,
   timestamp,
+  attachments,
 }: MessageBubbleProps) {
   const isUser = role === "user";
 
@@ -25,6 +27,37 @@ export function MessageBubble({
             : "bg-[var(--wadi-surface-glass)] border-[var(--wadi-glass-border)] text-[var(--wadi-text-secondary)] rounded-tl-sm backdrop-blur-xl hover:border-[var(--wadi-border-hover)]"
         }`}
       >
+        {/* Render Attachments */}
+        {attachments && attachments.length > 0 && (
+          <div className="flex flex-col gap-2 mb-3">
+            {attachments.map((att, idx) => {
+              if (att.type.startsWith("image/")) {
+                return (
+                  <img
+                    key={idx}
+                    src={att.url}
+                    alt={att.name || "Adjunto"}
+                    className="rounded-lg border border-[var(--wadi-primary-dim)] cursor-zoom-in max-h-64 object-cover"
+                    onClick={() => window.open(att.url, "_blank")}
+                  />
+                );
+              }
+              return (
+                <a
+                  key={idx}
+                  href={att.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 p-2 bg-black/10 rounded-md text-xs hover:bg-black/20 transition-colors"
+                >
+                  <Paperclip size={14} />
+                  <span className="truncate max-w-[200px]">{att.name}</span>
+                </a>
+              );
+            })}
+          </div>
+        )}
+
         {isUser ? (
           <div className="whitespace-pre-wrap">{content}</div>
         ) : (
