@@ -1,5 +1,11 @@
 const CACHE_NAME = "wadi-cache-v2";
-const ASSETS_TO_CACHE = ["/", "/index.html", "/manifest.json", "/wadi.svg"];
+const ASSETS_TO_CACHE = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/wadi.svg",
+  "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
+];
 
 // Install Event: Pre-cache core assets
 self.addEventListener("install", (event) => {

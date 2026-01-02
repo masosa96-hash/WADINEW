@@ -150,7 +150,7 @@ const guestSessions = new Map();
 
 router.post(
   "/chat",
-  authenticate(true),
+  authenticate(),
   validateChatInput,
   asyncHandler(async (req, res) => {
     let user = req.user;
