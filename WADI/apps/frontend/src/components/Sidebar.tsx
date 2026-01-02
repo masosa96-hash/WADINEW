@@ -31,6 +31,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     setSidebarOpen,
     deleteConversation,
     fetchCriminalSummary,
+    selectedIds,
+    toggleSelection,
+    selectAll,
+    deleteSelectedConversations,
   } = useChatStore();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -100,9 +104,29 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 py-2 scroll-smooth">
-        <h2 className="text-[10px] font-bold text-[var(--wadi-text-tertiary)] uppercase tracking-widest px-2 mb-3 opacity-80">
-          Historial
-        </h2>
+        <div className="flex justify-between items-center px-2 mb-3">
+          <h2 className="text-[10px] font-bold text-[var(--wadi-text-tertiary)] uppercase tracking-widest opacity-80">
+            Historial
+          </h2>
+          {conversations.length > 0 && (
+            <div className="flex gap-3">
+              <button
+                onClick={selectAll}
+                className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase"
+              >
+                [Todo]
+              </button>
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={deleteSelectedConversations}
+                  className="text-[10px] font-mono text-orange-900 hover:text-orange-700 transition-colors uppercase animate-pulse"
+                >
+                  [Borrar {selectedIds.length}]
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         {conversations && conversations.length > 0 ? (
           conversations.map((c) => {
             const isActive = location.pathname.includes(c.id);
@@ -116,6 +140,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     : "hover:bg-[var(--wadi-surface-active)] border border-transparent hover:border-[var(--wadi-border)]"
                 }`}
               >
+                {/* Selection Checkbox */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(c.id)}
+                    onChange={() => toggleSelection(c.id)}
+                    className="w-3 h-3 rounded bg-zinc-800 border-zinc-700 accent-orange-900 cursor-pointer"
+                  />
+                </div>
                 <MessageSquare
                   size={16}
                   className={

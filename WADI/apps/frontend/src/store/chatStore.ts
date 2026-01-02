@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { WadiMood } from "../components/WadiOnboarding";
@@ -159,6 +160,12 @@ interface ChatState {
   crystallizeProject: (name: string, description: string) => Promise<boolean>;
   startNewChat: () => void;
 
+  // Bulk Actions
+  selectedIds: string[];
+  toggleSelection: (id: string) => void;
+  selectAll: () => void;
+  deleteSelectedConversations: () => Promise<void>;
+
   // Realtime Subscription
   subscribeToMessages: (conversationId: string) => () => void;
 
@@ -195,6 +202,7 @@ export const useChatStore = create<ChatState>()(
       wadiError: null,
       timeoutId: null,
       lastMessageData: null,
+      selectedIds: [],
       activeFocus: null,
       rank: "GENERADOR_DE_HUMO",
       points: 0,
@@ -598,6 +606,54 @@ export const useChatStore = create<ChatState>()(
             log(`Error crítico en subida: ${error.message}`, "error");
           else log("Error desconocido en subida.", "error");
           return null;
+        }
+      },
+
+      // Bulk Actions Implementation
+      toggleSelection: (id) => {
+        const { selectedIds } = get();
+        const newSelection = selectedIds.includes(id)
+          ? selectedIds.filter((item) => item !== id)
+          : [...selectedIds, id];
+        set({ selectedIds: newSelection });
+      },
+
+      selectAll: () => {
+        const { conversations } = get();
+        set({ selectedIds: conversations.map((c) => c.id) });
+      },
+
+      deleteSelectedConversations: async () => {
+        const { selectedIds } = get();
+        if (selectedIds.length === 0) return;
+
+        try {
+          // Supabase delete using 'in'
+          const { error } = await supabase
+            .from("conversations")
+            .delete()
+            .in("id", selectedIds);
+
+          if (error) throw error;
+
+          set((state) => ({
+            conversations: state.conversations.filter(
+              (c) => !selectedIds.includes(c.id)
+            ),
+            selectedIds: [],
+          }));
+
+          useLogStore
+            .getState()
+            .addLog(
+              "WADI: 'Limpieza profunda completada. Menos ruido, más vacío.'",
+              "info"
+            );
+        } catch (e) {
+          console.error("Error deleting conversations:", e);
+          useLogStore
+            .getState()
+            .addLog("Error al borrar conversaciones.", "error");
         }
       },
 
