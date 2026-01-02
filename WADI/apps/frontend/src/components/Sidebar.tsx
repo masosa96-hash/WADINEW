@@ -78,6 +78,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={handleNewChat}
           className="p-2 bg-[var(--wadi-surface)] hover:bg-[var(--wadi-surface-active)] border border-[var(--wadi-border)] rounded-lg shadow-sm text-[var(--wadi-text-secondary)] hover:text-[var(--wadi-primary)] transition-all hover:scale-105 active:scale-95"
           title="Nuevo Chat"
+          aria-label="Nuevo Chat"
         >
           <Plus size={18} />
         </button>
@@ -85,9 +86,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 py-2 scroll-smooth">
-        <h3 className="text-[10px] font-bold text-[var(--wadi-text-tertiary)] uppercase tracking-widest px-2 mb-3 opacity-80">
+        <h2 className="text-[10px] font-bold text-[var(--wadi-text-tertiary)] uppercase tracking-widest px-2 mb-3 opacity-80">
           Memorias
-        </h3>
+        </h2>
         {conversations && conversations.length > 0 ? (
           conversations.map((c) => {
             const isActive = location.pathname.includes(c.id);
@@ -123,6 +124,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <button
                   onClick={(e) => handleDelete(e, c.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-danger)] transition-all hover:bg-[var(--wadi-surface-active)] rounded z-10"
+                  aria-label="Borrar chat"
                 >
                   ×
                 </button>
@@ -155,12 +157,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <button
               onClick={() => setShowSettings(true)}
               className="p-1.5 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-primary)] hover:bg-[var(--wadi-primary-dim)] rounded-lg transition-colors"
+              aria-label="Configuración"
             >
               <Settings size={16} />
             </button>
             <button
               onClick={() => signOut()}
               className="p-1.5 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-danger)] hover:bg-red-900/10 rounded-lg transition-colors"
+              aria-label="Cerrar sesión"
             >
               <LogOut size={16} />
             </button>

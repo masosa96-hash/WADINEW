@@ -38,7 +38,13 @@ export default function ChatPage() {
         loadConversation(conversationId);
       }
     } else {
-      if (storeConversationId) resetChat();
+      if (storeConversationId) {
+        // PERMANENCE: If we have an active chat in store but are at root, load it instead of resetting.
+        // This prevents data loss on refresh.
+        loadConversation(storeConversationId);
+        // Optionally update URL to match
+        window.history.replaceState({}, "", `/c/${storeConversationId}`);
+      }
     }
   }, [
     conversationId,
@@ -87,7 +93,12 @@ export default function ChatPage() {
     attachments: Attachment[] = []
   ) => {
     if (!text.trim() && attachments.length === 0) return;
-    await sendMessage(text, attachments);
+    const newId = await sendMessage(text, attachments);
+    if (newId && !conversationId) {
+      // If we started a new chat from Home, update URL silently or via navigate
+      // ensure we don't reload page
+      window.history.pushState({}, "", `/c/${newId}`);
+    }
   };
 
   const hasMessages = messages.length > 0;
@@ -225,7 +236,7 @@ export default function ChatPage() {
                 <button
                   onClick={sim.toggle}
                   aria-label="Alternar simulador de usuario"
-                  className={`px-2 py-0.5 rounded ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-100"}`}
+                  className={`px-2 py-0.5 rounded font-bold ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-white"}`}
                 >
                   {sim.isActive ? "ON" : "OFF"}
                 </button>

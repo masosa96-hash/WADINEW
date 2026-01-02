@@ -144,7 +144,13 @@ export function TerminalInput({
       )}
 
       {/* Main Input Capsule */}
-      <form onSubmit={handleSend} className="relative w-full group">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="relative w-full group"
+      >
         <div className="w-full rounded-full bg-[var(--wadi-surface)]/80 backdrop-blur-xl text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-glass-border)] px-4 py-3 flex items-center gap-2 pr-2 overflow-hidden transition-all duration-300 focus-within:shadow-[0_0_20px_var(--wadi-primary-dim)] focus-within:border-[var(--wadi-primary-glow)] hover:border-[var(--wadi-border-hover)]">
           <input
             type="file"
@@ -152,6 +158,7 @@ export function TerminalInput({
             className="hidden"
             onChange={handleFileSelect}
             accept="image/*,.txt,.md,.pdf,.csv,.json"
+            aria-label="Seleccionar archivo para adjuntar"
           />
 
           <button
@@ -178,6 +185,7 @@ export function TerminalInput({
             }
             className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-secondary)] text-base font-medium h-full min-h-[24px]"
             autoComplete="off"
+            aria-label="Ingrese su mensaje al sistema"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
