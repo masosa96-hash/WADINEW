@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { WadiMood } from "../components/WadiOnboarding";
 import { supabase } from "../config/supabase";
+import imageCompression from "browser-image-compression";
 
 const rawUrl = import.meta.env.VITE_API_URL;
 let apiUrl = rawUrl || "https://wadi-wxg7.onrender.com";
@@ -519,9 +520,29 @@ export const useChatStore = create<ChatState>()(
           const fileExt = file.name.split(".").pop();
           const fileName = `${chatId}/${Date.now()}.${fileExt}`;
 
+          let fileToUpload = file;
+
+          // COMPRESSION LOGIC
+          if (file.type.startsWith("image/")) {
+            try {
+              const options = {
+                maxSizeMB: 1.5,
+                maxWidthOrHeight: 1920,
+                // useWebWorker: true, // Optional but good for UI
+              };
+              const compressedFile = await imageCompression(file, options);
+              // browser-image-compression returns a Blob/File. We can cast if needed, or it behaves as File.
+              fileToUpload = new File([compressedFile], file.name, {
+                type: compressedFile.type,
+              });
+            } catch (cErr) {
+              console.warn("Compression failed, using original file", cErr);
+            }
+          }
+
           const { error: uploadError } = await supabase.storage
             .from("attachments")
-            .upload(fileName, file, {
+            .upload(fileName, fileToUpload, {
               cacheControl: "3600",
               upsert: false,
             });
