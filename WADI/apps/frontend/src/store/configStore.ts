@@ -135,6 +135,7 @@ export const useConfigStore = create<ConfigState>((set) => ({
       window.location.reload(); // Reinicio total para limpiar la UI
     } else {
       console.error("Error wiping data:", error);
+      alert("Error al limpiar datos: " + error.message);
     }
   },
 }));
