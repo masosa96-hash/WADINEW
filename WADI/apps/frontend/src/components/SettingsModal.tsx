@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChatStore, type ChatMode } from "../store/chatStore";
 import { useConfigStore } from "../store/configStore";
 
@@ -8,11 +8,23 @@ interface SettingsModalProps {
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const { settings, updateSettings, exportData } = useChatStore();
-  const { theme, setTheme, language, setLanguage, wipeAllData } =
-    useConfigStore();
+  const {
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+    wipeAllData,
+    systemPrompt,
+    setSystemPrompt,
+    fetchConfig,
+  } = useConfigStore();
   const [activeTab, setActiveTab] = useState<"general" | "persona" | "data">(
     "general"
   );
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -105,47 +117,25 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           {activeTab === "persona" && (
             <div className="space-y-6">
               <div className="space-y-2">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-mono-wadi text-[var(--wadi-text-secondary)] uppercase">
-                    Nivel de Sarcasmo
-                  </label>
-                  <span className="text-xs font-mono-wadi text-[var(--wadi-primary)]">
-                    {settings.sarcasmLevel}%
+                <label className="text-xs font-mono-wadi text-[var(--wadi-text-secondary)] uppercase">
+                  Instrucciones del Sistema (WADI Brain)
+                </label>
+                <div className="text-[10px] text-[var(--wadi-text-muted)] leading-relaxed mb-2">
+                  Define la personalidad y reglas de WADI. Si lo dejas vacío,
+                  usará el modo "Payaso Triste" por defecto.
+                </div>
+                <textarea
+                  className="w-full h-64 bg-[var(--wadi-surface)] border border-[var(--wadi-border)] text-[var(--wadi-text)] text-xs p-3 rounded font-mono custom-scrollbar focus:border-[var(--wadi-primary)] outline-none resize-none placeholder:opacity-30 leading-relaxed"
+                  placeholder="Ej: Eres un asistente experto en cocina molecular..."
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                />
+                <div className="flex justify-between items-center text-[10px] text-[var(--wadi-text-muted)] font-mono">
+                  <span>Se guarda automáticamente</span>
+                  <span className="text-[var(--wadi-primary)] opacity-50">
+                    {systemPrompt.length} chars
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="10"
-                  value={settings.sarcasmLevel}
-                  onChange={(e) =>
-                    updateSettings({ sarcasmLevel: parseInt(e.target.value) })
-                  }
-                  className="w-full h-1 bg-[var(--wadi-border)] rounded-lg appearance-none cursor-pointer accent-[var(--wadi-primary)]"
-                />
-                <div className="flex justify-between text-[10px] text-[var(--wadi-text-muted)] font-mono-wadi">
-                  <span>Sutil</span>
-                  <span>Nuclear</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-mono-wadi text-[var(--wadi-text-secondary)] uppercase">
-                  Modo por Defecto
-                </label>
-                <select
-                  value={settings.defaultMode}
-                  onChange={(e) =>
-                    updateSettings({ defaultMode: e.target.value as ChatMode })
-                  }
-                  className="w-full bg-[var(--wadi-surface)] border border-[var(--wadi-border)] text-[var(--wadi-text)] text-xs p-3 rounded font-mono-wadi outline-none focus:border-[var(--wadi-primary)]"
-                >
-                  <option value="normal">General (Compañero)</option>
-                  <option value="tech">Tech (Técnico)</option>
-                  <option value="biz">Biz (Negocios)</option>
-                  <option value="tutor">Tutor (Aprendizaje)</option>
-                </select>
               </div>
             </div>
           )}

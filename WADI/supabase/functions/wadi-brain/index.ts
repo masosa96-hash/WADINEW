@@ -30,6 +30,16 @@ serve(async (req) => {
   );
 
   try {
+    // 1. Buscamos las instrucciones personalizadas del usuario
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("custom_instructions")
+      .eq("id", record.user_id)
+      .single();
+
+    // 2. Usamos esas instrucciones como System Prompt
+    const finalSystemPrompt = profile?.custom_instructions || SYSTEM_PROMPT;
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -39,7 +49,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: finalSystemPrompt },
           { role: "user", content: record.content },
         ],
         temperature: 0.7, // Para que mantenga la creatividad en su ironía
