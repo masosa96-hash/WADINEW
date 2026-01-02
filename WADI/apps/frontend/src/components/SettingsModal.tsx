@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useChatStore, type ChatMode } from "../store/chatStore";
+import { useChatStore } from "../store/chatStore";
 import { useConfigStore } from "../store/configStore";
+import { runWadiDiagnostic } from "../utils/wadiTester";
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { settings, updateSettings, exportData } = useChatStore();
+  const { exportData } = useChatStore();
   const {
     theme,
     setTheme,
@@ -161,6 +162,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 <p className="text-zinc-500 text-[10px] mb-4 leading-relaxed">
                   Esto eliminará todo el historial de WADI. No hay vuelta atrás.
                 </p>
+                <div className="flex justify-between items-center mb-4">
+                  <button
+                    onClick={runWadiDiagnostic}
+                    className="text-[10px] font-mono text-zinc-500 hover:text-green-500 transition-colors uppercase tracking-wider"
+                  >
+                    [ EJECUTAR AUTO-TEST DE SISTEMA ]
+                  </button>
+                </div>
                 <button
                   onClick={() => {
                     if (confirm("¿Seguro? WADI no olvidará este desprecio."))
