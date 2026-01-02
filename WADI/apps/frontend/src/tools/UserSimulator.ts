@@ -90,7 +90,7 @@ export function useUserSimulator() {
             data: { session },
           } = await supabase.auth.getSession();
           await fetch(
-            `${import.meta.env.VITE_API_URL || ""}/api/memory/reflect`,
+            `${(import.meta.env.VITE_API_URL || "").replace(/\/api$/, "")}/api/memory/reflect`,
             {
               method: "POST",
               headers: { Authorization: `Bearer ${session?.access_token}` },

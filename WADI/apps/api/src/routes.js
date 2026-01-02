@@ -679,13 +679,29 @@ router.post(
             {"point": "Suele trabajar de noche", "category": "PATTERN"}
           ]
           
-          Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.`,
+          Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.
+          IMPORTANTE: Devolvé SOLAMENTE el JSON puro. Sin bloques de código markdown, sin \`\`\`json, sin texto extra.`,
         },
         { role: "user", content: conversationText },
       ],
     });
 
-    const insights = JSON.parse(completion.choices[0].message.content || "[]");
+    let rawContent = completion.choices[0].message.content || "[]";
+    // Remove markdown block if present
+    rawContent = rawContent
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    let insights = [];
+    try {
+      insights = JSON.parse(rawContent);
+    } catch (e) {
+      console.error("JSON Parse Error in Reflection", e);
+      // Fallback: Try to save crude text if possible, or just fail gracefully.
+      // For now, fail gracefully to avoid corrupt data.
+      insights = [];
+    }
 
     // 3. Store in Knowledge Base & Reflections
     const newReflections = [];
