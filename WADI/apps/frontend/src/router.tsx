@@ -11,6 +11,7 @@ import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import DashboardPage from "./pages/DashboardPage";
 import InnerSanctum from "./pages/InnerSanctum";
+import JournalPage from "./pages/JournalPage";
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +87,14 @@ export const router = createBrowserRouter([
     element: (
       <AuthLoader>
         <InnerSanctum />
+      </AuthLoader>
+    ),
+  },
+  {
+    path: "/journal",
+    element: (
+      <AuthLoader>
+        <JournalPage />
       </AuthLoader>
     ),
   },

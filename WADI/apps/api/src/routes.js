@@ -724,6 +724,25 @@ router.get(
   })
 );
 
+  })
+);
+
+// --- JOURNAL (CLOUD LOGS) ---
+router.get(
+  "/journal/files",
+  authenticate(),
+  authorize(["ADMIN"]),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { data } = await supabase
+      .from("wadi_cloud_reports")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    res.json(data);
+  })
+);
+
 // [DEBUG] Get Current System Prompt
 router.post(
   "/debug/system-prompt",
