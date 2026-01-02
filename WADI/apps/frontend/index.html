@@ -17,6 +17,10 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content"
     />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="description"
+      content="WADI: Your Agentic Workspace for technical assistance and evolution."
+    />
     <title>WADI · Agentic Workspace</title>
   </head>
   <body>
@@ -44,6 +48,7 @@
             opacity: 0.8;
             animation: pulse 2s infinite;
           "
+          class="pulse-loader"
         ></div>
         <div
           style="
@@ -68,6 +73,9 @@
         </div>
       </div>
       <style>
+        .pulse-loader {
+          will-change: transform, opacity;
+        }
         @keyframes pulse {
           0% {
             transform: scale(1);

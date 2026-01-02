@@ -135,6 +135,7 @@ export function TerminalInput({
             <button
               onClick={() => setSelectedFile(null)}
               className="ml-2 hover:bg-[var(--wadi-surface)] rounded-full p-1 transition-colors"
+              aria-label="Quitar archivo adjunto"
             >
               x
             </button>
