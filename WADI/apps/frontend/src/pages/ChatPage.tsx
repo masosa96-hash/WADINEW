@@ -158,10 +158,21 @@ export default function ChatPage() {
                       /\[DECONSTRUCT_START\]([\s\S]*?)\[DECONSTRUCT_END\]/
                     );
                     if (jsonMatch && jsonMatch[1]) {
-                      deconstructItems = JSON.parse(jsonMatch[1]);
-                      displayContent = message.content
-                        .replace(jsonMatch[0], "")
-                        .trim();
+                      let rawJson = jsonMatch[1];
+                      // Sanitizer: Find first '[' and last ']' to ignore markdown noise
+                      const firstBracket = rawJson.indexOf("[");
+                      const lastBracket = rawJson.lastIndexOf("]");
+
+                      if (firstBracket !== -1 && lastBracket !== -1) {
+                        rawJson = rawJson.substring(
+                          firstBracket,
+                          lastBracket + 1
+                        );
+                        deconstructItems = JSON.parse(rawJson);
+                        displayContent = message.content
+                          .replace(jsonMatch[0], "")
+                          .trim();
+                      }
                     }
                   } catch (e) {
                     console.error("Deconstruct Parse Error", e);
@@ -214,7 +225,7 @@ export default function ChatPage() {
                 <button
                   onClick={sim.toggle}
                   aria-label="Alternar simulador de usuario"
-                  className={`px-2 py-0.5 rounded ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-400"}`}
+                  className={`px-2 py-0.5 rounded ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-100"}`}
                 >
                   {sim.isActive ? "ON" : "OFF"}
                 </button>

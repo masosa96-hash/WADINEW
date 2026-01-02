@@ -680,7 +680,7 @@ router.post(
           ]
           
           Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.
-          IMPORTANTE: Devolvé SOLAMENTE el JSON puro. Sin bloques de código markdown, sin \`\`\`json, sin texto extra.`,
+          IMPORTANTE: Responde ÚNICAMENTE con el objeto JSON. Prohibido usar bloques de código Markdown (\`\`\`) o negritas (**). Solo el array JSON raw.`,
         },
         { role: "user", content: conversationText },
       ],
