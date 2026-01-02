@@ -321,8 +321,26 @@ export const useChatStore = create<ChatState>()(
       triggerVisualAlert: () => set({ visualAlertTimestamp: Date.now() }),
       triggerScorn: () => set({ scornTimestamp: Date.now() }),
 
-      updateSettings: (newSettings) =>
-        set((state) => ({ settings: { ...state.settings, ...newSettings } })),
+      updateSettings: (newSettings) => {
+        // SIDE EFFECT: Theme Application
+        if (newSettings.theme) {
+          const root = window.document.documentElement;
+          const themeToApply =
+            newSettings.theme === "system"
+              ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : newSettings.theme;
+
+          if (themeToApply === "dark") {
+            root.classList.add("dark");
+          } else {
+            root.classList.remove("dark");
+          }
+        }
+
+        set((state) => ({ settings: { ...state.settings, ...newSettings } }));
+      },
       setAiModel: (model) => set({ aiModel: model }),
       setCustomSystemPrompt: (prompt) => set({ customSystemPrompt: prompt }),
 

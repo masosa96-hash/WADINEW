@@ -27,8 +27,8 @@ export function MessageBubble({
             : "bg-zinc-800/90 border-orange-900/50 text-zinc-300 rounded-l-xl rounded-tr-sm backdrop-blur-sm shadow-[4px_4px_10px_rgba(0,0,0,0.2)]"
         }`}
       >
-        {/* Role Identifier */}
-        <span className="text-[10px] uppercase tracking-[0.2em] font-mono opacity-40 block mb-3 border-b border-white/5 pb-1 select-none">
+        {/* Role Identifier - High Contrast */}
+        <span className="text-[10px] uppercase tracking-[0.2em] font-mono opacity-70 block mb-3 border-b border-white/10 pb-1 select-none font-bold">
           {!isUser ? "◈ WADI / Erudito" : "◈ Humano"}
         </span>
         {/* Render Attachments */}
@@ -104,9 +104,9 @@ export function MessageBubble({
           )}
         </div>
 
-        {/* Minimalist Time inside bubble */}
+        {/* Minimalist Time inside bubble - High Contrast */}
         {timestamp && (
-          <span className="text-[9px] mt-3 block text-right opacity-30 font-mono tracking-widest select-none">
+          <span className="text-[9px] mt-3 block text-right opacity-60 font-mono tracking-widest select-none">
             {new Date(timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",

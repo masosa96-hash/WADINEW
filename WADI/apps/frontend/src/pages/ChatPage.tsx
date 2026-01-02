@@ -298,7 +298,7 @@ export default function ChatPage() {
                 <button
                   onClick={sim.toggle}
                   aria-label="Alternar simulador de usuario"
-                  className={`px-2 py-0.5 rounded font-bold ${sim.isActive ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-zinc-900 text-zinc-100 border border-zinc-700"}`}
+                  className={`px-2 py-0.5 rounded font-bold ${sim.isActive ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-black text-white border border-zinc-600"}`}
                 >
                   {sim.isActive ? "ON" : "OFF"}
                 </button>

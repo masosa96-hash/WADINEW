@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useChatStore, type ChatMode } from "../store/chatStore";
+import { useConfigStore } from "../store/configStore";
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { settings, updateSettings, exportData, clearAllChats } =
-    useChatStore();
+  const { settings, updateSettings, exportData } = useChatStore();
+  const { theme, setTheme, language, setLanguage, wipeAllData } =
+    useConfigStore();
   const [activeTab, setActiveTab] = useState<"general" | "persona" | "data">(
     "general"
   );
@@ -55,24 +57,24 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 </label>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => updateSettings({ language: "es" })}
+                    onClick={() => setLanguage("es")}
                     className={`flex-1 px-4 py-2 border rounded text-xs font-mono-wadi transition-all ${
-                      settings.language === "es"
-                        ? "border-[var(--wadi-primary)] bg-[var(--wadi-primary)]/10 text-[var(--wadi-primary)]"
-                        : "border-[var(--wadi-border)] text-[var(--wadi-text-muted)] hover:border-[var(--wadi-text-muted)]"
+                      language === "es"
+                        ? "bg-purple-600/20 border-purple-500 text-purple-300"
+                        : "border-[var(--wadi-border)] bg-zinc-900 text-[var(--wadi-text-muted)] hover:border-[var(--wadi-text-muted)]"
                     }`}
                   >
-                    Español
+                    ESPAÑOL
                   </button>
                   <button
-                    onClick={() => updateSettings({ language: "en" })}
+                    onClick={() => setLanguage("en")}
                     className={`flex-1 px-4 py-2 border rounded text-xs font-mono-wadi transition-all ${
-                      settings.language === "en"
-                        ? "border-[var(--wadi-primary)] bg-[var(--wadi-primary)]/10 text-[var(--wadi-primary)]"
-                        : "border-[var(--wadi-border)] text-[var(--wadi-text-muted)] hover:border-[var(--wadi-text-muted)]"
+                      language === "en"
+                        ? "bg-purple-600/20 border-purple-500 text-purple-300"
+                        : "border-[var(--wadi-border)] bg-zinc-900 text-[var(--wadi-text-muted)] hover:border-[var(--wadi-text-muted)]"
                     }`}
                   >
-                    English
+                    ENGLISH
                   </button>
                 </div>
               </div>
@@ -82,17 +84,17 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   Tema Visual
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(["light", "dark", "system"] as const).map((theme) => (
+                  {(["light", "dark", "system"] as const).map((t) => (
                     <button
-                      key={theme}
-                      onClick={() => updateSettings({ theme })}
+                      key={t}
+                      onClick={() => setTheme(t)}
                       className={`px-2 py-2 border rounded text-xs font-mono-wadi transition-all uppercase ${
-                        settings.theme === theme
-                          ? "border-[var(--wadi-primary)] bg-[var(--wadi-primary)]/10 text-[var(--wadi-primary)]"
-                          : "border-[var(--wadi-border)] text-[var(--wadi-text-muted)] hover:border-[var(--wadi-text-muted)]"
+                        theme === t
+                          ? "border-purple-500 bg-purple-600/10 text-purple-300"
+                          : "border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-600"
                       }`}
                     >
-                      {theme}
+                      {t}
                     </button>
                   ))}
                 </div>
@@ -162,22 +164,23 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 </span>
               </button>
 
-              <button
-                onClick={() => {
-                  if (
-                    confirm("ESTO ES IRREVERSIBLE. ¿Borrar TODA la historia?")
-                  ) {
-                    clearAllChats();
-                    onClose();
-                  }
-                }}
-                className="w-full flex items-center justify-between p-4 border border-[var(--wadi-alert)]/30 rounded hover:bg-[var(--wadi-alert)]/10 transition-colors group text-[var(--wadi-alert)]"
-              >
-                <span className="text-xs font-mono-wadi uppercase">
-                  Quemar Archivos (Borrar Todo)
-                </span>
-                <span className="group-hover:animate-pulse">⚠️</span>
-              </button>
+              <div className="p-4 bg-zinc-950 border border-red-900/30 rounded mt-4">
+                <h3 className="text-red-700 font-mono text-xs mb-2 font-bold uppercase tracking-widest">
+                  [ ZONA DE PELIGRO ]
+                </h3>
+                <p className="text-zinc-500 text-[10px] mb-4 leading-relaxed">
+                  Esto eliminará todo el historial de WADI. No hay vuelta atrás.
+                </p>
+                <button
+                  onClick={() => {
+                    if (confirm("¿Seguro? WADI no olvidará este desprecio."))
+                      wipeAllData();
+                  }}
+                  className="w-full py-2 border border-red-900 bg-red-950/20 text-red-700 hover:bg-red-900 hover:text-white transition-all font-bold text-[10px] tracking-widest uppercase rounded"
+                >
+                  ELIMINAR TODA LA DATA
+                </button>
+              </div>
             </div>
           )}
         </div>
