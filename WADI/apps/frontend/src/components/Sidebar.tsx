@@ -11,6 +11,14 @@ interface SidebarProps {
   className?: string; // Kept for compat
 }
 
+import { ConfirmModal } from "./ui/ConfirmModal";
+
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  className?: string; // Kept for compat
+}
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +32,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     deleteConversation,
     fetchCriminalSummary,
   } = useChatStore();
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -45,15 +55,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     setSidebarOpen(false);
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const onRequestDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm("¿Borrar chat?")) {
-      await deleteConversation(id);
-      if (location.pathname.includes(id)) {
-        navigate("/chat");
-      }
-      fetchConversations();
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    await deleteConversation(deleteId);
+    if (location.pathname.includes(deleteId)) {
+      navigate("/chat");
     }
+    fetchConversations();
+    setDeleteId(null);
   };
 
   const [showSettings, setShowSettings] = useState(false);
@@ -122,7 +136,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </p>
                 </div>
                 <button
-                  onClick={(e) => handleDelete(e, c.id)}
+                  onClick={(e) => onRequestDelete(e, c.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-danger)] transition-all hover:bg-[var(--wadi-surface-active)] rounded z-10"
                   aria-label="Borrar chat"
                 >
@@ -173,6 +187,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="¿Purgar Memoria?"
+        message="¿Deseas purgar esta línea de memoria? Esta acción es irreversible."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+        confirmText="Purgar"
+        cancelText="Cancelar"
+      />
     </aside>
   );
 }
