@@ -102,10 +102,41 @@ export default function InnerSanctum() {
             )}
           </div>
 
-          <div className="mt-12 pt-8 border-t border-slate-800 text-center">
+          <div className="flex justify-center gap-4 mt-12 pt-8 border-t border-slate-800 text-center">
+            <button
+              onClick={async () => {
+                if (!confirm("¿Archivar y limpiar mesa?")) return;
+                const {
+                  data: { session },
+                } = await supabase.auth.getSession();
+                await fetch(
+                  `${import.meta.env.VITE_API_URL || ""}/api/inner-sanctum/archive`,
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${session?.access_token}`,
+                    },
+                  }
+                );
+                window.location.reload();
+              }}
+              className={`text-xs px-4 py-2 border border-slate-700 rounded hover:bg-slate-800 text-slate-400 transition-colors uppercase tracking-widest`}
+            >
+              [Limpiar Mesa]
+            </button>
+
+            <button
+              onClick={() => navigate("/journal")}
+              className={`text-xs px-4 py-2 border border-[var(--wadi-primary)] rounded hover:bg-[var(--wadi-primary-dim)] text-[var(--wadi-primary)] transition-colors uppercase tracking-widest`}
+            >
+              Ver Historial (Journal)
+            </button>
+          </div>
+
+          <div className="text-center">
             <button
               onClick={() => navigate("/chat")}
-              className="text-xs text-slate-500 hover:text-[var(--wadi-primary)] transition-colors"
+              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
             >
               ← RETURN TO SURFACE
             </button>

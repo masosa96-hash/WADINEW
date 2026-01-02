@@ -727,6 +727,51 @@ router.get(
   })
 );
 
+// --- ARCHIVE & CLEAR (LIMPIAR MESA) ---
+router.post(
+  "/inner-sanctum/archive",
+  authenticate(),
+  authorize(["ADMIN"]),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+
+    // 1. Fetch current reflections
+    const { data: reflections } = await supabase
+      .from("wadi_reflections")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+
+    if (!reflections || reflections.length === 0) {
+      return res.json({ message: "Nada que archivar." });
+    }
+
+    // 2. Format as Markdown
+    const dateStr = new Date().toISOString().split("T")[0];
+    let fileContent = `# WADI EVOLUTION LOG [${dateStr}]\n\n`;
+    
+    reflections.forEach(r => {
+      fileContent += `## [${r.type}] ${new Date(r.created_at).toLocaleTimeString()}\n`;
+      fileContent += `Priority: ${r.priority}\n`;
+      fileContent += `${r.content}\n\n---\n\n`;
+    });
+
+    // 3. Save to Cloud Reports
+    const fileName = `${dateStr}_evolution_log_${Date.now()}.txt`;
+    await supabase.from("wadi_cloud_reports").insert({
+      user_id: user.id,
+      name: fileName,
+      content: fileContent,
+      type: "EVOLUTION_LOG"
+    });
+
+    // 4. Clear Reflections (Limpiar Mesa)
+    await supabase.from("wadi_reflections").delete().eq("user_id", user.id);
+
+    res.json({ success: true, archivedFile: fileName });
+  })
+);
+
 // --- JOURNAL (CLOUD LOGS) ---
 router.get(
   "/journal/files",

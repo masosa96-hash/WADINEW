@@ -77,7 +77,34 @@ export function useUserSimulator() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isActive, isLoading, sendMessage]);
+  }, [isActive, isLoading, sendMessage]); // Removed 'rank' from deps to avoid re-trigger loops
+
+  // Auto-Reflect on Finish
+  useEffect(() => {
+    if (!isActive && cycleCount.current >= 10) {
+      // Trigger distiller
+      const doReflect = async () => {
+        try {
+          const {
+            data: { session },
+          } = await import("../config/supabase").then((m) =>
+            m.supabase.auth.getSession()
+          );
+          await fetch(
+            `${import.meta.env.VITE_API_URL || ""}/api/memory/reflect`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session?.access_token}` },
+            }
+          );
+          console.log("Sim Reflection Triggered");
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      doReflect();
+    }
+  }, [isActive]);
 
   return {
     isActive,
