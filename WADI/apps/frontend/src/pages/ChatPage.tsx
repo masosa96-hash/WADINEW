@@ -31,6 +31,8 @@ export default function ChatPage() {
     activeFocus,
     isWadiThinking,
     subscribeToMessages,
+    wadiError,
+    retryLastMessage,
   } = useChatStore();
 
   // Load conversation on mount/param change
@@ -222,6 +224,22 @@ export default function ChatPage() {
                   <div className="flex items-center gap-2 p-3 bg-slate-900/50 rounded-xl border border-slate-800 text-xs text-slate-400 font-mono">
                     <span>🎭</span>
                     <span>WADI está procesando su desprecio...</span>
+                  </div>
+                </div>
+              )}
+
+              {wadiError && (
+                <div className="flex justify-center px-4 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-3 max-w-md w-full flex items-center justify-between gap-4">
+                    <span className="text-red-200 text-xs font-mono">
+                      ⚠️ {wadiError}
+                    </span>
+                    <button
+                      onClick={retryLastMessage}
+                      className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded text-red-300 text-xs font-bold transition-colors uppercase tracking-wider"
+                    >
+                      Reintentar
+                    </button>
                   </div>
                 </div>
               )}

@@ -75,6 +75,12 @@ interface ChatState {
   isWadiThinking: boolean;
   wadiError: string | null;
   timeoutId: ReturnType<typeof setTimeout> | null;
+  lastMessageData: {
+    content: string;
+    conversationId: string | null;
+    attachments: Attachment[];
+  } | null;
+  retryLastMessage: () => void;
 
   // Gamification
   rank: string;
@@ -187,6 +193,7 @@ export const useChatStore = create<ChatState>()(
       isWadiThinking: false,
       wadiError: null,
       timeoutId: null,
+      lastMessageData: null,
       activeFocus: null,
       rank: "GENERADOR_DE_HUMO",
       points: 0,
@@ -743,8 +750,16 @@ export const useChatStore = create<ChatState>()(
       sendMessage: async (text: string, attachments: Attachment[] = []) => {
         if (!text.trim() && attachments.length === 0) return null;
 
-        // 1. Safety Timeout setup
-        set({ isWadiThinking: true, wadiError: null });
+        // 1. Safety Timeout & Retry setup
+        set({
+          isWadiThinking: true,
+          wadiError: null,
+          lastMessageData: {
+            content: text,
+            conversationId: get().conversationId,
+            attachments,
+          },
+        });
 
         const timer = setTimeout(() => {
           const currentState = get();
@@ -835,7 +850,8 @@ export const useChatStore = create<ChatState>()(
             );
 
           // We do not wait for a reply here anymore, as the architecture shifts to Async/Edge
-          set({ isLoading: false }); // Stop loader
+          // Success: Clear retry data
+          set({ isLoading: false, lastMessageData: null });
 
           return currentConversationId;
         } catch (err: unknown) {
@@ -849,6 +865,7 @@ export const useChatStore = create<ChatState>()(
             error: errorMessage,
             isWadiThinking: false,
             timeoutId: null,
+            wadiError: "Error al enviar. El payaso está cansado.",
           });
           useLogStore
             .getState()
@@ -857,6 +874,14 @@ export const useChatStore = create<ChatState>()(
               "error"
             );
           return null;
+        }
+      },
+
+      retryLastMessage: () => {
+        const { lastMessageData } = get();
+        if (lastMessageData) {
+          const { content, attachments } = lastMessageData;
+          get().sendMessage(content, attachments || []);
         }
       },
 
