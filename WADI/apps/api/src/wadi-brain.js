@@ -38,7 +38,8 @@ export function generateSystemPrompt(
   efficiencyRank = "GENERADOR_DE_HUMO",
   efficiencyPoints = 0,
   activeFocus = null,
-  memory = {}
+  memory = {},
+  knowledgeBase = []
 ) {
   // 1. EL VINCULO Y RANGO
   let vibeInstruction = "";
@@ -86,6 +87,19 @@ El usuario tiene un compromiso pendiente con este tema.
 ### MEMORIA A LARGO PLAZO (DATOS CONFIRMADOS) ###
 ${memList}
 (Usá estos datos si son relevantes. Si te preguntan 'qué sabés de mí', acá está la respuesta).
+`;
+  }
+
+  // 6. KNOWLEDGE BASE (DISTILLED LEARNING)
+  let knowledgeContext = "";
+  if (knowledgeBase && knowledgeBase.length > 0) {
+    const kPoints = knowledgeBase
+      .map((k) => `- [${k.category}] ${k.point}`)
+      .join("\n");
+    knowledgeContext = `
+### CONOCIMIENTO CRISTALIZADO (ESTILO DE USUARIO) ###
+${kPoints}
+(Esto es lo que aprendiste de sus sesiones anteriores. Adaptate a esto sin mencionarlo explícitamente).
 `;
   }
 
@@ -147,6 +161,7 @@ ${WADI_SYSTEM_PROMPT}
 
 ${activeFocusProtocol}
 ${memoryContext}
+${knowledgeContext}
 
 EJEMPLOS DE TONO REQUERIDO:
 - Si saluda: "¿Qué rompiste ahora? Y hacela corta."

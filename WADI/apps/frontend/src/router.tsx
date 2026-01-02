@@ -10,6 +10,7 @@ import IntroWadi from "./pages/IntroWadi";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import DashboardPage from "./pages/DashboardPage";
+import InnerSanctum from "./pages/InnerSanctum";
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +78,14 @@ export const router = createBrowserRouter([
     element: (
       <AuthLoader>
         <DashboardPage />
+      </AuthLoader>
+    ),
+  },
+  {
+    path: "/inner-sanctum",
+    element: (
+      <AuthLoader>
+        <InnerSanctum />
       </AuthLoader>
     ),
   },

@@ -175,6 +175,7 @@ router.post(
       active_focus: null,
     };
     let pastFailures = [];
+    let knowledgeBase = [];
 
     // --- CASE A: AUTHENTICATED USER ---
     if (user) {
@@ -222,6 +223,7 @@ router.post(
       if (dbProfile) profile = dbProfile;
 
       pastFailures = await fetchUserCriminalRecord(user.id);
+      knowledgeBase = await fetchKnowledgeBase(user.id);
     }
     // --- CASE B: GUEST MODE (IN-MEMORY) ---
     else {
@@ -283,7 +285,8 @@ router.post(
       profile.efficiency_rank,
       profile.efficiency_points,
       profile.active_focus,
-      req.body.memory || {} // Pass memory
+      req.body.memory || {}, // Pass memory
+      knowledgeBase // Pass knowledge
     );
 
     // [DEBUG OVERRIDE]
@@ -618,6 +621,106 @@ router.post(
       tokens: Math.round(estimatedTokens),
       message: "Archivo procesado. Si esperabas un premio, seguí esperando.",
     });
+  })
+);
+
+// Helper: Fetch Knowledge Base
+const fetchKnowledgeBase = async (userId) => {
+  try {
+    const { data } = await supabase
+      .from("wadi_knowledge_base")
+      .select("category, point")
+      .eq("user_id", userId)
+      .order("confidence_score", { ascending: false })
+      .limit(5); // Top 5 insights
+    return data || [];
+  } catch (e) {
+    return [];
+  }
+};
+
+// --- MEMORY DISTILLER ---
+router.post(
+  "/memory/reflect",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+    
+    // 1. Get recent unsynthesized messages
+    // (For this V4, we just take the last 20 messages of the user to find patterns)
+    const { data: recentMsgs } = await supabase
+      .from("messages")
+      .select("role, content")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (!recentMsgs || recentMsgs.length < 5) {
+      return res.json({ message: "Not enough data to reflect." });
+    }
+
+    const conversationText = recentMsgs.reverse().map(m => `${m.role}: ${m.content}`).join("\n");
+
+    // 2. Ask AI to distill knowledge
+    const completion = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `Sos el Subconsciente de WADI. Tu trabajo es analizar chats y extraer "Hechos de Conocimiento" sobre el usuario para mejorar futuras interacciones.
+          
+          Output JSON Array:
+          [
+            {"point": "Usa mucho TypeScript y odia los any", "category": "PREFERENCE"},
+            {"point": "Suele trabajar de noche", "category": "PATTERN"}
+          ]
+          
+          Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.`
+        },
+        { role: "user", content: conversationText }
+      ]
+    });
+
+    const insights = JSON.parse(completion.choices[0].message.content || "[]");
+
+    // 3. Store in Knowledge Base & Reflections
+    const newReflections = [];
+
+    for (const insight of insights) {
+      // Check duplicate loosely (optional, skipping for speed)
+      await supabase.from("wadi_knowledge_base").insert({
+        user_id: user.id,
+        knowledge_point: insight.point,
+        category: insight.category
+      });
+      
+      // Add to Inner Sanctum Report
+      const { data: reflect } = await supabase.from("wadi_reflections").insert({
+        user_id: user.id,
+        type: "APRENDIZAJE",
+        content: `Detectado: ${insight.point} (${insight.category})`,
+        priority: "NORMAL"
+      }).select().single();
+      
+      newReflections.push(reflect);
+    }
+
+    res.json({ success: true, reflections: newReflections });
+  })
+);
+
+// --- INNER SANCTUM ---
+router.get(
+  "/inner-sanctum/reports",
+  authenticate(),
+  authorize(["ADMIN"]), // Strict Admin check
+  asyncHandler(async (req, res) => {
+     const { data } = await supabase
+       .from("wadi_reflections")
+       .select("*")
+       .order("created_at", { ascending: false })
+       .limit(50);
+     res.json(data);
   })
 );
 

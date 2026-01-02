@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useChatStore, type Attachment } from "../store/chatStore";
 import { useStoreHydration } from "../hooks/useStoreHydration";
+import { useUserSimulator } from "../tools/UserSimulator"; // Import
 
 import { TerminalInput } from "../components/ui/TerminalInput";
 import { Scouter } from "../components/ui/Scouter";
@@ -15,6 +16,8 @@ import { WadiTheme } from "../theme/wadi-theme";
 export default function ChatPage() {
   const { conversationId } = useParams();
   const hydrated = useStoreHydration();
+  // Simulator Hook
+  const sim = useUserSimulator();
 
   const {
     messages,
@@ -193,18 +196,44 @@ export default function ChatPage() {
         </div>
 
         {/* Side Panel (Context - Desktop Only - Subtle) */}
-        {!hasMessages && (
-          <div className="hidden lg:block w-[300px] h-full p-6 pt-24 opacity-40 pointer-events-none select-none transition-opacity duration-1000">
-            <div className="border-l border-slate-200 pl-6 space-y-8">
-              <div>
-                <h3 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
-                  Estado Neural
-                </h3>
-                <div className="text-slate-300 text-xs">Sincronizado</div>
+        <div className="hidden lg:block w-[300px] h-full p-6 pt-24 opacity-40 pointer-events-none select-none transition-opacity duration-1000">
+          <div className="border-l border-slate-200 pl-6 space-y-8 pointer-events-auto">
+            <div>
+              <h3 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
+                Estado Neural
+              </h3>
+              <div className="text-slate-300 text-xs">Sincronizado</div>
+            </div>
+
+            {/* SIMULATOR UI MOD */}
+            <div className="bg-black/40 p-2 rounded text-[10px] space-y-2 pointer-events-auto">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 uppercase font-mono">
+                  Auto-Test
+                </span>
+                <button
+                  onClick={sim.toggle}
+                  className={`px-2 py-0.5 rounded ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-400"}`}
+                >
+                  {sim.isActive ? "ON" : "OFF"}
+                </button>
               </div>
+              {sim.isActive && (
+                <div className="space-y-1 text-slate-400 font-mono">
+                  <div>Msg Sent: {sim.stats.messagesSent}</div>
+                  <div>Last Lat: {sim.stats.latency}ms</div>
+                  <div className="border-t border-slate-700 pt-1 mt-1">
+                    {sim.logs.map((l, i) => (
+                      <div key={i} className="truncate opacity-70">
+                        - {l}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
