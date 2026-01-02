@@ -660,23 +660,6 @@ export const useChatStore = create<ChatState>()(
       },
 
       sendMessage: async (text: string, attachments: Attachment[] = []) => {
-        // Auto-save workspace state if active
-        const currentStore = get();
-        if (currentStore.activeWorkspaceId) {
-          set((state) => ({
-            workspaces: state.workspaces.map((w) => {
-              if (w.id === state.activeWorkspaceId) {
-                return {
-                  ...w,
-                  messages: state.messages, // Note: this will be stale immediately, we need to update AFTER send or rely on effect.
-                  // Actually, let's update it with the CURRENT messages before optimistic update
-                };
-              }
-              return w;
-            }),
-          }));
-        }
-
         if (!text.trim() && attachments.length === 0) return null;
 
         // OPTIMISTIC UPDATE START
@@ -691,7 +674,7 @@ export const useChatStore = create<ChatState>()(
 
         useLogStore
           .getState()
-          .addLog("Enviando mensaje al núcleo de WADI...", "process");
+          .addLog("Enviando mensaje a la Matrix (Supabase)...", "process");
 
         set((state) => ({
           messages: [...state.messages, userMsg],
@@ -702,128 +685,61 @@ export const useChatStore = create<ChatState>()(
         // OPTIMISTIC UPDATE END
 
         try {
-          const token = await getToken();
           const {
-            conversationId,
-            mode,
-            topic,
-            explainLevel,
-            mood,
-            rank: oldRank,
-          } = get();
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) throw new Error("Usuario no autenticado");
 
-          // 2. Call Unified /api/chat
-          const res = await fetch(`${API_URL}/api/chat`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          let currentConversationId = get().conversationId;
+
+          // 1. Create Conversation if needed
+          if (!currentConversationId) {
+            useLogStore
+              .getState()
+              .addLog(
+                "Creando nueva línea temporal (Conversación)...",
+                "process"
+              );
+            const { data: newConv, error: convError } = await supabase
+              .from("conversations")
+              .insert({
+                user_id: user.id,
+                title: text.slice(0, 50),
+                mode: get().mode || "normal",
+              })
+              .select()
+              .single();
+
+            if (convError) throw convError;
+            currentConversationId = newConv.id;
+            set({ conversationId: currentConversationId });
+          }
+
+          // 2. Insert Message into Supabase
+          const { error: msgError } = await supabase.from("messages").insert([
+            {
+              content: text,
+              conversation_id: currentConversationId,
+              user_id: user.id,
+              role: "user",
+              // Note: Attachments column implementation pending backend update to JSONB
+              // For now we persist text content.
             },
-            body: JSON.stringify({
-              message: text,
-              conversationId,
-              mode,
-              topic,
-              explainLevel,
-              mood,
-              attachments,
-              isMobile: window.innerWidth < 1024,
-              customSystemPrompt: get().customSystemPrompt, // Send override
-              memory: get().memory, // Send memory context
-            }),
-          });
+          ]);
 
-          if (!res.ok) throw new Error("Failed to send message");
-
-          // Verify we got JSON
-          const contentType = res.headers.get("content-type");
-          if (contentType && contentType.includes("text/html")) {
-            throw new Error("Servidor retornó HTML en lugar de JSON");
-          }
-
-          const data = await res.json();
-
-          // Handle System Death
-          if (data.systemDeath) {
-            set({
-              systemDeath: true,
-              messages: [], // Wiped on client
-              points: 0,
-              rank: "GENERADOR_DE_HUMO",
-              activeFocus: null,
-              isLoading: false,
-              conversationId: null,
-            });
-            // Redirect will be handled by UI listening to systemDeath
-            return null;
-          }
-
-          // 3. Update State
-          let finalReply = data.reply;
-          // DETECT SCORN
-          if (finalReply.includes("[SCORN_DETECTED]")) {
-            get().triggerScorn();
-            finalReply = finalReply.replace("[SCORN_DETECTED]", "");
-          }
-
-          const aiMsg: Message = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: finalReply,
-            created_at: new Date().toISOString(),
-          };
-
-          const newRank =
-            data.efficiencyRank !== undefined ? data.efficiencyRank : oldRank;
+          if (msgError) throw msgError;
 
           useLogStore
             .getState()
-            .addLog("Respuesta recibida. Tokens procesados.", "success");
+            .addLog(
+              "Mensaje insertado en Base de Datos. Esperando Edge Function...",
+              "success"
+            );
 
-          set((state) => ({
-            messages: [...state.messages, aiMsg],
-            isLoading: false,
-            conversationId: data.conversationId,
-            activeFocus: data.activeFocus || null,
-            points:
-              data.efficiencyPoints !== undefined
-                ? data.efficiencyPoints
-                : state.points,
-            rank: newRank,
-          }));
+          // We do not wait for a reply here anymore, as the architecture shifts to Async/Edge
+          set({ isLoading: false }); // Stop loader
 
-          // UPDATE WORKSPACE AFTER RECEIVING MESSAGE
-          const postState = get();
-          if (postState.activeWorkspaceId) {
-            set((state) => ({
-              workspaces: state.workspaces.map((w) => {
-                if (w.id === state.activeWorkspaceId) {
-                  return {
-                    ...w,
-                    messages: state.messages,
-                    customPrompt: state.customSystemPrompt,
-                    aiModel: state.aiModel,
-                  };
-                }
-                return w;
-              }),
-            }));
-          }
-
-          // Rank Change Notification
-          if (newRank !== oldRank && newRank !== "GENERADOR_DE_HUMO") {
-            const rankMsg: Message = {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: `[SISTEMA]: ASCENSO A RANGO **${newRank}**. NO TE ACOSTUMBRES.`,
-              created_at: new Date().toISOString(),
-            };
-            set((state) => ({ messages: [...state.messages, rankMsg] }));
-          }
-
-          // Refresh list
-          get().loadConversations();
-          return data.conversationId;
+          return currentConversationId;
         } catch (err: unknown) {
           const errorMessage =
             err instanceof Error ? err.message : "An error occurred";
@@ -831,7 +747,7 @@ export const useChatStore = create<ChatState>()(
           useLogStore
             .getState()
             .addLog(
-              `Falla de comunicación con el núcleo WADI: ${errorMessage}`,
+              `Falla de comunicación con base de datos: ${errorMessage}`,
               "error"
             );
           return null;
