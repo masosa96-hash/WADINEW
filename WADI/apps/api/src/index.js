@@ -122,7 +122,7 @@ app.get("/system/debug-files", (req, res) => {
       rootContents,
       assetsContents,
       timestamp: Date.now(),
-      version: "1.0.1", // Bump version to verify deploy
+      version: "5.1.0", // Bump version to verify deploy
     });
   } catch (err) {
     res.status(500).json({
