@@ -33,13 +33,20 @@ export function MessageBubble({
             {attachments.map((att, idx) => {
               if (att.type.startsWith("image/")) {
                 return (
-                  <img
+                  <div
                     key={idx}
-                    src={att.url}
-                    alt={att.name || "Adjunto"}
-                    className="rounded-lg border border-[var(--wadi-primary-dim)] cursor-zoom-in max-h-64 object-cover"
-                    onClick={() => window.open(att.url, "_blank")}
-                  />
+                    className="relative mb-3 overflow-hidden rounded-lg border border-[var(--wadi-primary-dim)] group max-w-md"
+                  >
+                    <img
+                      src={att.url}
+                      alt={att.name || "Captura adjunta"}
+                      className="w-full h-auto cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.02] object-cover max-h-96"
+                      onClick={() => window.open(att.url, "_blank")}
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Click para expandir
+                    </div>
+                  </div>
                 );
               }
               return (
