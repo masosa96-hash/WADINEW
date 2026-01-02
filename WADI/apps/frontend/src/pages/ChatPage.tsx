@@ -142,7 +142,7 @@ export default function ChatPage() {
 
               {/* Minimalist Action Prompt */}
               <div className="opacity-40 text-xs text-[var(--wadi-text-secondary)] uppercase tracking-widest font-medium">
-                Esperando ingreso
+                Listo para iniciar
               </div>
             </div>
           ) : (
@@ -222,7 +222,7 @@ export default function ChatPage() {
           <div className="border-l border-slate-200 pl-6 space-y-8 pointer-events-auto">
             <div>
               <h2 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
-                Estado Neural
+                Estado del Sistema
               </h2>
               <div className="text-slate-300 text-xs">Sincronizado</div>
             </div>

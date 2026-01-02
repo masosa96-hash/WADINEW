@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* CHAT LIST */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 py-2 scroll-smooth">
         <h2 className="text-[10px] font-bold text-[var(--wadi-text-tertiary)] uppercase tracking-widest px-2 mb-3 opacity-80">
-          Memorias
+          Historial
         </h2>
         {conversations && conversations.length > 0 ? (
           conversations.map((c) => {
@@ -190,11 +190,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <ConfirmModal
         isOpen={!!deleteId}
-        title="¿Purgar Memoria?"
-        message="¿Deseas purgar esta línea de memoria? Esta acción es irreversible."
+        title="¿Eliminar conversación?"
+        message="¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer."
         onConfirm={confirmDelete}
         onCancel={() => setDeleteId(null)}
-        confirmText="Purgar"
+        confirmText="Eliminar"
         cancelText="Cancelar"
       />
     </aside>

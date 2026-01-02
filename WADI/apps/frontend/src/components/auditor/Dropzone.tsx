@@ -40,7 +40,7 @@ export function Dropzone() {
       await uploadDocument(file);
     } catch (e) {
       console.error(e);
-      alert("Error subiendo archivo.");
+      console.error("Upload failed", e);
     } finally {
       setIsUploading(false);
     }
@@ -108,7 +108,7 @@ export function Dropzone() {
           <div className="flex flex-col items-center gap-2 animate-pulse">
             <UploadCloud size={32} className="text-[var(--wadi-primary)]" />
             <p className="text-xs font-mono-wadi text-[var(--wadi-primary)] tracking-widest">
-              INGIRIENDO DATOS...
+              Subiendo archivo...
             </p>
           </div>
         ) : (
@@ -123,10 +123,10 @@ export function Dropzone() {
             />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium text-[var(--wadi-text)]">
-                Arrastrá tus documentos (sí, los que evitás leer)
+                Arrastrá tus documentos aquí
               </p>
               <p className="text-[10px] text-[var(--wadi-text-muted)] uppercase tracking-wide">
-                PDF, TXT, MD (EVIDENCIA REQUERIDA)
+                PDF, TXT, MD
               </p>
             </div>
           </div>
