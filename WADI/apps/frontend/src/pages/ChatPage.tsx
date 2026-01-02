@@ -199,9 +199,9 @@ export default function ChatPage() {
         <div className="hidden lg:block w-[300px] h-full p-6 pt-24 opacity-40 pointer-events-none select-none transition-opacity duration-1000">
           <div className="border-l border-slate-200 pl-6 space-y-8 pointer-events-auto">
             <div>
-              <h3 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
+              <h2 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
                 Estado Neural
-              </h3>
+              </h2>
               <div className="text-slate-300 text-xs">Sincronizado</div>
             </div>
 
@@ -213,6 +213,7 @@ export default function ChatPage() {
                 </span>
                 <button
                   onClick={sim.toggle}
+                  aria-label="Alternar simulador de usuario"
                   className={`px-2 py-0.5 rounded ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-400"}`}
                 >
                   {sim.isActive ? "ON" : "OFF"}

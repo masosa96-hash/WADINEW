@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../store/chatStore";
+import { supabase } from "../config/supabase";
 
 const TEST_PROMPTS = [
   { text: "Hola WADI, ¿cómo estás?", type: "GREETING" },
@@ -87,9 +88,7 @@ export function useUserSimulator() {
         try {
           const {
             data: { session },
-          } = await import("../config/supabase").then((m) =>
-            m.supabase.auth.getSession()
-          );
+          } = await supabase.auth.getSession();
           await fetch(
             `${import.meta.env.VITE_API_URL || ""}/api/memory/reflect`,
             {
