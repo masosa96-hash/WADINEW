@@ -5,6 +5,7 @@ import { useChatStore, type Attachment } from "../store/chatStore";
 import { useStoreHydration } from "../hooks/useStoreHydration";
 import { useUserSimulator } from "../tools/UserSimulator"; // Import
 
+import { OperationsMonitor } from "../components/ui/OperationsMonitor";
 import { TerminalInput } from "../components/ui/TerminalInput";
 import { Scouter } from "../components/ui/Scouter";
 import { AuditorHeader } from "../components/auditor/AuditorHeader";
@@ -108,6 +109,7 @@ export default function ChatPage() {
   return (
     <Layout>
       <Scouter />
+      <OperationsMonitor />
       <Dropzone />
 
       <div className="flex h-full max-w-7xl mx-auto w-full gap-4 pt-16 md:pt-4 px-2 md:px-0">

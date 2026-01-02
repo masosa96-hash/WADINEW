@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { WadiMood } from "../components/WadiOnboarding";
 import { supabase } from "../config/supabase";
 import imageCompression from "browser-image-compression";
+import { useLogStore } from "./logStore";
 
 const rawUrl = import.meta.env.VITE_API_URL;
 let apiUrl = rawUrl || "https://wadi-wxg7.onrender.com";
@@ -515,6 +516,9 @@ export const useChatStore = create<ChatState>()(
 
       uploadFile: async (file: File) => {
         set({ isUploading: true });
+        const log = useLogStore.getState().addLog;
+        log(`Iniciando procesamiento de archivo: ${file.name}`, "process");
+
         try {
           const chatId = get().conversationId || "new";
           const fileExt = file.name.split(".").pop();
@@ -524,22 +528,30 @@ export const useChatStore = create<ChatState>()(
 
           // COMPRESSION LOGIC
           if (file.type.startsWith("image/")) {
+            log(
+              "Detectada imagen. Iniciando compresión inteligente...",
+              "process"
+            );
             try {
               const options = {
                 maxSizeMB: 1.5,
                 maxWidthOrHeight: 1920,
-                // useWebWorker: true, // Optional but good for UI
               };
               const compressedFile = await imageCompression(file, options);
-              // browser-image-compression returns a Blob/File. We can cast if needed, or it behaves as File.
               fileToUpload = new File([compressedFile], file.name, {
                 type: compressedFile.type,
               });
+              log(
+                `Compresión finalizada. ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`,
+                "success"
+              );
             } catch (cErr) {
               console.warn("Compression failed, using original file", cErr);
+              log("Fallo en compresión. Usando archivo original.", "warning");
             }
           }
 
+          log(`Subiendo ${fileName} a Supabase Storage...`, "info");
           const { error: uploadError } = await supabase.storage
             .from("attachments")
             .upload(fileName, fileToUpload, {
@@ -554,6 +566,7 @@ export const useChatStore = create<ChatState>()(
             .getPublicUrl(fileName);
 
           set({ isUploading: false });
+          log("Subida completada. URL pública generada.", "success");
 
           return {
             url: data.publicUrl,
@@ -563,6 +576,9 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           console.error("Error uploading file:", error);
           set({ isUploading: false, error: "Error al subir archivo." });
+          if (error instanceof Error)
+            log(`Error crítico en subida: ${error.message}`, "error");
+          else log("Error desconocido en subida.", "error");
           return null;
         }
       },
@@ -673,6 +689,10 @@ export const useChatStore = create<ChatState>()(
           created_at: new Date().toISOString(),
         };
 
+        useLogStore
+          .getState()
+          .addLog("Enviando mensaje al núcleo de WADI...", "process");
+
         set((state) => ({
           messages: [...state.messages, userMsg],
           isLoading: true,
@@ -756,6 +776,10 @@ export const useChatStore = create<ChatState>()(
           const newRank =
             data.efficiencyRank !== undefined ? data.efficiencyRank : oldRank;
 
+          useLogStore
+            .getState()
+            .addLog("Respuesta recibida. Tokens procesados.", "success");
+
           set((state) => ({
             messages: [...state.messages, aiMsg],
             isLoading: false,
@@ -804,6 +828,12 @@ export const useChatStore = create<ChatState>()(
           const errorMessage =
             err instanceof Error ? err.message : "An error occurred";
           set({ isLoading: false, error: errorMessage });
+          useLogStore
+            .getState()
+            .addLog(
+              `Falla de comunicación con el núcleo WADI: ${errorMessage}`,
+              "error"
+            );
           return null;
         }
       },
