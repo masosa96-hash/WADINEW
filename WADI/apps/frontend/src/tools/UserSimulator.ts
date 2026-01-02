@@ -15,7 +15,7 @@ const TEST_PROMPTS = [
 ];
 
 export function useUserSimulator() {
-  const { sendMessage, isLoading, messages, rank } = useChatStore();
+  const { sendMessage, isLoading, rank } = useChatStore();
   const [isActive, setIsActive] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [stats, setStats] = useState({
@@ -24,7 +24,7 @@ export function useUserSimulator() {
     rankStart: rank,
   });
 
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cycleCount = useRef(0);
 
   const log = (msg: string) => setLogs((p) => [msg, ...p].slice(0, 10));

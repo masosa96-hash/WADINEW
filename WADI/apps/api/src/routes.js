@@ -409,6 +409,7 @@ router.post(
 );
 
 // --- PROYECTOS (Simplificados) ---
+router.get(
   "/projects",
   authenticate(),
   asyncHandler(async (req, res) => {
@@ -645,7 +646,7 @@ router.post(
   authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
-    
+
     // 1. Get recent unsynthesized messages
     // (For this V4, we just take the last 20 messages of the user to find patterns)
     const { data: recentMsgs } = await supabase
@@ -659,7 +660,10 @@ router.post(
       return res.json({ message: "Not enough data to reflect." });
     }
 
-    const conversationText = recentMsgs.reverse().map(m => `${m.role}: ${m.content}`).join("\n");
+    const conversationText = recentMsgs
+      .reverse()
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
 
     // 2. Ask AI to distill knowledge
     const completion = await openai.chat.completions.create({
@@ -675,10 +679,10 @@ router.post(
             {"point": "Suele trabajar de noche", "category": "PATTERN"}
           ]
           
-          Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.`
+          Extraé máximo 3 puntos. Si no hay nada relevante, devolvé array vacío.`,
         },
-        { role: "user", content: conversationText }
-      ]
+        { role: "user", content: conversationText },
+      ],
     });
 
     const insights = JSON.parse(completion.choices[0].message.content || "[]");
@@ -691,17 +695,21 @@ router.post(
       await supabase.from("wadi_knowledge_base").insert({
         user_id: user.id,
         knowledge_point: insight.point,
-        category: insight.category
+        category: insight.category,
       });
-      
+
       // Add to Inner Sanctum Report
-      const { data: reflect } = await supabase.from("wadi_reflections").insert({
-        user_id: user.id,
-        type: "APRENDIZAJE",
-        content: `Detectado: ${insight.point} (${insight.category})`,
-        priority: "NORMAL"
-      }).select().single();
-      
+      const { data: reflect } = await supabase
+        .from("wadi_reflections")
+        .insert({
+          user_id: user.id,
+          type: "APRENDIZAJE",
+          content: `Detectado: ${insight.point} (${insight.category})`,
+          priority: "NORMAL",
+        })
+        .select()
+        .single();
+
       newReflections.push(reflect);
     }
 
@@ -715,15 +723,12 @@ router.get(
   authenticate(),
   authorize(["ADMIN"]), // Strict Admin check
   asyncHandler(async (req, res) => {
-     const { data } = await supabase
-       .from("wadi_reflections")
-       .select("*")
-       .order("created_at", { ascending: false })
-       .limit(50);
-     res.json(data);
-  })
-);
-
+    const { data } = await supabase
+      .from("wadi_reflections")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    res.json(data);
   })
 );
 
@@ -749,8 +754,8 @@ router.post(
     // 2. Format as Markdown
     const dateStr = new Date().toISOString().split("T")[0];
     let fileContent = `# WADI EVOLUTION LOG [${dateStr}]\n\n`;
-    
-    reflections.forEach(r => {
+
+    reflections.forEach((r) => {
       fileContent += `## [${r.type}] ${new Date(r.created_at).toLocaleTimeString()}\n`;
       fileContent += `Priority: ${r.priority}\n`;
       fileContent += `${r.content}\n\n---\n\n`;
@@ -762,7 +767,7 @@ router.post(
       user_id: user.id,
       name: fileName,
       content: fileContent,
-      type: "EVOLUTION_LOG"
+      type: "EVOLUTION_LOG",
     });
 
     // 4. Clear Reflections (Limpiar Mesa)
