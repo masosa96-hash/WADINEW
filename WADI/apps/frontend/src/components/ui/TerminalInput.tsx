@@ -1,39 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { type Attachment } from "../../store/chatStore";
 import { useScouter } from "../../hooks/useScouter";
-import { Paperclip } from "lucide-react";
-
-// Fallback icons if lucide not imported/working in this context
-const IconSend = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="m22 2-7 20-4-9-9-4Z" />
-    <path d="M22 2 11 13" />
-  </svg>
-);
-
-const IconAttach = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-  </svg>
-);
+import { Paperclip, X, Image as ImageIcon, Send } from "lucide-react";
 
 interface TerminalInputProps {
   onSendMessage: (text: string, attachments: Attachment[]) => Promise<void>;
@@ -124,26 +92,62 @@ export function TerminalInput({
     setSelectedFile(file);
   };
 
+  // CLIPBOARD PASTE HANDLER
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData.items;
+    for (const item of items) {
+      if (item.type.indexOf("image") !== -1) {
+        e.preventDefault(); // Prevent pasting the "file name" or binary data as text
+        const blob = item.getAsFile();
+        if (blob) {
+          playScanSound();
+          setSelectedFile(blob); // React handles converting Blob to File interface mostly fine
+        }
+        return;
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-2 relative mb-6">
-      {/* File Preview Capsule */}
+      {/* File Preview Toolbar */}
       {selectedFile && (
-        <div className="absolute -top-12 left-0 right-0 flex justify-center animate-enter">
-          <div className="bg-[var(--wadi-surface-active)] backdrop-blur border border-[var(--wadi-primary-dim)] shadow-sm rounded-full px-4 py-1 flex items-center gap-2 text-xs text-[var(--wadi-primary)] font-medium">
-            <Paperclip size={12} className="opacity-50" />
-            <span>{selectedFile.name}</span>
+        <div className="absolute -top-16 left-0 right-0 flex justify-center animate-enter z-20">
+          <div className="bg-[var(--wadi-surface-active)] backdrop-blur-md border border-[var(--wadi-primary-dim)] shadow-lg rounded-2xl p-2 flex items-center gap-3 pr-4">
+            {/* Thumbnail Preview */}
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-black/20 flex items-center justify-center border border-white/10">
+              {selectedFile.type.startsWith("image/") ? (
+                <img
+                  src={URL.createObjectURL(selectedFile)}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Paperclip size={18} className="text-[var(--wadi-primary)]" />
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-[var(--wadi-text)] max-w-[150px] truncate">
+                {selectedFile.name}
+              </span>
+              <span className="text-[10px] text-[var(--wadi-text-tertiary)] uppercase tracking-wider">
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </span>
+            </div>
+
             <button
               onClick={() => setSelectedFile(null)}
-              className="ml-2 hover:bg-[var(--wadi-surface)] rounded-full p-1 transition-colors"
+              className="ml-2 hover:bg-red-500/20 hover:text-red-400 text-[var(--wadi-text-tertiary)] rounded-full p-1.5 transition-colors"
               aria-label="Quitar archivo adjunto"
             >
-              x
+              <X size={14} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Main Input Capsule */}
+      {/* Main Input Bar */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -151,7 +155,20 @@ export function TerminalInput({
         }}
         className="relative w-full group"
       >
-        <div className="w-full rounded-full bg-[var(--wadi-surface)]/80 backdrop-blur-xl text-[var(--wadi-text)] shadow-lg border border-[var(--wadi-glass-border)] px-4 py-3 flex items-center gap-2 pr-2 overflow-hidden transition-all duration-300 focus-within:shadow-[0_0_20px_var(--wadi-primary-dim)] focus-within:border-[var(--wadi-primary-glow)] hover:border-[var(--wadi-border-hover)]">
+        <div
+          className={`
+          w-full rounded-3xl 
+          bg-[var(--wadi-surface)]/90 backdrop-blur-xl 
+          text-[var(--wadi-text)] 
+          shadow-lg border border-[var(--wadi-glass-border)] 
+          px-2 py-2 
+          flex items-center gap-2 
+          transition-all duration-300 
+          focus-within:shadow-[0_0_25px_var(--wadi-primary-dim)] 
+          focus-within:border-[var(--wadi-primary-glow)] 
+          hover:border-[var(--wadi-border-hover)]
+        `}
+        >
           <input
             type="file"
             ref={fileInputRef}
@@ -161,16 +178,18 @@ export function TerminalInput({
             aria-label="Seleccionar archivo para adjuntar"
           />
 
+          {/* Attach Button */}
           <button
             type="button"
-            className="p-2 text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-primary)] transition-colors rounded-full hover:bg-[var(--wadi-surface-active)]"
+            className="w-10 h-10 flex items-center justify-center text-[var(--wadi-text-tertiary)] hover:text-[var(--wadi-primary)] transition-colors rounded-full hover:bg-[var(--wadi-surface-active)]"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            aria-label="Adjuntar archivo"
+            aria-label="Adjuntar archivo o imagen"
           >
-            <IconAttach />
+            <Paperclip size={20} />
           </button>
 
+          {/* Text Input */}
           <input
             id="wadi-user-input"
             name="userInput"
@@ -178,12 +197,13 @@ export function TerminalInput({
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onPaste={handlePaste} // PASTE HANDLER
             placeholder={
               activeFocus
                 ? "Estamos en un foco activo. ¿Qué opinás?"
-                : "Escribí tu instrucción..."
+                : "Escribí tu instrucción (o pegá una imagen)..."
             }
-            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-secondary)] text-base font-medium h-full min-h-[24px]"
+            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-secondary)] text-base font-medium h-10 px-2"
             autoComplete="off"
             aria-label="Ingrese su mensaje al sistema"
             onKeyDown={(e) => {
@@ -194,17 +214,29 @@ export function TerminalInput({
             }}
           />
 
+          {/* Token/Char Counter (Subtle) */}
+          <div className="hidden sm:block text-[10px] font-mono text-[var(--wadi-text-tertiary)] opacity-40 select-none mr-2">
+            {input.length}
+          </div>
+
+          {/* Send Button */}
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || isLoading}
-            className={`p-2 rounded-full transition-all duration-300 ${
-              input.trim() || selectedFile
-                ? "bg-[var(--wadi-primary)] text-white shadow-md hover:scale-110"
-                : "bg-[var(--wadi-surface-active)] text-[var(--wadi-text-tertiary)]"
-            }`}
-            aria-label="Enviar"
+            className={`
+              w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 
+              ${
+                input.trim() || selectedFile
+                  ? "bg-[var(--wadi-primary)] text-white shadow-md hover:scale-105 hover:bg-[var(--wadi-primary-hover)]"
+                  : "bg-[var(--wadi-surface-active)] text-[var(--wadi-text-tertiary)] cursor-not-allowed"
+              }
+            `}
+            aria-label="Enviar mensaje"
           >
-            <IconSend />
+            <Send
+              size={18}
+              className={input.trim() || selectedFile ? "ml-0.5" : ""}
+            />
           </button>
         </div>
       </form>

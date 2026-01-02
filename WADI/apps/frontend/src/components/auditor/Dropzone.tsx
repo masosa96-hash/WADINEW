@@ -100,7 +100,7 @@ export function Dropzone() {
         <input
           type="file"
           className="absolute inset-0 opacity-0 cursor-pointer"
-          accept=".pdf,.txt,.md"
+          accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp"
           onChange={handleFileSelect}
           aria-label="Seleccionar archivo"
         />
@@ -127,7 +127,7 @@ export function Dropzone() {
                 Arrastrá tus documentos aquí
               </p>
               <p className="text-[10px] text-[var(--wadi-text-muted)] uppercase tracking-wide">
-                PDF, TXT, MD
+                IMÁGENES, PDF, TXT, MD
               </p>
             </div>
           </div>
