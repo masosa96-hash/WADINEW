@@ -29,6 +29,8 @@ export default function ChatPage() {
     loadConversation,
     conversationId: storeConversationId,
     activeFocus,
+    isWadiThinking,
+    subscribeToMessages,
   } = useChatStore();
 
   // Load conversation on mount/param change
@@ -54,6 +56,16 @@ export default function ChatPage() {
     storeConversationId,
     loadConversations,
   ]);
+
+  // Realtime Subscription
+  useEffect(() => {
+    if (storeConversationId) {
+      const unsubscribe = subscribeToMessages(storeConversationId);
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [storeConversationId, subscribeToMessages]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -205,6 +217,14 @@ export default function ChatPage() {
                   </div>
                 );
               })}
+              {isWadiThinking && (
+                <div className="flex justify-start px-4 animate-pulse">
+                  <div className="flex items-center gap-2 p-3 bg-slate-900/50 rounded-xl border border-slate-800 text-xs text-slate-400 font-mono">
+                    <span>🎭</span>
+                    <span>WADI está procesando su desprecio...</span>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} className="h-4" />
             </div>
           )}

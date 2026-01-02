@@ -72,6 +72,9 @@ interface ChatState {
   isPanicMode: boolean; // EMERGENCY OVERRIDE
   isUploading: boolean;
   activeFocus: string | null;
+  isWadiThinking: boolean;
+  wadiError: string | null;
+  timeoutId: ReturnType<typeof setTimeout> | null;
 
   // Gamification
   rank: string;
@@ -148,6 +151,10 @@ interface ChatState {
   clearAllChats: () => Promise<void>;
 
   crystallizeProject: (name: string, description: string) => Promise<boolean>;
+
+  // Realtime Subscription
+  subscribeToMessages: (conversationId: string) => () => void;
+
   // Action to trigger visual alert
   triggerVisualAlert: () => void;
   visualAlertTimestamp: number;
@@ -177,6 +184,9 @@ export const useChatStore = create<ChatState>()(
       isSidebarOpen: false,
       isPanicMode: false,
       isUploading: false,
+      isWadiThinking: false,
+      wadiError: null,
+      timeoutId: null,
       activeFocus: null,
       rank: "GENERADOR_DE_HUMO",
       points: 0,
@@ -624,6 +634,77 @@ export const useChatStore = create<ChatState>()(
         }
       },
 
+      subscribeToMessages: (conversationId: string) => {
+        const channel = supabase
+          .channel(`chat:${conversationId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages",
+              filter: `conversation_id=eq.${conversationId}`,
+            },
+            (payload) => {
+              const newMessage = payload.new as any;
+
+              set((state) => {
+                // Deduplication logic
+                const alreadyExists = state.messages.some(
+                  (m) =>
+                    m.id === newMessage.id ||
+                    (m.role === newMessage.role &&
+                      m.content === newMessage.content &&
+                      // Tight window for optimistic update matching
+                      Math.abs(
+                        new Date(m.created_at || Date.now()).getTime() -
+                          new Date(newMessage.created_at).getTime()
+                      ) < 10000)
+                );
+
+                if (alreadyExists) return state;
+
+                const incomingMsg: Message = {
+                  id: newMessage.id,
+                  content: newMessage.content,
+                  role: newMessage.role,
+                  created_at: newMessage.created_at,
+                };
+
+                // Logic to handle AI thinking state
+                let newThinkingState = state.isWadiThinking;
+                let newTimeoutId = state.timeoutId;
+
+                if (incomingMsg.role === "assistant") {
+                  newThinkingState = false;
+                  if (state.timeoutId) clearTimeout(state.timeoutId);
+                  newTimeoutId = null;
+
+                  useLogStore
+                    .getState()
+                    .addLog(
+                      "Señal neural recibida: WADI ha respondido.",
+                      "success"
+                    );
+                }
+
+                return {
+                  messages: [...state.messages, incomingMsg],
+                  isLoading: false,
+                  isWadiThinking: newThinkingState,
+                  timeoutId: newTimeoutId,
+                  wadiError: null,
+                };
+              });
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      },
+
       admitFailure: async () => {
         try {
           const token = await getToken();
@@ -662,6 +743,21 @@ export const useChatStore = create<ChatState>()(
       sendMessage: async (text: string, attachments: Attachment[] = []) => {
         if (!text.trim() && attachments.length === 0) return null;
 
+        // 1. Safety Timeout setup
+        set({ isWadiThinking: true, wadiError: null });
+
+        const timer = setTimeout(() => {
+          const currentState = get();
+          if (currentState.isWadiThinking) {
+            set({
+              isWadiThinking: false,
+              wadiError:
+                "WADI se quedó mudo. Parece que su desprecio bloqueó la conexión.",
+              isLoading: false,
+            });
+          }
+        }, 10000); // 10s watchdog
+
         // OPTIMISTIC UPDATE START
         const tempId = crypto.randomUUID();
         const userMsg: Message = {
@@ -679,8 +775,10 @@ export const useChatStore = create<ChatState>()(
         set((state) => ({
           messages: [...state.messages, userMsg],
           isLoading: true,
+          isWadiThinking: true,
           error: null,
           hasStarted: true,
+          timeoutId: timer,
         }));
         // OPTIMISTIC UPDATE END
 
@@ -741,9 +839,17 @@ export const useChatStore = create<ChatState>()(
 
           return currentConversationId;
         } catch (err: unknown) {
+          const { timeoutId } = get();
+          if (timeoutId) clearTimeout(timeoutId);
+
           const errorMessage =
             err instanceof Error ? err.message : "An error occurred";
-          set({ isLoading: false, error: errorMessage });
+          set({
+            isLoading: false,
+            error: errorMessage,
+            isWadiThinking: false,
+            timeoutId: null,
+          });
           useLogStore
             .getState()
             .addLog(
