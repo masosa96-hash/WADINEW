@@ -64,6 +64,11 @@
     outline-offset: 2px;
   }
 
+  button:focus-visible {
+    outline: 2px solid #7c2d12; /* wadi-oxide / orange-900 */
+    outline-offset: 2px;
+  }
+
   /* Selection */
   ::selection {
     background: var(--wadi-primary-dim);

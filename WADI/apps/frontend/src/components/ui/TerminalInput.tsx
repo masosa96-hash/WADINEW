@@ -126,6 +126,8 @@ export function TerminalInput({
                 <img
                   src={URL.createObjectURL(selectedFile)}
                   alt="Preview"
+                  width="40"
+                  height="40"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -237,7 +239,7 @@ export function TerminalInput({
                   : "bg-[var(--wadi-surface-active)] text-[var(--wadi-text-tertiary)] cursor-not-allowed"
               }
             `}
-            aria-label="Enviar mensaje"
+            aria-label="Enviar mensaje a WADI"
           >
             <Send
               size={18}

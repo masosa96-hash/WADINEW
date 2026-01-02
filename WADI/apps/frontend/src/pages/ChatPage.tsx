@@ -141,6 +141,7 @@ export default function ChatPage() {
             <button
               onClick={handleNewChat}
               className="group flex items-center space-x-2 px-3 py-1 border border-zinc-800 hover:border-orange-900 transition-colors bg-black/40 backdrop-blur-sm rounded"
+              aria-label="Iniciar nueva sesión"
             >
               <div className="w-1.5 h-1.5 bg-zinc-700 group-hover:bg-orange-900 rotate-45 transition-colors"></div>
               <span className="text-[10px] font-mono tracking-[0.2em] text-zinc-500 group-hover:text-zinc-300 uppercase">
@@ -257,6 +258,7 @@ export default function ChatPage() {
                     <button
                       onClick={retryLastMessage}
                       className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded text-red-300 text-xs font-bold transition-colors uppercase tracking-wider"
+                      aria-label="Reintentar envío"
                     >
                       Reintentar
                     </button>
@@ -277,9 +279,9 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Side Panel (Context - Desktop Only - Subtle) */}
-        <div className="hidden lg:block w-[300px] h-full p-6 pt-24 opacity-40 pointer-events-none select-none transition-opacity duration-1000">
-          <div className="border-l border-slate-200 pl-6 space-y-8 pointer-events-auto">
+        {/* Side Panel (Context - Desktop Only) */}
+        <div className="hidden lg:block w-[300px] h-full p-6 pt-24 transition-opacity duration-1000">
+          <div className="border-l border-slate-200/10 pl-6 space-y-8">
             <div>
               <h2 className="text-[10px] uppercase tracking-widest text-slate-400 mb-2">
                 Estado del Sistema
@@ -296,7 +298,7 @@ export default function ChatPage() {
                 <button
                   onClick={sim.toggle}
                   aria-label="Alternar simulador de usuario"
-                  className={`px-2 py-0.5 rounded font-bold ${sim.isActive ? "bg-green-500/20 text-green-400" : "bg-slate-900 text-white"}`}
+                  className={`px-2 py-0.5 rounded font-bold ${sim.isActive ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-zinc-900 text-zinc-100 border border-zinc-700"}`}
                 >
                   {sim.isActive ? "ON" : "OFF"}
                 </button>
