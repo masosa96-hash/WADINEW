@@ -18,15 +18,19 @@ export function MessageBubble({
 
   return (
     <div
-      className={`flex flex-col mb-4 w-full animate-enter ${isUser ? "items-end" : "items-start"}`}
+      className={`flex w-full mb-6 animate-enter ${isUser ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`max-w-[85%] p-5 rounded-2xl shadow-lg border text-[0.95rem] leading-7 transition-all duration-300 ${
-          isUser
-            ? "bg-[linear-gradient(135deg,rgba(139,92,246,0.1),rgba(139,92,246,0.05))] border-[var(--wadi-primary-dim)] text-[var(--wadi-text)] rounded-tr-sm backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(139,92,246,0.15)]"
-            : "bg-[var(--wadi-surface-glass)] border-[var(--wadi-glass-border)] text-[var(--wadi-text-secondary)] rounded-tl-sm backdrop-blur-xl hover:border-[var(--wadi-border-hover)]"
+        className={`max-w-[85%] px-5 py-4 border-l-2 shadow-sm transition-all duration-300 ${
+          !isUser
+            ? "bg-stone-900/90 border-zinc-500 text-stone-300 rounded-r-xl rounded-tl-sm backdrop-blur-sm shadow-[4px_4px_10px_rgba(0,0,0,0.2)]"
+            : "bg-zinc-800/90 border-orange-900/50 text-zinc-300 rounded-l-xl rounded-tr-sm backdrop-blur-sm shadow-[4px_4px_10px_rgba(0,0,0,0.2)]"
         }`}
       >
+        {/* Role Identifier */}
+        <span className="text-[10px] uppercase tracking-[0.2em] font-mono opacity-40 block mb-3 border-b border-white/5 pb-1 select-none">
+          {!isUser ? "◈ WADI / Erudito" : "◈ Humano"}
+        </span>
         {/* Render Attachments */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-col gap-2 mb-3">
@@ -65,48 +69,51 @@ export function MessageBubble({
           </div>
         )}
 
-        {isUser ? (
-          <div className="whitespace-pre-wrap">{content}</div>
-        ) : (
-          <div>
-            {content.split(/(?=^#{1,3}\s)/m).map((block, i) => {
-              // Simple markdown header parsing for WADI structure
-              const match = block.match(/^(#{1,3})\s+(.+)(\r?\n|$)/);
-              if (match) {
-                const title = match[2].trim();
-                const body = block.replace(match[0], "").trim();
+        <div className="font-serif italic leading-relaxed text-[0.95rem]">
+          {isUser ? (
+            <div className="whitespace-pre-wrap">"{content}"</div>
+          ) : (
+            <div>
+              {content.split(/(?=^#{1,3}\s)/m).map((block, i) => {
+                // Simple markdown header parsing for WADI structure
+                const match = block.match(/^(#{1,3})\s+(.+)(\r?\n|$)/);
+                if (match) {
+                  const title = match[2].trim();
+                  const body = block.replace(match[0], "").trim();
+                  return (
+                    <div key={i} className="mb-5 last:mb-0 group">
+                      <div className="font-display font-semibold text-[1.1em] mb-2 text-[var(--wadi-text)] tracking-tight border-b border-[var(--wadi-primary-dim)] pb-1 w-fit group-hover:text-[var(--wadi-primary)] transition-colors">
+                        {title}
+                      </div>
+                      <div className="whitespace-pre-wrap text-[var(--wadi-text-secondary)] font-light opacity-95">
+                        {body}
+                      </div>
+                    </div>
+                  );
+                }
                 return (
-                  <div key={i} className="mb-5 last:mb-0 group">
-                    <div className="font-display font-semibold text-[1.1em] mb-2 text-[var(--wadi-text)] tracking-tight border-b border-[var(--wadi-primary-dim)] pb-1 w-fit group-hover:text-[var(--wadi-primary)] transition-colors">
-                      {title}
-                    </div>
-                    <div className="whitespace-pre-wrap text-[var(--wadi-text-secondary)] font-light opacity-95">
-                      {body}
-                    </div>
+                  <div
+                    key={i}
+                    className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-secondary)]"
+                  >
+                    {block.trim()}
                   </div>
                 );
-              }
-              return (
-                <div
-                  key={i}
-                  className="whitespace-pre-wrap leading-relaxed text-[var(--wadi-text-secondary)]"
-                >
-                  {block.trim()}
-                </div>
-              );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Minimalist Time inside bubble */}
+        {timestamp && (
+          <span className="text-[9px] mt-3 block text-right opacity-30 font-mono tracking-widest select-none">
+            {new Date(timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
             })}
-          </div>
+          </span>
         )}
       </div>
-
-      {timestamp && (
-        <span className="text-[10px] text-[var(--wadi-text-tertiary)] px-2 mt-1 font-medium tracking-wide">
-          {new Date(timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
-      )}
     </div>
   );
 }

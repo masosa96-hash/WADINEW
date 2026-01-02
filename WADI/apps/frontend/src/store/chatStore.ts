@@ -157,6 +157,7 @@ interface ChatState {
   clearAllChats: () => Promise<void>;
 
   crystallizeProject: (name: string, description: string) => Promise<boolean>;
+  startNewChat: () => void;
 
   // Realtime Subscription
   subscribeToMessages: (conversationId: string) => () => void;
@@ -598,6 +599,22 @@ export const useChatStore = create<ChatState>()(
           else log("Error desconocido en subida.", "error");
           return null;
         }
+      },
+
+      startNewChat: () => {
+        set({
+          messages: [],
+          conversationId: null,
+          wadiError: null,
+          isWadiThinking: false,
+          lastMessageData: null,
+        });
+        useLogStore
+          .getState()
+          .addLog(
+            "WADI: 'Memoria despejada. Amnesia selectiva aplicada.'",
+            "info"
+          );
       },
 
       crystallizeProject: async (name: string, description: string) => {

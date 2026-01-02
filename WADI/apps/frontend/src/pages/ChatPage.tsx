@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useLayoutEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useChatStore, type Attachment } from "../store/chatStore";
 import { useStoreHydration } from "../hooks/useStoreHydration";
@@ -16,6 +16,7 @@ import { WadiTheme } from "../theme/wadi-theme";
 
 export default function ChatPage() {
   const { conversationId } = useParams();
+  const navigate = useNavigate();
   const hydrated = useStoreHydration();
   // Simulator Hook
   const sim = useUserSimulator();
@@ -33,6 +34,7 @@ export default function ChatPage() {
     subscribeToMessages,
     wadiError,
     retryLastMessage,
+    startNewChat,
   } = useChatStore();
 
   // Load conversation on mount/param change
@@ -68,6 +70,11 @@ export default function ChatPage() {
       };
     }
   }, [storeConversationId, subscribeToMessages]);
+
+  const handleNewChat = () => {
+    startNewChat();
+    navigate("/");
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -129,6 +136,19 @@ export default function ChatPage() {
       <div className="flex h-full max-w-7xl mx-auto w-full gap-4 pt-16 md:pt-4 px-2 md:px-0">
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col h-full relative z-10 transition-all duration-500">
+          {/* Top Actions Bar (Industrial) */}
+          <div className="absolute top-2 right-4 z-50">
+            <button
+              onClick={handleNewChat}
+              className="group flex items-center space-x-2 px-3 py-1 border border-zinc-800 hover:border-orange-900 transition-colors bg-black/40 backdrop-blur-sm rounded"
+            >
+              <div className="w-1.5 h-1.5 bg-zinc-700 group-hover:bg-orange-900 rotate-45 transition-colors"></div>
+              <span className="text-[10px] font-mono tracking-[0.2em] text-zinc-500 group-hover:text-zinc-300 uppercase">
+                Nueva Sesión
+              </span>
+            </button>
+          </div>
+
           {!hasMessages ? (
             // WADI MODERN EMPTY STATE
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-enter">
