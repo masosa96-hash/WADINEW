@@ -102,6 +102,7 @@ export function Dropzone() {
           className="absolute inset-0 opacity-0 cursor-pointer"
           accept=".pdf,.txt,.md"
           onChange={handleFileSelect}
+          aria-label="Seleccionar archivo"
         />
 
         {isUploading ? (
