@@ -10,6 +10,7 @@ import { AuditorHeader } from "../components/auditor/AuditorHeader";
 import { DataDeconstructor } from "../components/auditor/DataDeconstructor";
 import { Dropzone } from "../components/auditor/Dropzone";
 import { MessageBubble } from "../components/MessageBubble";
+import { WadiTheme } from "../theme/wadi-theme";
 
 export default function ChatPage() {
   const { conversationId } = useParams();
@@ -102,16 +103,24 @@ export default function ChatPage() {
             // WADI MODERN EMPTY STATE
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-enter">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-[var(--wadi-surface)] backdrop-blur-xl border border-[var(--wadi-border)] shadow-[0_0_40px_var(--wadi-primary-dim)] flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--wadi-primary)] to-[var(--wadi-accent)] opacity-80 animate-pulse-soft"></div>
+                <div
+                  className={`w-24 h-24 ${WadiTheme.layout.radiusFull} ${WadiTheme.effects.glass} ${WadiTheme.effects.glowMain} flex items-center justify-center transition-transform group-hover:scale-105 duration-500`}
+                >
+                  <div
+                    className={`w-16 h-16 ${WadiTheme.layout.radiusFull} ${WadiTheme.gradients.logo} opacity-80 ${WadiTheme.effects.pulseSoft}`}
+                  ></div>
                 </div>
               </div>
 
               <div className="text-center space-y-4 max-w-md px-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-[var(--wadi-text)] tracking-tight font-mono">
+                <h1
+                  className={`text-2xl md:text-3xl ${WadiTheme.typography.display} text-[var(--wadi-text)] ${WadiTheme.typography.mono}`}
+                >
                   WADI
                 </h1>
-                <p className="text-sm md:text-base leading-relaxed text-[var(--wadi-text-secondary)] font-mono">
+                <p
+                  className={`text-sm md:text-base leading-relaxed text-[var(--wadi-text-secondary)] ${WadiTheme.typography.mono}`}
+                >
                   "Si buscás que te den la razón, ni te gastes. No nos vamos a
                   querer. ¿Qué sale?"
                 </p>

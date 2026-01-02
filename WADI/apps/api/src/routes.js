@@ -13,23 +13,11 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse");
 import { wadiPreFlight } from "./layers/human_pattern/index.js";
+import { authenticate, authorize } from "./middleware/auth.js";
 
 const router = Router();
 
-// Helper: Verify Auth Token via Supabase
-const getAuthenticatedUser = async (req) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
-  const token = authHeader.replace("Bearer ", "");
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
-
-  if (error || !user) return null;
-  return user;
-};
+// Helper: Authenticated User extraction is now handled by middleware (req.user)
 
 // Helper: Async Wrapper
 const asyncHandler = (fn) => (req, res, next) => {
@@ -98,9 +86,9 @@ const calculateRank = (points) => {
 
 router.get(
   "/user/criminal-summary",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
-    if (!user) throw new AuthError("Authentication required");
+    const user = req.user;
 
     const { data: audits } = await supabase
       .from("messages")
@@ -128,9 +116,9 @@ router.get(
 
 router.post(
   "/user/admit-failure",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
-    if (!user) throw new AuthError("Authentication required");
+    const user = req.user;
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -162,9 +150,10 @@ const guestSessions = new Map();
 
 router.post(
   "/chat",
+  authenticate(true),
   validateChatInput,
   asyncHandler(async (req, res) => {
-    let user = await getAuthenticatedUser(req);
+    let user = req.user;
 
     // Guest Mode: If no user, user stays null, but we proceed carefully.
     const {
@@ -417,10 +406,10 @@ router.post(
 );
 
 // --- PROYECTOS (Simplificados) ---
-router.get(
   "/projects",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
+    const user = req.user;
     const { data } = await supabase
       .from("projects")
       .select("*")
@@ -432,9 +421,10 @@ router.get(
 
 router.post(
   "/projects",
+  authenticate(),
   validateProjectInput,
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
+    const user = req.user;
     const { data } = await supabase
       .from("projects")
       .insert([{ ...req.body, user_id: user.id }])
@@ -470,9 +460,9 @@ const generateProjectName = async (description) => {
 
 router.post(
   "/projects/crystallize",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
-    if (!user) throw new AuthError("Authentication required");
+    const user = req.user;
 
     let { name, description } = req.body;
 
@@ -509,8 +499,9 @@ router.post(
 
 router.delete(
   "/projects/:id",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
+    const user = req.user;
     await supabase
       .from("projects")
       .delete()
@@ -523,8 +514,9 @@ router.delete(
 // Conversations list
 router.get(
   "/conversations",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
+    const user = req.user;
     const { data } = await supabase
       .from("conversations")
       .select("*")
@@ -536,8 +528,9 @@ router.get(
 
 router.delete(
   "/conversations/:id",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
+    const user = req.user;
     await supabase
       .from("conversations")
       .delete()
@@ -550,9 +543,9 @@ router.delete(
 // 1.6 Get Single Conversation (with messages)
 router.get(
   "/conversations/:id",
+  authenticate(),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
-    if (!user) throw new AuthError("Authentication required");
+    const user = req.user;
     const { id } = req.params;
 
     // Obtener metadatos de la conversación
@@ -585,10 +578,10 @@ router.get(
 // ------------------------------------------------------------------
 router.post(
   "/documents/upload",
+  authenticate(),
   upload.single("file"),
   asyncHandler(async (req, res) => {
-    const user = await getAuthenticatedUser(req);
-    // if (!user) throw new AuthError("Identifíquese antes de subir basura."); // Optional strict auth
+    const user = req.user;
 
     if (!req.file) {
       throw new AppError("No enviaste ningún archivo. ¿Es una broma?", 400);
