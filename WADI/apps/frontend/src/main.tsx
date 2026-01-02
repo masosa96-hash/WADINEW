@@ -52,6 +52,16 @@ if (isStandalone) {
 }
 
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import React from "react";
+import ReactDOM from "react-dom";
+
+// Axe Accessibility Auditing (Dev Only)
+if (import.meta.env.DEV) {
+  import("@axe-core/react").then((axe) => {
+    console.log("[WADI_ACCESS]: Initializing Axe-Core...");
+    axe.default(React, ReactDOM, 1000);
+  });
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
