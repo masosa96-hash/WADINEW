@@ -7,13 +7,11 @@ interface TerminalInputProps {
   onSendMessage: (text: string, attachments: Attachment[]) => Promise<void>;
   isLoading: boolean;
   isDecisionBlocked?: boolean;
-  activeFocus?: string | null;
 }
 
 export function TerminalInput({
   onSendMessage,
   isLoading,
-  activeFocus,
 }: TerminalInputProps) {
   const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -206,11 +204,7 @@ export function TerminalInput({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={handlePaste} // PASTE HANDLER
-            placeholder={
-              activeFocus
-                ? "Estamos en un foco activo. ¿Qué opinás?"
-                : "Escribí tu instrucción (o pegá una imagen)..."
-            }
+            placeholder="Escribí tu instrucción (o pegá una imagen)..."
             className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-secondary)] text-base font-medium h-10 px-2"
             autoComplete="off"
             aria-label="Ingrese su mensaje al sistema"

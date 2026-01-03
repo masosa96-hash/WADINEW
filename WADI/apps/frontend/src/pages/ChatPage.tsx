@@ -29,11 +29,8 @@ export default function ChatPage() {
     resetChat,
     loadConversation,
     conversationId: storeConversationId,
-    activeFocus,
-    isWadiThinking,
+    isTyping, // Replaces isWadiThinking
     subscribeToMessages,
-    wadiError,
-    retryLastMessage,
     startNewChat,
   } = useChatStore();
 
@@ -46,10 +43,7 @@ export default function ChatPage() {
       }
     } else {
       if (storeConversationId) {
-        // PERMANENCE: If we have an active chat in store but are at root, load it instead of resetting.
-        // This prevents data loss on refresh.
         loadConversation(storeConversationId);
-        // Optionally update URL to match
         window.history.replaceState({}, "", `/c/${storeConversationId}`);
       }
     }
@@ -109,18 +103,15 @@ export default function ChatPage() {
     prevMessagesLength.current = newCount;
   }, [messages, shouldAutoScroll]);
 
-  // Handle message sending
   const handleSendMessage = async (
     text: string,
     attachments: Attachment[] = []
   ) => {
     if (!text.trim() && attachments.length === 0) return;
-    const newId = await sendMessage(text, attachments);
-    if (newId && !conversationId) {
-      // If we started a new chat from Home, update URL silently or via navigate
-      // ensure we don't reload page
-      window.history.pushState({}, "", `/c/${newId}`);
-    }
+    await sendMessage(text, attachments);
+    // Navigation is handled in store/realtime update usually, but if needed here:
+    // With current store logic, if we are in 'new' state, store updates activeId.
+    // We can rely on a store listener or just check activeId changes if we wanted.
   };
 
   const hasMessages = messages.length > 0;
@@ -137,10 +128,11 @@ export default function ChatPage() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col h-full relative z-10 transition-all duration-500">
           {/* Top Actions Bar (Industrial) */}
-          <div className="absolute top-2 right-4 z-50">
+          <div className="absolute top-2 right-4 z-50 flex gap-2 p-1 rounded-lg bg-black/40 backdrop-blur-sm border border-zinc-900">
+            {/* Placeholder for future tools if needed */}
             <button
               onClick={handleNewChat}
-              className="group flex items-center space-x-2 px-3 py-1 border border-zinc-800 hover:border-orange-900 transition-colors bg-black/40 backdrop-blur-sm rounded"
+              className="group flex items-center space-x-2 px-3 py-1 border border-zinc-800 hover:border-orange-900 transition-colors bg-transparent rounded"
               aria-label="Iniciar nueva sesión"
             >
               <div className="w-1.5 h-1.5 bg-zinc-700 group-hover:bg-orange-900 rotate-45 transition-colors"></div>
@@ -240,7 +232,7 @@ export default function ChatPage() {
                   </div>
                 );
               })}
-              {isWadiThinking && (
+              {isTyping && (
                 <div className="flex justify-start px-4 animate-pulse">
                   <div className="flex items-center gap-2 p-3 bg-slate-900/50 rounded-xl border border-slate-800 text-xs text-slate-400 font-mono">
                     <span>🎭</span>
@@ -249,22 +241,6 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {wadiError && (
-                <div className="flex justify-center px-4 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-3 max-w-md w-full flex items-center justify-between gap-4">
-                    <span className="text-red-200 text-xs font-mono">
-                      ⚠️ {wadiError}
-                    </span>
-                    <button
-                      onClick={retryLastMessage}
-                      className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded text-red-300 text-xs font-bold transition-colors uppercase tracking-wider"
-                      aria-label="Reintentar envío"
-                    >
-                      Reintentar
-                    </button>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} className="h-4" />
             </div>
           )}
@@ -274,7 +250,6 @@ export default function ChatPage() {
             <TerminalInput
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
-              activeFocus={activeFocus}
             />
           </div>
         </div>

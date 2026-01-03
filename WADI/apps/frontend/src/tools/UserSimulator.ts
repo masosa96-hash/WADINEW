@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useChatStore, API_URL } from "../store/chatStore";
+import { useChatStore } from "../store/chatStore";
 import { supabase } from "../config/supabase";
+
+const rawUrl = import.meta.env.VITE_API_URL;
+const API_URL = rawUrl
+  ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
+  : "https://wadi-wxg7.onrender.com";
 
 const TEST_PROMPTS = [
   { text: "Hola WADI, ¿cómo estás?", type: "GREETING" },
@@ -16,13 +21,13 @@ const TEST_PROMPTS = [
 ];
 
 export function useUserSimulator() {
-  const { sendMessage, isLoading, rank } = useChatStore();
+  const { sendMessage, isLoading } = useChatStore();
   const [isActive, setIsActive] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [stats, setStats] = useState({
     latency: 0,
     messagesSent: 0,
-    rankStart: rank,
+    rankStart: "USER",
   });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
