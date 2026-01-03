@@ -32,6 +32,9 @@ const app = express();
 // --------------------------------------------------
 // SECURITY: CSP (Content Security Policy)
 // --------------------------------------------------
+app.use(
+  helmet({
+    contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'", "https://wadi-wxg7.onrender.com"],
         scriptSrc: [
