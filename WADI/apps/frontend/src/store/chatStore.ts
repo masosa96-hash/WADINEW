@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "../config/supabase";
 import { useLogStore } from "./logStore";
+import imageCompression from "browser-image-compression";
 
 const rawUrl = import.meta.env.VITE_API_URL;
 const API_URL = rawUrl
@@ -42,10 +43,13 @@ interface ChatState {
   // Actions
   fetchConversations: () => Promise<void>;
   openConversation: (id: string, initialTitle?: string) => Promise<void>;
-  startNewConversation: (initialTitle?: string) => Promise<string | null>; // Updated signature
+  startNewConversation: (initialTitle?: string) => Promise<string | null>;
   sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   deleteSelectedConversations: (ids?: string[]) => Promise<void>;
+
+  uploadFile: (file: File) => Promise<Attachment | null>;
+  subscribeToMessages: (conversationId: string) => () => void;
 
   // UI Actions
   toggleSidebar: () => void;
@@ -58,8 +62,10 @@ interface ChatState {
 
   // Deprecated/Legacy compatibility aliases
   isWadiThinking: boolean;
-  conversationId: string | null; // For compatibility
-  startNewChat: () => void; // Alias for compatibility
+  conversationId: string | null;
+  startNewChat: () => void;
+  loadConversations: () => Promise<void>;
+  loadConversation: (id: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -70,7 +76,7 @@ export const useChatStore = create<ChatState>()(
       activeId: null,
       get conversationId() {
         return get().activeId;
-      }, // Getter alias
+      },
       conversationTitle: null,
       isLoading: false,
       isTyping: false,
@@ -102,6 +108,10 @@ export const useChatStore = create<ChatState>()(
         set({ conversations: data || [] });
       },
 
+      loadConversations: async () => {
+        return get().fetchConversations();
+      },
+
       openConversation: async (id: string, initialTitle?: string) => {
         set({
           activeId: id,
@@ -123,7 +133,10 @@ export const useChatStore = create<ChatState>()(
         }
       },
 
-      // Updated to match previous signature more closely if components rely on it returning promise string
+      loadConversation: async (id: string) => {
+        return get().openConversation(id);
+      },
+
       startNewConversation: async (initialTitle?: string) => {
         set({
           activeId: null,
@@ -172,9 +185,7 @@ export const useChatStore = create<ChatState>()(
               set({ activeId: data.conversationId });
               get().fetchConversations();
             }
-            // Trigger immediate refresh or wait for realtime
             if (activeId || data.conversationId) {
-              // A simple re-fetch of messages could be done here or handled by realtime component
               const convId = activeId || data.conversationId;
               const { data: msgs } = await supabase
                 .from("messages")
@@ -249,6 +260,125 @@ export const useChatStore = create<ChatState>()(
           await supabase.from("conversations").delete().eq("user_id", user.id);
           set({ conversations: [], messages: [], activeId: null });
         }
+      },
+
+      uploadFile: async (file: File) => {
+        set({ isUploading: true });
+        const log = useLogStore.getState().addLog;
+        log(`Iniciando procesamiento de archivo: ${file.name}`, "process");
+
+        try {
+          const chatId = get().activeId || "new";
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${chatId}/${Date.now()}.${fileExt}`;
+
+          let fileToUpload = file;
+
+          if (file.type.startsWith("image/")) {
+            log(
+              "Detectada imagen. Iniciando compresión inteligente...",
+              "process"
+            );
+            try {
+              const options = {
+                maxSizeMB: 1.5,
+                maxWidthOrHeight: 1920,
+              };
+              const compressedFile = await imageCompression(file, options);
+              fileToUpload = new File([compressedFile], file.name, {
+                type: compressedFile.type,
+              });
+              log(
+                `Compresión finalizada. ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`,
+                "success"
+              );
+            } catch (cErr) {
+              console.warn("Compression failed, using original file", cErr);
+              log("Fallo en compresión. Usando archivo original.", "warning");
+            }
+          }
+
+          log(`Subiendo ${fileName} a Supabase Storage...`, "info");
+          const { error: uploadError } = await supabase.storage
+            .from("attachments")
+            .upload(fileName, fileToUpload, {
+              cacheControl: "3600",
+              upsert: false,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+            .from("attachments")
+            .getPublicUrl(fileName);
+
+          set({ isUploading: false });
+          log("Subida completada. URL pública generada.", "success");
+
+          return {
+            url: data.publicUrl,
+            name: file.name,
+            type: file.type,
+          };
+        } catch (error) {
+          console.error("Error uploading file:", error);
+          set({ isUploading: false });
+          if (error instanceof Error)
+            log(`Error crítico en subida: ${error.message}`, "error");
+          else log("Error desconocido en subida.", "error");
+          return null;
+        }
+      },
+
+      subscribeToMessages: (conversationId: string) => {
+        const channel = supabase
+          .channel(`chat:${conversationId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages",
+              filter: `conversation_id=eq.${conversationId}`,
+            },
+            (payload) => {
+              const newMessage = payload.new as any;
+              set((state) => {
+                const alreadyExists = state.messages.some(
+                  (m) => m.id === newMessage.id
+                );
+                if (alreadyExists) return state;
+
+                const incomingMsg: Message = {
+                  id: newMessage.id,
+                  content: newMessage.content,
+                  role: newMessage.role,
+                  created_at: newMessage.created_at,
+                };
+
+                let newTypingState = state.isTyping;
+                if (incomingMsg.role === "assistant") {
+                  newTypingState = false;
+                  useLogStore
+                    .getState()
+                    .addLog(
+                      "Señal neural recibida: WADI ha respondido.",
+                      "success"
+                    );
+                }
+
+                return {
+                  messages: [...state.messages, incomingMsg],
+                  isTyping: newTypingState,
+                };
+              });
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
       },
     }),
     {
