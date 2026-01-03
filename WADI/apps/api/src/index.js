@@ -32,12 +32,14 @@ const app = express();
 // --------------------------------------------------
 // SECURITY: CSP (Content Security Policy)
 // --------------------------------------------------
-app.use(
-  helmet({
-    contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.hcaptcha.com"],
+        defaultSrc: ["'self'", "https://wadi-wxg7.onrender.com"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://js.hcaptcha.com",
+          "https://wadi-wxg7.onrender.com",
+        ],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -50,6 +52,7 @@ app.use(
           "blob:",
           "https://*.supabase.co",
           "https://*.supabase.in",
+          "https://wadi-wxg7.onrender.com",
         ],
         fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
         connectSrc: [
@@ -57,12 +60,15 @@ app.use(
           "https://smkbiguvgiscojwxgbae.supabase.co",
           "https://*.supabase.co",
           "https://*.supabase.in",
+          "wss://*.supabase.co",
+          "wss://smkbiguvgiscojwxgbae.supabase.co",
           "https://api.openai.com",
           "https://api.groq.com",
           "https://*.hcaptcha.com",
           "https://hcaptcha.com",
           "https://fonts.googleapis.com",
           "https://fonts.gstatic.com",
+          "https://wadi-wxg7.onrender.com",
         ],
         frameSrc: [
           "'self'",
