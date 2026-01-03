@@ -1,30 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { WadiMood } from "../components/WadiOnboarding";
 import { supabase } from "../config/supabase";
-import imageCompression from "browser-image-compression";
 import { useLogStore } from "./logStore";
 
 const rawUrl = import.meta.env.VITE_API_URL;
-let apiUrl = rawUrl || "https://wadi-wxg7.onrender.com";
+const API_URL = rawUrl
+  ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
+  : "https://wadi-wxg7.onrender.com";
 
-// Runtime check: If we are NOT on localhost, we should NOT call localhost.
-if (
-  typeof window !== "undefined" &&
-  window.location.hostname !== "localhost" &&
-  window.location.hostname !== "127.0.0.1" &&
-  (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1"))
-) {
-  console.warn(
-    "Detected localhost API URL in production/remote. Switching to relative path."
-  );
-  apiUrl = "";
-}
-
-// Make API_URL exported so components can reuse it
-export const API_URL = apiUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
-
-// New Type Definition
 export interface Attachment {
   url: string;
   name: string;
@@ -35,598 +18,191 @@ export interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  attachments?: Attachment[]; // Refactored to Object Array
+  attachments?: Attachment[];
   created_at?: string;
-  diagnosis?: string; // WADI visual tag for user patterns
 }
 
 export interface Conversation {
   id: string;
   title: string;
-  mode: string;
   updated_at: string;
 }
 
-export type ChatMode = "normal" | "tech" | "biz" | "tutor";
-
-export interface Workspace {
-  id: string;
-  name: string;
-  createdAt: string;
-  customPrompt?: string | null;
-  aiModel?: "fast" | "deep";
-  messages: Message[];
-}
-
 interface ChatState {
-  // State
-  messages: Message[];
   conversations: Conversation[];
-  conversationId: string | null;
+  messages: Message[];
+  activeId: string | null;
   conversationTitle: string | null;
   isLoading: boolean;
-  error: string | null;
-  hasStarted: boolean;
-  mood: WadiMood;
-  isSidebarOpen: boolean;
-  isPanicMode: boolean; // EMERGENCY OVERRIDE
+  isTyping: boolean; // isWadiThinking replacement
   isUploading: boolean;
-  activeFocus: string | null;
-  isWadiThinking: boolean;
-  wadiError: string | null;
-  timeoutId: ReturnType<typeof setTimeout> | null;
-  lastMessageData: {
-    content: string;
-    conversationId: string | null;
-    attachments: Attachment[];
-  } | null;
-  retryLastMessage: () => void;
-
-  // Gamification
-  rank: string;
-  points: number;
-  systemDeath: boolean;
-
-  // Criminal Record (Long Term Memory)
-  criminalRecord: {
-    auditCount: number;
-    riskCount: number;
-  };
-
-  // Memory
-  memory: Record<string, string>;
-  remember: (key: string, value: string) => void;
-  recall: () => Record<string, string>;
-  forget: () => void;
-
-  // Workspaces
-  workspaces: Workspace[];
-  activeWorkspaceId: string | null;
-
-  createWorkspace: (name: string) => void;
-  switchWorkspace: (name: string) => boolean;
-  deleteWorkspace: (name: string) => boolean;
-  listWorkspaces: () => Workspace[];
-
-  // Settings for NEW conversation
-  mode: ChatMode;
-  topic: string;
-  explainLevel: "short" | "normal" | "detailed";
+  isSidebarOpen: boolean;
+  selectedIds: string[]; // For bulk actions
 
   // Actions
-  setPreset: (
-    preset: "tech" | "biz" | "learning" | "productivity" | "reflexivo"
-  ) => void;
-  setMood: (mood: WadiMood) => void;
-  toggleSidebar: () => void;
-  setSidebarOpen: (isOpen: boolean) => void;
-  togglePanicMode: () => void;
-  setPanicMode: (isPanic: boolean) => void;
-
-  setExplainLevel: (level: "short" | "normal" | "detailed") => void;
-
   fetchConversations: () => Promise<void>;
-  fetchCriminalSummary: () => Promise<void>;
-  startNewConversation: (initialTitle?: string) => Promise<string | null>;
-  loadConversations: () => Promise<void>;
-  openConversation: (id: string) => Promise<void>;
-  loadConversation: (id: string) => Promise<void>;
-  uploadFile: (file: File) => Promise<Attachment | null>;
-  sendMessage: (
-    text: string,
-    attachments?: Attachment[]
-  ) => Promise<string | null>;
+  openConversation: (id: string, initialTitle?: string) => Promise<void>;
+  startNewConversation: (initialTitle?: string) => Promise<string | null>; // Updated signature
+  sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
-  resetChat: () => void;
-  admitFailure: () => Promise<void>;
-  // Settings
-  settings: {
-    sarcasmLevel: number; // 0 (Soft) to 100 (Nuclear)
-    theme: "light" | "dark" | "system";
-    language: "es" | "en";
-    defaultMode: ChatMode;
-  };
-  aiModel: "fast" | "deep";
-  customSystemPrompt: string | null;
-
-  updateSettings: (settings: Partial<ChatState["settings"]>) => void;
-  setAiModel: (model: "fast" | "deep") => void;
-  setCustomSystemPrompt: (prompt: string | null) => void;
-  getSystemPrompt: () => Promise<string>;
-  exportData: () => Promise<void>;
-  clearAllChats: () => Promise<void>;
-
-  crystallizeProject: (name: string, description: string) => Promise<boolean>;
-  startNewChat: () => void;
-
-  // Bulk Actions
-  selectedIds: string[];
-  toggleSelection: (id: string) => void;
-  selectAll: () => void;
   deleteSelectedConversations: (ids?: string[]) => Promise<void>;
 
-  // Realtime Subscription
-  subscribeToMessages: (conversationId: string) => () => void;
+  // UI Actions
+  toggleSidebar: () => void;
+  setSidebarOpen: (isOpen: boolean) => void;
+  toggleSelection: (id: string) => void;
+  selectAll: () => void;
 
-  // Action to trigger visual alert
-  triggerVisualAlert: () => void;
-  visualAlertTimestamp: number;
-  triggerScorn: () => void;
-  scornTimestamp: number;
+  resetChat: () => void;
+  wipeChatData: () => Promise<void>;
+
+  // Deprecated/Legacy compatibility aliases
+  isWadiThinking: boolean;
+  conversationId: string | null; // For compatibility
+  startNewChat: () => void; // Alias for compatibility
 }
-
-// Helper to get token
-const getToken = async () => {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token;
-};
 
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
-      // Default State
-      messages: [],
       conversations: [],
-      conversationId: null,
+      messages: [],
+      activeId: null,
+      get conversationId() {
+        return get().activeId;
+      }, // Getter alias
       conversationTitle: null,
       isLoading: false,
-      error: null,
-      hasStarted: false,
-      mood: "hostile",
-
-      isSidebarOpen: false,
-      isPanicMode: false,
+      isTyping: false,
       isUploading: false,
-      isWadiThinking: false,
-      wadiError: null,
-      timeoutId: null,
-      lastMessageData: null,
+      isSidebarOpen: false,
       selectedIds: [],
-      activeFocus: null,
-      rank: "GENERADOR_DE_HUMO",
-      points: 0,
-      systemDeath: false,
-      criminalRecord: { auditCount: 0, riskCount: 0 },
 
-      // Memory Init
-      memory: {},
-      remember: (key, value) =>
-        set((state) => ({
-          memory: { ...state.memory, [key]: value },
-        })),
-      recall: () => get().memory,
-      forget: () => set({ memory: {} }),
-
-      mode: "normal",
-      topic: "general",
-      explainLevel: "normal",
-      visualAlertTimestamp: 0,
-      scornTimestamp: 0,
-
-      // Settings Defaults
-      aiModel: "fast",
-      customSystemPrompt: null,
-      settings: {
-        sarcasmLevel: 50,
-        theme: "dark",
-        language: "es",
-        defaultMode: "normal",
+      // Aliases
+      get isWadiThinking() {
+        return get().isTyping;
       },
-
-      // Workspaces Init
-      workspaces: [],
-      activeWorkspaceId: null,
 
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
       setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
 
-      togglePanicMode: () =>
-        set((state) => ({ isPanicMode: !state.isPanicMode })),
-      setPanicMode: (isPanic) => set({ isPanicMode: isPanic }),
+      fetchConversations: async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
 
-      createWorkspace: (name) => {
-        const newWorkspace: Workspace = {
-          id: crypto.randomUUID(),
-          name,
-          createdAt: new Date().toISOString(),
-          customPrompt: get().customSystemPrompt,
-          aiModel: get().aiModel,
-          messages: get().messages,
-        };
-        set((state) => ({
-          workspaces: [...state.workspaces, newWorkspace],
-          activeWorkspaceId: newWorkspace.id,
-        }));
+        const { data } = await supabase
+          .from("conversations")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("updated_at", { ascending: false });
+
+        set({ conversations: data || [] });
       },
 
-      switchWorkspace: (name) => {
-        const state = get();
-        // 1. Save current state to active workspace before switching?
-        // Ideally we auto-save on change, but for now let's just find target.
-
-        const target = state.workspaces.find((w) => w.name === name);
-        if (!target) return false;
-
-        // If there was an active workspace, update it first
-        if (state.activeWorkspaceId) {
-          const updatedWorkspaces = state.workspaces.map((w) => {
-            if (w.id === state.activeWorkspaceId) {
-              return {
-                ...w,
-                messages: state.messages,
-                customPrompt: state.customSystemPrompt,
-                aiModel: state.aiModel,
-              };
-            }
-            return w;
-          });
-          set({ workspaces: updatedWorkspaces });
-        }
-
-        // Load target
+      openConversation: async (id: string, initialTitle?: string) => {
         set({
-          activeWorkspaceId: target.id,
-          messages: target.messages,
-          customSystemPrompt: target.customPrompt || null,
-          aiModel: target.aiModel || "fast",
-          // Reset conversation ID to avoid sync conflicts with backend for now
-          conversationId: null,
-        });
-        return true;
-      },
-
-      deleteWorkspace: (name) => {
-        const state = get();
-        const target = state.workspaces.find((w) => w.name === name);
-        if (!target) return false;
-
-        const remaining = state.workspaces.filter((w) => w.id !== target.id);
-
-        // If we deleted the active one, revert to default "no workspace" state
-        if (state.activeWorkspaceId === target.id) {
-          set({
-            activeWorkspaceId: null,
-            workspaces: remaining,
-            // Optional: clear messages or keep them as "detached"
-          });
-        } else {
-          set({ workspaces: remaining });
-        }
-        return true;
-      },
-
-      listWorkspaces: () => get().workspaces,
-
-      triggerVisualAlert: () => set({ visualAlertTimestamp: Date.now() }),
-      triggerScorn: () => set({ scornTimestamp: Date.now() }),
-
-      updateSettings: (newSettings) => {
-        // SIDE EFFECT: Theme Application
-        if (newSettings.theme) {
-          const root = window.document.documentElement;
-          const themeToApply =
-            newSettings.theme === "system"
-              ? window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light"
-              : newSettings.theme;
-
-          if (themeToApply === "dark") {
-            root.classList.add("dark");
-          } else {
-            root.classList.remove("dark");
-          }
-        }
-
-        set((state) => ({ settings: { ...state.settings, ...newSettings } }));
-      },
-      setAiModel: (model) => set({ aiModel: model }),
-      setCustomSystemPrompt: (prompt) => set({ customSystemPrompt: prompt }),
-
-      getSystemPrompt: async () => {
-        const state = get();
-        // If we have a custom override, return that
-        if (state.customSystemPrompt) return state.customSystemPrompt;
-
-        try {
-          const token = await getToken();
-          // We call the debug endpoint
-          const res = await fetch(`${API_URL}/api/debug/system-prompt`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: JSON.stringify({
-              mode: state.mode,
-              topic: state.topic,
-              explainLevel: state.explainLevel,
-              isMobile: window.innerWidth < 1024,
-              messageCount: state.messages.length,
-            }),
-          });
-          const data = await res.json();
-          return data.prompt || "Error fetching prompt";
-        } catch (e) {
-          console.warn("Failed to fetch system prompt:", e);
-          return "Error retrieving system prompt.";
-        }
-      },
-
-      exportData: async () => {
-        const state = get();
-        const data = {
-          conversations: state.conversations,
-          profile: { rank: state.rank, points: state.points },
-          settings: state.settings,
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `wadi_export_${new Date().toISOString().split("T")[0]}.json`;
-        a.click();
-      },
-
-      clearAllChats: async () => {
-        try {
-          const token = await getToken();
-          if (!token) return;
-          // We'll iterate and delete for now, or assume backend has a bulk delete (it doesn't yet, so careful)
-          // Ideally we create a bulk delete endpoint, but for this step we will iterate locally or clear local state.
-          const convs = get().conversations;
-          for (const c of convs) {
-            await fetch(`${API_URL}/api/conversations/${c.id}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-          get().resetChat();
-          set({ conversations: [] });
-        } catch (e) {
-          console.error("Failed to clear chats", e);
-        }
-      },
-
-      setPreset: (preset) =>
-        set((state) => {
-          switch (preset) {
-            case "tech":
-              return {
-                ...state,
-                mode: "tech",
-                topic: "general",
-                explainLevel: "normal",
-              };
-            case "biz":
-              return {
-                ...state,
-                mode: "biz",
-                topic: "negocios",
-                explainLevel: "normal",
-              };
-            case "learning":
-              return {
-                ...state,
-                mode: "tutor",
-                topic: "aprendizaje",
-                explainLevel: "detailed",
-              };
-            case "productivity":
-              return {
-                ...state,
-                mode: "normal",
-                topic: "productividad",
-                explainLevel: "short",
-              };
-            case "reflexivo":
-              return {
-                ...state,
-                mode: "normal",
-                topic: "general",
-                explainLevel: "normal",
-              };
-            default:
-              return state;
-          }
-        }),
-
-      setMood: (mood) => set({ mood }),
-
-      setExplainLevel: (level) => set({ explainLevel: level }),
-
-      resetChat: () =>
-        set({
-          conversationId: null,
-          conversationTitle: null,
-          messages: [],
-          error: null,
-          hasStarted: false,
-        }),
-
-      startNewConversation: async (initialTitle?: string) => {
-        set({
-          conversationId: null,
+          activeId: id,
           conversationTitle: initialTitle || null,
           messages: [],
-          error: null,
-          isLoading: false,
+          isLoading: true,
+        });
+
+        const { data: messages, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("conversation_id", id)
+          .order("created_at", { ascending: true });
+
+        if (!error && messages) {
+          set({ messages: messages as Message[], isLoading: false });
+        } else {
+          set({ isLoading: false });
+        }
+      },
+
+      // Updated to match previous signature more closely if components rely on it returning promise string
+      startNewConversation: async (initialTitle?: string) => {
+        set({
+          activeId: null,
+          conversationTitle: initialTitle || null,
+          messages: [],
+          isTyping: false,
         });
         return null;
       },
 
-      fetchConversations: async () => {
-        try {
-          const token = await getToken();
-          if (!token) return;
-
-          const res = await fetch(`${API_URL}/api/conversations`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!res.ok) throw new Error("Failed to fetch conversations");
-          const data = await res.json();
-          set({ conversations: data });
-        } catch (err) {
-          console.error(err);
-        }
+      startNewChat: () => {
+        set({
+          activeId: null,
+          conversationTitle: null,
+          messages: [],
+          isTyping: false,
+        });
       },
 
-      loadConversations: async () => {
-        return get().fetchConversations();
-      },
+      sendMessage: async (content: string, attachments: Attachment[] = []) => {
+        const { activeId } = get();
+        set({ isTyping: true });
 
-      fetchCriminalSummary: async () => {
-        try {
-          const token = await getToken();
-          if (!token) return;
-          const res = await fetch(`${API_URL}/api/user/criminal-summary`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            set({
-              criminalRecord: {
-                auditCount: data.totalAudits,
-                riskCount: data.totalHighRisks,
-              },
-            });
-          }
-        } catch (e) {
-          console.warn("Failed to fetch criminal record", e);
-        }
-      },
-
-      openConversation: async (id: string) => {
-        try {
-          set({
-            isLoading: true,
-            error: null,
-            conversationId: id,
-            messages: [],
-          });
-          const token = await getToken();
-          if (!token) return;
-
-          const res = await fetch(`${API_URL}/api/conversations/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (!res.ok) {
-            throw new Error("Failed to load conversation");
-          }
-
-          const data = await res.json();
-          set({
-            messages: data.messages || [],
-            conversationTitle: data.title,
-            mode: data.mode as ChatMode,
-            explainLevel: data.explain_level,
-            isLoading: false,
-            hasStarted: data.messages && data.messages.length > 0,
-          });
-        } catch (err: unknown) {
-          console.error(err);
-          set({ isLoading: false, hasStarted: false });
-        }
-      },
-
-      loadConversation: async (id: string) => {
-        return get().openConversation(id);
-      },
-
-      uploadFile: async (file: File) => {
-        set({ isUploading: true });
-        const log = useLogStore.getState().addLog;
-        log(`Iniciando procesamiento de archivo: ${file.name}`, "process");
+        const token = (await supabase.auth.getSession()).data.session
+          ?.access_token;
+        if (!token) return;
 
         try {
-          const chatId = get().conversationId || "new";
-          const fileExt = file.name.split(".").pop();
-          const fileName = `${chatId}/${Date.now()}.${fileExt}`;
+          const response = await fetch(`${API_URL}/api/chat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              message: content,
+              conversationId: activeId,
+              attachments,
+            }),
+          });
 
-          let fileToUpload = file;
+          const data = await response.json();
 
-          // COMPRESSION LOGIC
-          if (file.type.startsWith("image/")) {
-            log(
-              "Detectada imagen. Iniciando compresión inteligente...",
-              "process"
-            );
-            try {
-              const options = {
-                maxSizeMB: 1.5,
-                maxWidthOrHeight: 1920,
-              };
-              const compressedFile = await imageCompression(file, options);
-              fileToUpload = new File([compressedFile], file.name, {
-                type: compressedFile.type,
-              });
-              log(
-                `Compresión finalizada. ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`,
-                "success"
-              );
-            } catch (cErr) {
-              console.warn("Compression failed, using original file", cErr);
-              log("Fallo en compresión. Usando archivo original.", "warning");
+          if (response.ok) {
+            if (!activeId && data.conversationId) {
+              set({ activeId: data.conversationId });
+              get().fetchConversations();
+            }
+            // Trigger immediate refresh or wait for realtime
+            if (activeId || data.conversationId) {
+              // A simple re-fetch of messages could be done here or handled by realtime component
+              const convId = activeId || data.conversationId;
+              const { data: msgs } = await supabase
+                .from("messages")
+                .select("*")
+                .eq("conversation_id", convId)
+                .order("created_at", { ascending: true });
+              if (msgs) set({ messages: msgs as Message[] });
             }
           }
-
-          log(`Subiendo ${fileName} a Supabase Storage...`, "info");
-          const { error: uploadError } = await supabase.storage
-            .from("attachments")
-            .upload(fileName, fileToUpload, {
-              cacheControl: "3600",
-              upsert: false,
-            });
-
-          if (uploadError) throw uploadError;
-
-          const { data } = supabase.storage
-            .from("attachments")
-            .getPublicUrl(fileName);
-
-          set({ isUploading: false });
-          log("Subida completada. URL pública generada.", "success");
-
-          return {
-            url: data.publicUrl,
-            name: file.name,
-            type: file.type,
-          };
         } catch (error) {
-          console.error("Error uploading file:", error);
-          set({ isUploading: false, error: "Error al subir archivo." });
-          if (error instanceof Error)
-            log(`Error crítico en subida: ${error.message}`, "error");
-          else log("Error desconocido en subida.", "error");
-          return null;
+          console.error("Error sending message:", error);
+          useLogStore
+            .getState()
+            .addLog("Error enviando mensaje al cerebro.", "error");
+        } finally {
+          set({ isTyping: false });
         }
       },
 
-      // Bulk Actions Implementation
+      deleteConversation: async (id: string) => {
+        await supabase.from("conversations").delete().eq("id", id);
+        set((state) => ({
+          conversations: state.conversations.filter((c) => c.id !== id),
+          activeId: state.activeId === id ? null : state.activeId,
+          messages: state.activeId === id ? [] : state.messages,
+        }));
+      },
+
       toggleSelection: (id) => {
         const { selectedIds } = get();
         const newSelection = selectedIds.includes(id)
@@ -642,391 +218,44 @@ export const useChatStore = create<ChatState>()(
 
       deleteSelectedConversations: async (ids?: string[]) => {
         const { selectedIds } = get();
-        // Use passed IDs or fallback to selectedIds
         const validIds = ids && ids.length > 0 ? ids : selectedIds;
-
         if (validIds.length === 0) return;
 
-        try {
-          // Supabase delete using 'in'
-          const { error } = await supabase
-            .from("conversations")
-            .delete()
-            .in("id", validIds);
-
-          if (error) throw error;
-
-          set((state) => ({
-            conversations: state.conversations.filter(
-              (c) => !validIds.includes(c.id)
-            ),
-            // Only clear selection if we used the selection
-            selectedIds: ids ? state.selectedIds : [],
-          }));
-
-          useLogStore
-            .getState()
-            .addLog(
-              "WADI: 'Limpieza profunda completada. Menos ruido, más vacío.'",
-              "info"
-            );
-        } catch (e) {
-          console.error("Error deleting conversations:", e);
-          useLogStore
-            .getState()
-            .addLog("Error al borrar conversaciones.", "error");
-        }
-      },
-
-      startNewChat: () => {
-        set({
-          messages: [],
-          conversationId: null,
-          wadiError: null,
-          isWadiThinking: false,
-          lastMessageData: null,
-        });
-        useLogStore
-          .getState()
-          .addLog(
-            "WADI: 'Memoria despejada. Amnesia selectiva aplicada.'",
-            "info"
-          );
-      },
-
-      crystallizeProject: async (name: string, description: string) => {
-        try {
-          const token = await getToken();
-          if (!token) return false;
-
-          set({ isLoading: true });
-
-          const res = await fetch(`${API_URL}/api/projects/crystallize`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ name, description }),
-          });
-
-          if (!res.ok) throw new Error("Failed to crystallize");
-
-          const data = await res.json();
-
-          // Add System Confirmation
-          const sysMsg: Message = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: `[PROYECTO_CRISTALIZADO: ${data.name}]`,
-            created_at: new Date().toISOString(),
-          };
-
-          set((state) => ({
-            messages: [...state.messages, sysMsg],
-            isLoading: false,
-          }));
-
-          return true;
-        } catch (e) {
-          console.error(e);
-          set({ isLoading: false, error: "Fallo al cristalizar proyecto." });
-          return false;
-        }
-      },
-
-      subscribeToMessages: (conversationId: string) => {
-        const channel = supabase
-          .channel(`chat:${conversationId}`)
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "messages",
-              filter: `conversation_id=eq.${conversationId}`,
-            },
-            (payload) => {
-              const newMessage = payload.new as any;
-
-              set((state) => {
-                // Deduplication logic
-                const alreadyExists = state.messages.some(
-                  (m) =>
-                    m.id === newMessage.id ||
-                    (m.role === newMessage.role &&
-                      m.content === newMessage.content &&
-                      // Tight window for optimistic update matching
-                      Math.abs(
-                        new Date(m.created_at || Date.now()).getTime() -
-                          new Date(newMessage.created_at).getTime()
-                      ) < 10000)
-                );
-
-                if (alreadyExists) return state;
-
-                const incomingMsg: Message = {
-                  id: newMessage.id,
-                  content: newMessage.content,
-                  role: newMessage.role,
-                  created_at: newMessage.created_at,
-                };
-
-                // Logic to handle AI thinking state
-                let newThinkingState = state.isWadiThinking;
-                let newTimeoutId = state.timeoutId;
-
-                if (incomingMsg.role === "assistant") {
-                  newThinkingState = false;
-                  if (state.timeoutId) clearTimeout(state.timeoutId);
-                  newTimeoutId = null;
-
-                  useLogStore
-                    .getState()
-                    .addLog(
-                      "Señal neural recibida: WADI ha respondido.",
-                      "success"
-                    );
-                }
-
-                return {
-                  messages: [...state.messages, incomingMsg],
-                  isLoading: false,
-                  isWadiThinking: newThinkingState,
-                  timeoutId: newTimeoutId,
-                  wadiError: null,
-                };
-              });
-            }
-          )
-          .subscribe();
-
-        return () => {
-          supabase.removeChannel(channel);
-        };
-      },
-
-      admitFailure: async () => {
-        try {
-          const token = await getToken();
-          if (!token) return;
-
-          set({ isLoading: true });
-
-          const res = await fetch(`${API_URL}/api/user/admit-failure`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          const data = await res.json();
-
-          // Inject Monday's crushing response
-          const aiMsg: Message = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: data.reply,
-            created_at: new Date().toISOString(),
-          };
-
-          set((state) => ({
-            messages: [...state.messages, aiMsg],
-            isLoading: false,
-            activeFocus: null, // Cleared
-            points: data.efficiencyPoints,
-            rank: data.efficiencyRank,
-          }));
-        } catch (e) {
-          console.error(e);
-          set({ isLoading: false });
-        }
-      },
-
-      sendMessage: async (text: string, attachments: Attachment[] = []) => {
-        if (!text.trim() && attachments.length === 0) return null;
-
-        // 1. Safety Timeout & Retry setup
-        set({
-          isWadiThinking: true,
-          wadiError: null,
-          lastMessageData: {
-            content: text,
-            conversationId: get().conversationId,
-            attachments,
-          },
-        });
-
-        const timer = setTimeout(() => {
-          const currentState = get();
-          if (currentState.isWadiThinking) {
-            set({
-              isWadiThinking: false,
-              wadiError:
-                "WADI se quedó mudo. Parece que su desprecio bloqueó la conexión.",
-              isLoading: false,
-            });
-          }
-        }, 10000); // 10s watchdog
-
-        // OPTIMISTIC UPDATE START
-        const tempId = crypto.randomUUID();
-        const userMsg: Message = {
-          id: tempId,
-          role: "user",
-          content: text,
-          attachments: attachments,
-          created_at: new Date().toISOString(),
-        };
-
-        useLogStore
-          .getState()
-          .addLog("Enviando mensaje a la Matrix (Supabase)...", "process");
+        await supabase.from("conversations").delete().in("id", validIds);
 
         set((state) => ({
-          messages: [...state.messages, userMsg],
-          isLoading: true,
-          isWadiThinking: true,
-          error: null,
-          hasStarted: true,
-          timeoutId: timer,
+          conversations: state.conversations.filter(
+            (c) => !validIds.includes(c.id)
+          ),
+          selectedIds: ids ? state.selectedIds : [],
+          activeId: validIds.includes(state.activeId || "")
+            ? null
+            : state.activeId,
+          messages: validIds.includes(state.activeId || "")
+            ? []
+            : state.messages,
         }));
-        // OPTIMISTIC UPDATE END
-
-        try {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (!user) throw new Error("Usuario no autenticado");
-
-          let currentConversationId = get().conversationId;
-
-          // 1. Create Conversation if needed
-          if (!currentConversationId) {
-            useLogStore
-              .getState()
-              .addLog(
-                "Creando nueva línea temporal (Conversación)...",
-                "process"
-              );
-            const { data: newConv, error: convError } = await supabase
-              .from("conversations")
-              .insert({
-                user_id: user.id,
-                title: text.slice(0, 50),
-                mode: get().mode || "normal",
-              })
-              .select()
-              .single();
-
-            if (convError) throw convError;
-            currentConversationId = newConv.id;
-            set({ conversationId: currentConversationId });
-          }
-
-          // 2. Insert Message into Supabase
-          const { error: msgError } = await supabase.from("messages").insert([
-            {
-              content: text,
-              conversation_id: currentConversationId,
-              user_id: user.id,
-              role: "user",
-              // Note: Attachments column implementation pending backend update to JSONB
-              // For now we persist text content.
-            },
-          ]);
-
-          if (msgError) throw msgError;
-
-          useLogStore
-            .getState()
-            .addLog(
-              "Mensaje insertado en Base de Datos. Esperando Edge Function...",
-              "success"
-            );
-
-          // We do not wait for a reply here anymore, as the architecture shifts to Async/Edge
-          // Success: Clear retry data
-          set({ isLoading: false, lastMessageData: null });
-
-          return currentConversationId;
-        } catch (err: unknown) {
-          const { timeoutId } = get();
-          if (timeoutId) clearTimeout(timeoutId);
-
-          const errorMessage =
-            err instanceof Error ? err.message : "An error occurred";
-          set({
-            isLoading: false,
-            error: errorMessage,
-            isWadiThinking: false,
-            timeoutId: null,
-            wadiError: "Error al enviar. El payaso está cansado.",
-          });
-          useLogStore
-            .getState()
-            .addLog(
-              `Falla de comunicación con base de datos: ${errorMessage}`,
-              "error"
-            );
-          return null;
-        }
       },
 
-      retryLastMessage: () => {
-        const { lastMessageData } = get();
-        if (lastMessageData) {
-          const { content, attachments } = lastMessageData;
-          get().sendMessage(content, attachments || []);
-        }
+      resetChat: () => {
+        set({ activeId: null, messages: [], conversationTitle: null });
       },
 
-      deleteConversation: async (id: string) => {
-        try {
-          const token = await getToken();
-          const res = await fetch(`${API_URL}/api/conversations/${id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          if (!res.ok) throw new Error("Delete failed");
-
-          set((state) => {
-            const nextConversations = state.conversations.filter(
-              (c) => c.id !== id
-            );
-            // If current open conversation is deleted, reset
-            if (state.conversationId === id) {
-              return {
-                conversations: nextConversations,
-                conversationId: null,
-                conversationTitle: null,
-                messages: [],
-              };
-            }
-            return { conversations: nextConversations };
-          });
-        } catch (err) {
-          console.error(err);
+      wipeChatData: async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("conversations").delete().eq("user_id", user.id);
+          set({ conversations: [], messages: [], activeId: null });
         }
       },
     }),
     {
-      name: "wadi-session-v1",
+      name: "wadi-chat-storage",
       partialize: (state) => ({
-        mood: state.mood,
-        conversationId: state.conversationId,
-        messages: state.messages,
-        hasStarted: state.hasStarted,
-        aiModel: state.aiModel,
-        customSystemPrompt: state.customSystemPrompt,
-        workspaces: state.workspaces,
-        activeWorkspaceId: state.activeWorkspaceId,
-        memory: state.memory,
-        // Don't persist isUploading or blocked states if they are ephemeral
+        activeId: state.activeId,
       }),
-      onRehydrateStorage: () => () => {
-        // [FIX]: Removed automatic "Volviste" greeting on rehydration to prevent repetitive messages.
-        // The persistence should just restore state as is.
-      },
     }
   )
 );
