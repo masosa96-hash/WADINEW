@@ -12,8 +12,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Legacy Store (Still handling Data Wipe)
   // New Modular Store (Handling UI & Persona & Data)
-  const { theme, language, customInstructions, updateSettings, wipeAllData } =
-    useSettingsStore();
+  const {
+    theme,
+    language,
+    customInstructions,
+    updateSettings,
+    wipeAllData,
+    fetchSettings,
+  } = useSettingsStore();
 
   const [localPrompt, setLocalPrompt] = useState(customInstructions);
   const [activeTab, setActiveTab] = useState<"general" | "persona" | "data">(
@@ -21,8 +27,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   );
 
   useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    fetchSettings();
+  }, [fetchSettings]);
 
   // Sync local state when store updates (e.g. after fetch)
   useEffect(() => {
@@ -177,7 +183,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm("¿Seguro? WADI no olvidará este desprecio."))
+                    if (
+                      window.confirm(
+                        "¿Seguro? WADI no olvidará este desprecio."
+                      )
+                    )
                       wipeAllData();
                   }}
                   className="w-full py-2 border border-red-900 bg-red-950/20 text-red-700 hover:bg-red-900 hover:text-white transition-all font-bold text-[10px] tracking-widest uppercase rounded"

@@ -59,6 +59,7 @@ interface ChatState {
 
   resetChat: () => void;
   wipeChatData: () => Promise<void>;
+  exportData: () => void;
 
   // Deprecated/Legacy compatibility aliases
   isWadiThinking: boolean;
@@ -379,6 +380,18 @@ export const useChatStore = create<ChatState>()(
         return () => {
           supabase.removeChannel(channel);
         };
+      },
+      exportData: () => {
+        const { conversations, messages } = get();
+        const dataStr = JSON.stringify({ conversations, messages }, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `wadi-backup-${new Date().toISOString()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       },
     }),
     {

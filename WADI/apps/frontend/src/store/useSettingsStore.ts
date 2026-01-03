@@ -142,6 +142,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       .delete()
       .eq("user_id", user.id);
     if (!error) window.location.reload();
-    else alert("Error wiping data: " + error.message);
+    else console.error("Error wiping data: " + error.message);
   },
 }));
