@@ -19,6 +19,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     setSystemPrompt,
     fetchConfig,
   } = useConfigStore();
+  const [localPrompt, setLocalPrompt] = useState(systemPrompt);
   const [activeTab, setActiveTab] = useState<"general" | "persona" | "data">(
     "general"
   );
@@ -26,6 +27,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
+
+  // Sync local state when store updates (e.g. after fetch)
+  useEffect(() => {
+    setLocalPrompt(systemPrompt);
+  }, [systemPrompt]);
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -128,13 +134,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 <textarea
                   className="w-full h-64 bg-[var(--wadi-surface)] border border-[var(--wadi-border)] text-[var(--wadi-text)] text-xs p-3 rounded font-mono custom-scrollbar focus:border-[var(--wadi-primary)] outline-none resize-none placeholder:opacity-30 leading-relaxed"
                   placeholder="Ej: Eres un asistente experto en cocina molecular..."
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  value={localPrompt}
+                  onChange={(e) => setLocalPrompt(e.target.value)}
+                  onBlur={() => setSystemPrompt(localPrompt)}
                 />
                 <div className="flex justify-between items-center text-[10px] text-[var(--wadi-text-muted)] font-mono">
                   <span>Se guarda automáticamente</span>
                   <span className="text-[var(--wadi-primary)] opacity-50">
-                    {systemPrompt.length} chars
+                    {localPrompt.length} chars
                   </span>
                 </div>
               </div>
