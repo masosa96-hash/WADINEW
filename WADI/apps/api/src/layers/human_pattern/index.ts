@@ -1,12 +1,13 @@
-import { detectHumanPattern } from "./detectPattern.js";
-import { composeResponse } from "./composeResponse.js";
+import { detectHumanPattern } from "./detectPattern";
+import { composeResponse } from "./composeResponse";
 
 // WADI no simula inteligencia.
 // Aplica memoria social.
 // Si puede reconocer el patrón humano,
 // no llama al modelo.
 
-export function wadiPreFlight(userInput, context = {}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function wadiPreFlight(userInput: string, context: any = {}) {
   const pattern = detectHumanPattern(userInput, context);
 
   // patrones que NO merecen gastar tokens (Early Exit)

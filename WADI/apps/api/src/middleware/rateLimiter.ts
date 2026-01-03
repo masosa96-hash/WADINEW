@@ -1,14 +1,21 @@
-import { RateLimitError } from "../core/errors.js";
+import { Request, Response, NextFunction } from "express";
+import { RateLimitError } from "../core/errors";
 
 const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_REQUESTS = 30;
 
-const hits = new Map();
+const hits = new Map<string, { count: number; startTime: number }>();
 
-export const rateLimiter = (req, res, next) => {
+export const rateLimiter = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Use IP or UserID as key
   const key =
-    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    (req.headers["x-forwarded-for"] as string) ||
+    req.socket.remoteAddress ||
+    "unknown";
 
   const now = Date.now();
   const record = hits.get(key);

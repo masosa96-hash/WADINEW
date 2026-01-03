@@ -1,7 +1,11 @@
-import { SOCIAL_MEMORY } from "./socialMemory.js";
+import { SOCIAL_MEMORY } from "./socialMemory";
 
-export function composeResponse(pattern) {
-  const memory = SOCIAL_MEMORY[pattern] || SOCIAL_MEMORY["UNCLASSIFIED"];
+// Manually defining keys if needed, or using 'keyof typeof SOCIAL_MEMORY'
+type MemoryKey = keyof typeof SOCIAL_MEMORY;
+
+export function composeResponse(pattern: string): string {
+  const memory =
+    SOCIAL_MEMORY[pattern as MemoryKey] || SOCIAL_MEMORY["UNCLASSIFIED"];
   const { observation, stance } = memory;
 
   switch (stance) {

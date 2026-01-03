@@ -9,10 +9,10 @@ const metrics = {
     "4xx": 0,
     "5xx": 0,
   },
-  latencies: [], // Store last 1000 latencies for p95/p99 calculation
+  latencies: [] as number[], // Store last 1000 latencies for p95/p99 calculation
 };
 
-export const recordMetric = (statusCode, latency) => {
+export const recordMetric = (statusCode: number, latency: number) => {
   if (statusCode >= 200 && statusCode < 300) metrics.requests["2xx"]++;
   else if (statusCode >= 400 && statusCode < 500) metrics.requests["4xx"]++;
   else if (statusCode >= 500) metrics.requests["5xx"]++;
@@ -21,7 +21,7 @@ export const recordMetric = (statusCode, latency) => {
   if (metrics.latencies.length > 1000) metrics.latencies.shift();
 };
 
-const calculatePercentile = (percentile) => {
+const calculatePercentile = (percentile: number) => {
   if (metrics.latencies.length === 0) return 0;
   const sorted = [...metrics.latencies].sort((a, b) => a - b);
   const index = Math.ceil((percentile / 100) * sorted.length) - 1;

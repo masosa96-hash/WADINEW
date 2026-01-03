@@ -15,7 +15,7 @@ export const upload = multer({
     ) {
       cb(null, true);
     } else {
-      cb(new Error("Formato no soportado. Solo PDF, TXT o MD."), false);
+      cb(new Error("Formato no soportado. Solo PDF, TXT o MD."));
     }
   },
 });

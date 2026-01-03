@@ -1,21 +1,31 @@
-// sí, esto duele, pero es mejor que JS puro
+export type Tone = "hostile" | "neutral" | "surgical";
+
+export interface Risk {
+  code: string;
+  severity: "low" | "medium" | "high";
+  description: string;
+}
+
+export interface WadiDecision {
+  response: string;
+  tone: Tone;
+  risks: Risk[];
+  smokeIndex: number;
+}
+
 export interface WadiContext {
   userId: string;
   message: string;
   history: unknown[];
 }
 
-export interface WadiDecision {
-  response: string;
-  warnings: string[];
-  smokeIndex: number;
-}
-
 export function wadiBrain(context: WadiContext): WadiDecision {
   // implementación actual (placeholder per migration instructions)
+  console.log("WADI Brain Context:", context);
   return {
     response: "WADI_BRAIN_NOT_FULL_IMPL",
-    warnings: [],
+    tone: "neutral",
+    risks: [],
     smokeIndex: 0,
   };
 }
@@ -54,6 +64,7 @@ FORMATO:
 export function generateSystemPrompt(
   mode = "normal",
   topic = "general",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sessionPrefs: any = {},
   mood = "hostile",
   isMobile = false,

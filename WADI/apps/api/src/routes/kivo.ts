@@ -1,6 +1,6 @@
 import express from "express";
-import { openai, AI_MODEL } from "../openai.js";
-import { WADI_SYSTEM_PROMPT } from "../wadi-brain.js";
+import { openai, AI_MODEL } from "../openai";
+import { WADI_SYSTEM_PROMPT } from "../wadi-brain";
 
 const router = express.Router();
 
@@ -35,7 +35,8 @@ router.post("/chat", async (req, res) => {
   } catch (err) {
     console.error("Kivo error:", err);
     // DEBUG: Retornamos el error exacto para verlo en frontend
-    return res.status(500).json({ error: err.message });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return res.status(500).json({ error: (err as any).message });
   }
 });
 

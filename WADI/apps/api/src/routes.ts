@@ -630,7 +630,11 @@ router.post(
     const user = req.user;
 
     if (!req.file) {
-      throw new AppError("No enviaste ningún archivo. ¿Es una broma?", 400);
+      throw new AppError(
+        "BAD_REQUEST",
+        "No enviaste ningún archivo. ¿Es una broma?",
+        400
+      );
     }
 
     let textContent = "";
@@ -646,6 +650,7 @@ router.post(
     } catch (e) {
       console.error("Error parsing document:", e);
       throw new AppError(
+        "UNPROCESSABLE_ENTITY",
         "No pude leer ese archivo. Probablemente esté corrupto como tu moral.",
         422
       );

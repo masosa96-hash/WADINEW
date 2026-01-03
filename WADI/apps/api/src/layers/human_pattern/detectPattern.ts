@@ -5,9 +5,10 @@ import {
   lacksConcreteNouns,
   containsHelpSignals,
   mentionsRealProblem,
-} from "./heuristics.js";
+} from "./heuristics";
 
-export function detectHumanPattern(text, context = {}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function detectHumanPattern(text: string, context: any = {}): string {
   if (!text) return "UNCLASSIFIED";
 
   // VAGUE_AMBITION: Short & Desire-based
