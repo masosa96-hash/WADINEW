@@ -1,0 +1,21 @@
+:root {
+  /* Colores base */
+  --bg-main: #0f111a;
+  --bg-panel: #131622;
+  --bg-elevated: #181c2b;
+
+  --border-subtle: #23283b;
+
+  /* Texto */
+  --text-primary: #e6e8ef;
+  --text-secondary: #9aa1b3;
+  --text-muted: #6b7280;
+
+  /* Estado */
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
+
+  /* Tipografía */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}

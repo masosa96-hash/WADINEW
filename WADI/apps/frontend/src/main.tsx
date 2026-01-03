@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { useChatStore, type Message } from "./store/chatStore";
 
+import "./styles/tokens.css";
 import "./index.css";
 
 // 1. Service Worker Registration

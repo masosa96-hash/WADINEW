@@ -61,6 +61,10 @@ interface ChatState {
   wipeChatData: () => Promise<void>;
   exportData: () => void;
 
+  auditCount: number;
+  riskCount: number;
+  fetchCriminalSummary: () => Promise<void>;
+
   // Deprecated/Legacy compatibility aliases
   isWadiThinking: boolean;
   conversationId: string | null;
@@ -84,6 +88,8 @@ export const useChatStore = create<ChatState>()(
       isUploading: false,
       isSidebarOpen: false,
       selectedIds: [],
+      auditCount: 0,
+      riskCount: 0,
 
       // Aliases
       get isWadiThinking() {
@@ -93,6 +99,26 @@ export const useChatStore = create<ChatState>()(
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
       setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+
+      fetchCriminalSummary: async () => {
+        const token = (await supabase.auth.getSession()).data.session
+          ?.access_token;
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_URL}/api/user/criminal-summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({
+              auditCount: data.totalAudits || 0,
+              riskCount: data.totalHighRisks || 0,
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
 
       fetchConversations: async () => {
         const {

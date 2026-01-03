@@ -21,7 +21,8 @@ module.exports = {
         wadi: "0 2px 10px rgba(145, 246, 215, 0.1)",
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        mono: ["var(--font-mono)"],
+        sans: ["var(--font-mono)"], // Force mono even for sans
       },
       spacing: {
         input: "3rem",

@@ -44,10 +44,9 @@
   html,
   body,
   #root {
-    background: var(--wadi-bg);
-    background-attachment: fixed;
-    color: var(--wadi-text);
-    font-family: "Outfit", sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
     height: 100vh; /* Fallback */
     height: 100dvh;
     width: 100vw;
