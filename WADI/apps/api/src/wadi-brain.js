@@ -40,8 +40,13 @@ export function generateSystemPrompt(
   efficiencyPoints = 0,
   activeFocus = null,
   memory = {},
-  knowledgeBase = []
+  knowledgeBase = [],
+  customInstructionsFromDB = null
 ) {
+  // 0. PERSONALIDAD DINÁMICA (DB OVERRIDE)
+  // Si existen instrucciones en la DB, estas se convierten en la "Semilla de Personalidad" base.
+  // De lo contrario, usamos el default WADI_SYSTEM_PROMPT.
+  const basePersonality = customInstructionsFromDB || WADI_SYSTEM_PROMPT;
   // 1. EL VINCULO Y RANGO
   let vibeInstruction = "";
   if (efficiencyPoints < 100) {
@@ -140,7 +145,7 @@ CONTEXTO TÉCNICO:
   }
 
   return `
-${WADI_SYSTEM_PROMPT}
+${basePersonality}
 
 ### CONTEXTO DE ENTORNO ###
 - Rango Usuario: ${efficiencyRank} (Si es bajo, suspirá).

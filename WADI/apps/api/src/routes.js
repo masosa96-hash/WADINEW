@@ -286,7 +286,8 @@ router.post(
       profile.efficiency_points,
       profile.active_focus,
       req.body.memory || {}, // Pass memory
-      knowledgeBase // Pass knowledge
+      knowledgeBase, // Pass knowledge
+      profile.custom_instructions // Pass dynamic instructions from DB
     );
 
     // [DEBUG OVERRIDE]
@@ -310,9 +311,13 @@ router.post(
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+      // MODEL SELECTION: Use GPT-4o for vision (if attachments exist), else GPT-4o-mini (AI_MODEL)
+      const hasImages = attachments && attachments.length > 0;
+      const modelToUse = hasImages ? "gpt-4o" : AI_MODEL;
+
       const completion = await Promise.race([
         openai.chat.completions.create({
-          model: AI_MODEL,
+          model: modelToUse,
           messages: [
             { role: "system", content: finalSystemPrompt },
             ...openAIHistory,
