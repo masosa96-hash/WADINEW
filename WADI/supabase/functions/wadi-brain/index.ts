@@ -51,7 +51,16 @@ serve(async (req) => {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: record.content },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: record.content },
+              // Si hay una imagen en el mensaje, se agrega automáticamente aquí
+              ...(record.file_url
+                ? [{ type: "image_url", image_url: { url: record.file_url } }]
+                : []),
+            ],
+          },
         ],
         temperature: 0.8,
       }),

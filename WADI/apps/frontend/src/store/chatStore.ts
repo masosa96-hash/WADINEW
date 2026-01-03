@@ -163,7 +163,7 @@ interface ChatState {
   selectedIds: string[];
   toggleSelection: (id: string) => void;
   selectAll: () => void;
-  deleteSelectedConversations: () => Promise<void>;
+  deleteSelectedConversations: (ids?: string[]) => Promise<void>;
 
   // Realtime Subscription
   subscribeToMessages: (conversationId: string) => () => void;
@@ -640,24 +640,28 @@ export const useChatStore = create<ChatState>()(
         set({ selectedIds: conversations.map((c) => c.id) });
       },
 
-      deleteSelectedConversations: async () => {
+      deleteSelectedConversations: async (ids?: string[]) => {
         const { selectedIds } = get();
-        if (selectedIds.length === 0) return;
+        // Use passed IDs or fallback to selectedIds
+        const validIds = ids && ids.length > 0 ? ids : selectedIds;
+
+        if (validIds.length === 0) return;
 
         try {
           // Supabase delete using 'in'
           const { error } = await supabase
             .from("conversations")
             .delete()
-            .in("id", selectedIds);
+            .in("id", validIds);
 
           if (error) throw error;
 
           set((state) => ({
             conversations: state.conversations.filter(
-              (c) => !selectedIds.includes(c.id)
+              (c) => !validIds.includes(c.id)
             ),
-            selectedIds: [],
+            // Only clear selection if we used the selection
+            selectedIds: ids ? state.selectedIds : [],
           }));
 
           useLogStore
