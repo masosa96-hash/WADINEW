@@ -9,6 +9,9 @@ export const DecisionWall: React.FC<DecisionWallProps> = ({
   onOptionA,
   onOptionB,
 }) => {
+  const [blockId] = React.useState(() =>
+    Math.random().toString(36).substr(2, 6).toUpperCase()
+  );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-lg">
       <div className="w-full max-w-md p-1 border-2 border-[var(--monday-amber)] bg-black relative">
@@ -57,7 +60,7 @@ export const DecisionWall: React.FC<DecisionWallProps> = ({
 
         {/* Footer */}
         <div className="border-t border-[var(--monday-amber)]/30 p-2 text-center text-[10px] text-[var(--monday-amber)] font-mono">
-          BLOCK_ID: {Math.random().toString(36).substr(2, 6).toUpperCase()}
+          BLOCK_ID: {blockId}
         </div>
       </div>
     </div>

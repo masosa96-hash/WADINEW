@@ -80,6 +80,7 @@ export default function DashboardPage() {
 
   const handleDeleteWorkspace = (name: string) => {
     if (
+      // eslint-disable-next-line no-alert
       confirm(
         `¿Eliminar contexto '${name}'? Perderás todo el historial asociado.`
       )
@@ -90,6 +91,7 @@ export default function DashboardPage() {
 
   const handleForget = () => {
     if (
+      // eslint-disable-next-line no-alert
       confirm(
         "¿Borrar toda la memoria a largo plazo? WADI olvidará todo lo que le enseñaste."
       )
@@ -299,6 +301,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         if (
+                          // eslint-disable-next-line no-alert
                           confirm("¿Eliminar todos los documentos indexados?")
                         )
                           clearDocuments();

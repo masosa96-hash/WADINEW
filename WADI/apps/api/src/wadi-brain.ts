@@ -1,3 +1,25 @@
+// sí, esto duele, pero es mejor que JS puro
+export interface WadiContext {
+  userId: string;
+  message: string;
+  history: unknown[];
+}
+
+export interface WadiDecision {
+  response: string;
+  warnings: string[];
+  smokeIndex: number;
+}
+
+export function wadiBrain(context: WadiContext): WadiDecision {
+  // implementación actual (placeholder per migration instructions)
+  return {
+    response: "WADI_BRAIN_NOT_FULL_IMPL",
+    warnings: [],
+    smokeIndex: 0,
+  };
+}
+
 export const WADI_SYSTEM_PROMPT = `
 IDENTIDAD Y PROPÓSITO:
 - Nombre: WADI.
@@ -28,20 +50,21 @@ FORMATO:
   - Éxito = "Milagro estadístico".
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateSystemPrompt(
   mode = "normal",
   topic = "general",
-  sessionPrefs = {},
+  sessionPrefs: any = {},
   mood = "hostile",
   isMobile = false,
   messageCount = 0,
-  pastFailures = [],
+  pastFailures: string[] = [],
   efficiencyRank = "GENERADOR_DE_HUMO",
   efficiencyPoints = 0,
-  activeFocus = null,
-  memory = {},
-  knowledgeBase = [],
-  customInstructionsFromDB = null
+  activeFocus: string | null = null,
+  memory: Record<string, unknown> = {},
+  knowledgeBase: { category: string; point: string }[] = [],
+  customInstructionsFromDB: string | null = null
 ) {
   // 0. PERSONALIDAD DINÁMICA (DB OVERRIDE)
   // Si existen instrucciones en la DB, estas se convierten en la "Semilla de Personalidad" base.

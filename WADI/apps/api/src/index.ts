@@ -1,12 +1,12 @@
 // WADI API – static + API routing OK for Render (Deploy Trigger)
 
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import routes from "./routes.js";
-import kivoRoutes from "./routes/kivo.js";
-import monitoringRoutes from "./routes/monitoring.js";
+import routes from "./routes"; // TS file
+import kivoRoutes from "./routes/kivo.js"; // JS file
+import monitoringRoutes from "./routes/monitoring.js"; // JS file
 
 import { requestLogger } from "./middleware/requestLogger.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
@@ -14,21 +14,18 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
+// import { fileURLToPath } from "url";
 
 dotenv.config({ path: "../../.env" });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 const frontendPath = path.resolve(__dirname, "../../frontend/dist");
 
 import helmet from "helmet";
 
 const app = express();
 
-// --------------------------------------------------
-// SECURITY: CSP (Content Security Policy)
-// --------------------------------------------------
 // --------------------------------------------------
 // SECURITY: CSP (Content Security Policy)
 // --------------------------------------------------
@@ -110,7 +107,8 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(requestLogger);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use(requestLogger as any);
 
 // TOP PRIORITY DEBUG ROUTE
 app.get("/system/debug-files", (req, res) => {
@@ -133,7 +131,8 @@ app.get("/system/debug-files", (req, res) => {
       timestamp: Date.now(),
       version: "5.1.0", // Bump version to verify deploy
     });
-  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
     res.status(500).json({
       error: err.message,
       stack: err.stack,
@@ -142,7 +141,6 @@ app.get("/system/debug-files", (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // --------------------------------------------------
 // PRIORITY 2: Static Assets (Correctly Ordered)
 // --------------------------------------------------
@@ -190,10 +188,13 @@ app.use(express.static(frontendPath));
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
 // --------------------------------------------------
-app.use("/api", rateLimiter);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use("/api", rateLimiter as any);
 app.use("/api", routes); // Main API
-app.use("/api/kivo", kivoRoutes); // Legacy/Module
-app.use("/system", monitoringRoutes);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use("/system", monitoringRoutes as any);
 
 // Explicit 404 for API to prevent falling through to SPA
 app.all(/\/api\/.*/, (req, res) => {
@@ -212,10 +213,17 @@ app.get(/.*/, (req, res) => {
 });
 
 // Error Handler
-app.use(errorHandler);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use(errorHandler as any);
 
 // START SERVER
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(asAny(PORT), asAny("0.0.0.0"), () => {
   console.log(`WADI API running on port ${PORT}`);
 });
+
+// Helper for strict listen types if needed, though usually string port is fine in express types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function asAny(val: any): any {
+  return val;
+}

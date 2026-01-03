@@ -183,12 +183,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 </div>
                 <button
                   onClick={() => {
-                    if (
-                      window.confirm(
-                        "¿Seguro? WADI no olvidará este desprecio."
-                      )
-                    )
-                      wipeAllData();
+                    // eslint-disable-next-line no-alert
+                    const confirmed = window.confirm(
+                      "¿Seguro? WADI no olvidará este desprecio."
+                    );
+                    if (confirmed) wipeAllData();
                   }}
                   className="w-full py-2 border border-red-900 bg-red-950/20 text-red-700 hover:bg-red-900 hover:text-white transition-all font-bold text-[10px] tracking-widest uppercase rounded"
                 >

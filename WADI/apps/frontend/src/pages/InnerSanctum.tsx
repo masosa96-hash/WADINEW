@@ -105,6 +105,7 @@ export default function InnerSanctum() {
           <div className="flex justify-center gap-4 mt-12 pt-8 border-t border-slate-800 text-center">
             <button
               onClick={async () => {
+                // eslint-disable-next-line no-alert
                 if (!confirm("¿Archivar y limpiar mesa?")) return;
                 const {
                   data: { session },
