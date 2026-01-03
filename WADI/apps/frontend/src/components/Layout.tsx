@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { useChatStore } from "../store/chatStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Menu, Plus } from "lucide-react";
 
 interface LayoutProps {
@@ -11,7 +12,12 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { isSidebarOpen, setSidebarOpen, toggleSidebar, resetChat } =
     useChatStore();
+  const { initializeAuth } = useAuthStore(); // New Store
   const navigate = useNavigate();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   const handleNewChat = () => {
     resetChat();

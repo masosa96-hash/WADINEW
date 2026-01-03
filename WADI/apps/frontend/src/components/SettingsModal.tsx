@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useChatStore } from "../store/chatStore";
 import { useConfigStore } from "../store/configStore";
+import { useSettingsStore } from "../store/useSettingsStore";
 import { runWadiDiagnostic } from "../utils/wadiTester";
 
 interface SettingsModalProps {
@@ -9,17 +10,15 @@ interface SettingsModalProps {
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const { exportData } = useChatStore();
-  const {
-    theme,
-    setTheme,
-    language,
-    setLanguage,
-    wipeAllData,
-    systemPrompt,
-    setSystemPrompt,
-    fetchConfig,
-  } = useConfigStore();
-  const [localPrompt, setLocalPrompt] = useState(systemPrompt);
+
+  // Legacy Store (Still handling Data Wipe)
+  const { wipeAllData } = useConfigStore();
+
+  // New Modular Store (Handling UI & Persona)
+  const { theme, language, customInstructions, updateSettings } =
+    useSettingsStore();
+
+  const [localPrompt, setLocalPrompt] = useState(customInstructions);
   const [activeTab, setActiveTab] = useState<"general" | "persona" | "data">(
     "general"
   );
@@ -30,8 +29,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Sync local state when store updates (e.g. after fetch)
   useEffect(() => {
-    setLocalPrompt(systemPrompt);
-  }, [systemPrompt]);
+    setLocalPrompt(customInstructions);
+  }, [customInstructions]);
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -76,7 +75,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 </label>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setLanguage("es")}
+                    onClick={() => updateSettings({ language: "es" })}
                     className={`flex-1 px-4 py-2 border rounded text-xs font-mono-wadi transition-all ${
                       language === "es"
                         ? "bg-purple-600/20 border-purple-500 text-purple-300"
@@ -86,7 +85,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                     ESPAÑOL
                   </button>
                   <button
-                    onClick={() => setLanguage("en")}
+                    onClick={() => updateSettings({ language: "en" })}
                     className={`flex-1 px-4 py-2 border rounded text-xs font-mono-wadi transition-all ${
                       language === "en"
                         ? "bg-purple-600/20 border-purple-500 text-purple-300"
@@ -106,7 +105,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   {(["light", "dark", "system"] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setTheme(t)}
+                      onClick={() => updateSettings({ theme: t })}
                       className={`px-2 py-2 border rounded text-xs font-mono-wadi transition-all uppercase ${
                         theme === t
                           ? "border-purple-500 bg-purple-600/10 text-purple-300"
@@ -136,7 +135,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   placeholder="Ej: Eres un asistente experto en cocina molecular..."
                   value={localPrompt}
                   onChange={(e) => setLocalPrompt(e.target.value)}
-                  onBlur={() => setSystemPrompt(localPrompt)}
+                  onBlur={() =>
+                    updateSettings({ customInstructions: localPrompt })
+                  }
                 />
                 <div className="flex justify-between items-center text-[10px] text-[var(--wadi-text-muted)] font-mono">
                   <span>Se guarda automáticamente</span>
