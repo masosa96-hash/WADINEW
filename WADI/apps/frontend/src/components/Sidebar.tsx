@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/chatStore";
 import { useEffect, useState } from "react";
 import { MessageSquare, Plus, LogOut, Settings, User } from "lucide-react";

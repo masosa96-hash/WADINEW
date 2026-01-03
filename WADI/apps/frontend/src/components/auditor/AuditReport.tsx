@@ -5,7 +5,7 @@ const rawUrl = import.meta.env.VITE_API_URL;
 const API_URL = rawUrl
   ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
   : "https://wadi-wxg7.onrender.com";
-import { useAuthStore } from "../../store/authStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { useScouter } from "../../hooks/useScouter";
 import { supabase } from "../../config/supabase";
 

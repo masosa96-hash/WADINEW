@@ -1,24 +1,34 @@
 import { create } from "zustand";
 import { supabase } from "../config/supabase";
 
-interface ConfigState {
+interface SettingsState {
   language: string;
   theme: string;
-  systemPrompt: string;
+  customInstructions: string | null; // Renamed from systemPrompt for clarity/consistency with earlier plan
+
   setLanguage: (lang: string) => void;
   setTheme: (theme: string) => void;
-  setSystemPrompt: (prompt: string) => void;
-  fetchConfig: () => Promise<void>;
+  setCustomInstructions: (instructions: string) => void; // Renamed action
+
+  // Aliases for compatibility if needed or cleaned up
+  updateSettings: (
+    settings: Partial<{
+      theme: string;
+      language: string;
+      customInstructions: string;
+    }>
+  ) => void;
+
+  fetchSettings: () => Promise<void>;
   wipeAllData: () => Promise<void>;
 }
 
-export const useConfigStore = create<ConfigState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: localStorage.getItem("wadi-lang") || "es",
   theme: localStorage.getItem("wadi-theme") || "system",
-  systemPrompt: localStorage.getItem("wadi-prompt") || "",
+  customInstructions: localStorage.getItem("wadi-prompt") || "",
 
-  // --- INIT ---
-  fetchConfig: async () => {
+  fetchSettings: async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -29,19 +39,21 @@ export const useConfigStore = create<ConfigState>((set) => ({
       .select("language, theme, custom_instructions")
       .eq("id", user.id)
       .single();
+
     if (data) {
       set({
         language: data.language || "es",
         theme: data.theme || "system",
-        systemPrompt: data.custom_instructions || "",
+        customInstructions: data.custom_instructions || "",
       });
-      // Update LocalStorage to keep sync
+
+      // Update LocalStorage
       if (data.language) localStorage.setItem("wadi-lang", data.language);
       if (data.theme) localStorage.setItem("wadi-theme", data.theme);
       if (data.custom_instructions)
         localStorage.setItem("wadi-prompt", data.custom_instructions);
 
-      // Apply theme side-effect immediately
+      // Apply theme
       const root = window.document.documentElement;
       const theme = data.theme || "system";
       if (theme === "system") {
@@ -55,19 +67,18 @@ export const useConfigStore = create<ConfigState>((set) => ({
     }
   },
 
-  // --- GENERAL ---
-  setSystemPrompt: (prompt) => {
-    set({ systemPrompt: prompt });
-    localStorage.setItem("wadi-prompt", prompt);
+  setCustomInstructions: (instructions) => {
+    set({ customInstructions: instructions });
+    localStorage.setItem("wadi-prompt", instructions);
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
           .from("profiles")
-          .update({ custom_instructions: prompt })
+          .update({ custom_instructions: instructions })
           .eq("id", user.id)
           .then(({ error }) => {
-            if (error) console.error("Error saving prompt:", error);
+            if (error) console.error("Error saving prompt", error);
           });
       }
     });
@@ -76,8 +87,6 @@ export const useConfigStore = create<ConfigState>((set) => ({
   setLanguage: (lang) => {
     set({ language: lang });
     localStorage.setItem("wadi-lang", lang);
-
-    // Sync with Supabase
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
@@ -85,7 +94,7 @@ export const useConfigStore = create<ConfigState>((set) => ({
           .update({ language: lang })
           .eq("id", user.id)
           .then(({ error }) => {
-            if (error) console.error("Error saving language:", error);
+            if (error) console.error(error);
           });
       }
     });
@@ -94,7 +103,6 @@ export const useConfigStore = create<ConfigState>((set) => ({
   setTheme: (theme) => {
     set({ theme });
     localStorage.setItem("wadi-theme", theme);
-
     // UI Update
     const root = window.document.documentElement;
     if (theme === "system") {
@@ -104,38 +112,36 @@ export const useConfigStore = create<ConfigState>((set) => ({
       root.classList.toggle("dark", theme === "dark");
     }
 
-    // Sync with Supabase
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
           .from("profiles")
-          .update({ theme: theme })
+          .update({ theme })
           .eq("id", user.id)
           .then(({ error }) => {
-            if (error) console.error("Error saving theme:", error);
+            if (error) console.error(error);
           });
       }
     });
   },
 
-  // --- DATA (Borrar lo que está dando vueltas) ---
+  updateSettings: (newSettings) => {
+    if (newSettings.theme) get().setTheme(newSettings.theme);
+    if (newSettings.language) get().setLanguage(newSettings.language);
+    if (newSettings.customInstructions !== undefined)
+      get().setCustomInstructions(newSettings.customInstructions);
+  },
+
   wipeAllData: async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-
-    // Borra conversaciones (el ON DELETE CASCADE borrará los mensajes)
     const { error } = await supabase
       .from("conversations")
       .delete()
       .eq("user_id", user.id);
-
-    if (!error) {
-      window.location.reload(); // Reinicio total para limpiar la UI
-    } else {
-      console.error("Error wiping data:", error);
-      alert("Error al limpiar datos: " + error.message);
-    }
+    if (!error) window.location.reload();
+    else alert("Error wiping data: " + error.message);
   },
 }));

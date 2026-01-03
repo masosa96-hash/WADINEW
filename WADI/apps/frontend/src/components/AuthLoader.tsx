@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../config/supabase";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../store/useAuthStore";
 
 export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
   const [ready, setReady] = useState(false);

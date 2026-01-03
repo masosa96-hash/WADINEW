@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useChatStore } from "../store/chatStore";
-import { useConfigStore } from "../store/configStore";
 import { useSettingsStore } from "../store/useSettingsStore";
 import { runWadiDiagnostic } from "../utils/wadiTester";
 
@@ -12,10 +11,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { exportData } = useChatStore();
 
   // Legacy Store (Still handling Data Wipe)
-  const { wipeAllData } = useConfigStore();
-
-  // New Modular Store (Handling UI & Persona)
-  const { theme, language, customInstructions, updateSettings } =
+  // New Modular Store (Handling UI & Persona & Data)
+  const { theme, language, customInstructions, updateSettings, wipeAllData } =
     useSettingsStore();
 
   const [localPrompt, setLocalPrompt] = useState(customInstructions);
