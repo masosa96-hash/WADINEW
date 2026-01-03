@@ -1,15 +1,5 @@
 import type { Attachment } from "../store/chatStore";
-import { Paperclip } from "lucide-react";
-
-interface MessageBubbleProps {
-  role: "user" | "assistant";
-  content: string;
-  timestamp?: string;
-  attachments?: Attachment[];
-}
-
-import type { Attachment } from "../store/chatStore";
-import { Paperclip } from "lucide-react";
+import { Paperclip as AttachmentIcon } from "lucide-react";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -69,7 +59,7 @@ export function MessageBubble({
                   rel="noreferrer"
                   className="flex items-center gap-2 p-2 bg-[var(--bg-main)] border border-[var(--border-subtle)] text-xs hover:text-[var(--text-primary)] transition-colors"
                 >
-                  <Paperclip size={14} />
+                  <AttachmentIcon size={14} />
                   <span className="truncate max-w-[200px]">{att.name}</span>
                 </a>
               );
