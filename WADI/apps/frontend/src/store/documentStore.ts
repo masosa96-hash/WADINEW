@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { API_URL } from "./chatStore";
+const rawUrl = import.meta.env.VITE_API_URL;
+const API_URL = rawUrl
+  ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
+  : "https://wadi-wxg7.onrender.com";
 
 export interface Document {
   id: string;
