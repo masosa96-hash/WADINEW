@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../ui/Button";
-import { API_URL } from "../../store/chatStore";
+const rawUrl = import.meta.env.VITE_API_URL;
+const API_URL = rawUrl
+  ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
+  : "https://wadi-wxg7.onrender.com";
 import { useAuthStore } from "../../store/authStore";
 import { useScouter } from "../../hooks/useScouter";
 import { supabase } from "../../config/supabase";
