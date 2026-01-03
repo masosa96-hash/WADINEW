@@ -343,7 +343,7 @@ export const useChatStore = create<ChatState>()(
               filter: `conversation_id=eq.${conversationId}`,
             },
             (payload) => {
-              const newMessage = payload.new as { [key: string]: any };
+              const newMessage = payload.new as unknown as Message;
               set((state) => {
                 const alreadyExists = state.messages.some(
                   (m) => m.id === newMessage.id
