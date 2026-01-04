@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+
+      # Smoke runtime
+      - name: Start API
+        run: |
+          export PORT=3000
+          node apps/api/dist/index.js &
+          echo $! > /tmp/api.pid
+          sleep 5
+          pnpm -s smoke:health
+      - name: Stop API
+        if: always()
+        run: |
+          kill $(cat /tmp/api.pid) || true

@@ -5,7 +5,9 @@
     "dev": "pnpm --filter frontend run dev",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build": "pnpm install && pnpm --filter frontend build",
+    "build": "pnpm install && pnpm -r build",
+    "smoke:api": "node apps/api/dist/index.js",
+    "smoke:health": "node -e \"const http=require('http');http.get('http://127.0.0.1:'+process.env.PORT+'/system/health',r=>{if(r.statusCode!==200){process.exit(1)};process.exit(0)}).on('error',()=>process.exit(1));\"",
     "start": "cd apps/api && node src/index.js"
   },
   "devDependencies": {
