@@ -1,8 +1,12 @@
 {
   "name": "@wadi/core",
   "version": "0.1.0",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": "./dist/index.js"
   },
