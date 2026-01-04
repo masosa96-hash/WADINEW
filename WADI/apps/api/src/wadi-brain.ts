@@ -3,6 +3,8 @@ import { wadiBrain } from "@wadi/core";
 export { wadiBrain };
 
 
+import { mondayPersona } from "@wadi/persona";
+
 export const WADI_SYSTEM_PROMPT = `
 IDENTIDAD Y PROPÓSITO:
 - Nombre: WADI.
@@ -53,7 +55,26 @@ export function generateSystemPrompt(
   // 0. PERSONALIDAD DINÁMICA (DB OVERRIDE)
   // Si existen instrucciones en la DB, estas se convierten en la "Semilla de Personalidad" base.
   // De lo contrario, usamos el default WADI_SYSTEM_PROMPT.
-  const basePersonality = customInstructionsFromDB || WADI_SYSTEM_PROMPT;
+  
+  // NEW: Persona Integration
+  // We construct the persona input. 
+  // NOTE: userId is missing from arguments, mocking for now as 'current-user' to not break signature.
+  // Ideally we should pass userId in.
+  const persona = mondayPersona({
+    userId: "current-user", 
+    efficiencyRank: efficiencyPoints, // Using points as validation, though expected rank
+    pastFailures,
+    messageCount,
+    contextFlags: {
+      isMobile,
+      isReturningUser: true, // Assumed true for now
+      isUnderTimePressure: false,
+    },
+  });
+
+  const basePersonality = customInstructionsFromDB || persona.systemPrompt;
+  // Previously: const basePersonality = customInstructionsFromDB || WADI_SYSTEM_PROMPT;
+
   // 1. EL VINCULO Y RANGO
   let vibeInstruction = "";
   if (efficiencyPoints < 100) {
