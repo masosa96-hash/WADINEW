@@ -1,7 +1,4 @@
-import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
-import prettierRecommended from "eslint-plugin-prettier/recommended";
+import boundaries from "eslint-plugin-boundaries";
 
 export default tseslint.config(
   {
@@ -23,6 +20,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettierRecommended,
   {
+    plugins: {
+      boundaries,
+    },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -32,18 +32,43 @@ export default tseslint.config(
         ...globals.es2021,
       },
     },
+    settings: {
+      "boundaries/elements": [
+        {
+          type: "app",
+          pattern: "apps/*",
+        },
+        {
+          type: "package",
+          pattern: "packages/*",
+        },
+      ],
+      "boundaries/ignore": ["**/*.test.ts", "**/*.spec.ts"],
+    },
     rules: {
       "no-unused-vars": "off", // Handled by typescript-eslint
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "no-console": ["warn", { allow: ["warn", "error", "info"] }], // Discourage plain console.log
       "@typescript-eslint/no-explicit-any": "error", // Strict mode
       eqeqeq: "error", // Enforce type-safe equality
       "no-var": "error",
       "prefer-const": "error",
       "prettier/prettier": "error",
+
+      // Boundaries rules
+      "boundaries/no-private": ["error", { allowUnancestored: true }],
+      "boundaries/entry-point": [
+        "error",
+        {
+          default: "dist/index.js",
+          rules: [
+            {
+              target: ["package"],
+              allow: "src/index.ts", // Allow importing from src during dev within workspace if needed, but 'no-unknown' catches most
+            },
+          ],
+        },
+      ],
     },
   },
   {
