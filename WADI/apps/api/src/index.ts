@@ -11,6 +11,10 @@ import monitoringRoutes from "./routes/monitoring.js"; // JS file
 import { requestLogger } from "./middleware/requestLogger.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { startWorker } from "./queue/worker.js";
+
+// Initialize Worker in the same process
+startWorker();
 
 import path from "path";
 import fs from "fs";
