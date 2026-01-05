@@ -15,7 +15,8 @@ import { upload } from "./middleware/upload.js";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdf = require("pdf-parse");
 import { wadiPreFlight } from "./layers/human_pattern/index.js";
-import { authenticate, authorize } from "./middleware/auth.js";
+import { authenticate } from "./middleware/authenticate.js";
+import { requireScope } from "./middleware/require-scope.js";
 
 interface AuthenticatedRequest extends Request {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,7 +107,7 @@ const calculateRank = (points: number) => {
 
 router.get(
   "/user/criminal-summary",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -139,7 +140,7 @@ router.get(
 
 router.post(
   "/user/admit-failure",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -175,7 +176,7 @@ const guestSessions = new Map<string, any[]>();
 
 router.post(
   "/chat",
-  authenticate(),
+  authenticate,
   validateChatInput,
   asyncHandler(async (req, res) => {
     let user = req.user;
@@ -439,7 +440,7 @@ router.post(
 // --- PROYECTOS (Simplificados) ---
 router.get(
   "/projects",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
@@ -453,7 +454,7 @@ router.get(
 
 router.post(
   "/projects",
-  authenticate(),
+  authenticate,
   validateProjectInput,
   asyncHandler(async (req, res) => {
     const user = req.user;
@@ -492,7 +493,7 @@ const generateProjectName = async (description: string) => {
 
 router.post(
   "/projects/crystallize",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -532,7 +533,7 @@ router.post(
 
 router.delete(
   "/projects/:id",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
     await supabase
@@ -547,7 +548,7 @@ router.delete(
 // Conversations list
 router.get(
   "/conversations",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
@@ -561,7 +562,7 @@ router.get(
 
 router.delete(
   "/conversations/:id",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
     await supabase
@@ -576,7 +577,7 @@ router.delete(
 // 1.6 Get Single Conversation (with messages)
 router.get(
   "/conversations/:id",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { id } = req.params;
@@ -611,7 +612,7 @@ router.get(
 // ------------------------------------------------------------------
 router.post(
   "/documents/upload",
-  authenticate(),
+  authenticate,
   upload.single("file"),
   asyncHandler(async (req: AuthenticatedRequest, res) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -678,7 +679,7 @@ const fetchKnowledgeBase = async (userId: string) => {
 // --- MEMORY DISTILLER ---
 router.post(
   "/memory/reflect",
-  authenticate(),
+  authenticate,
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -773,8 +774,8 @@ router.post(
 // --- INNER SANCTUM ---
 router.get(
   "/inner-sanctum/reports",
-  authenticate(),
-  authorize(["ADMIN"]), // Strict Admin check
+  authenticate,
+  requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const { data } = await supabase
       .from("wadi_reflections")
@@ -788,8 +789,8 @@ router.get(
 // --- ARCHIVE & CLEAR (LIMPIAR MESA) ---
 router.post(
   "/inner-sanctum/archive",
-  authenticate(),
-  authorize(["ADMIN"]),
+  authenticate,
+  requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -833,8 +834,8 @@ router.post(
 // --- JOURNAL (CLOUD LOGS) ---
 router.get(
   "/journal/files",
-  authenticate(),
-  authorize(["ADMIN"]),
+  authenticate,
+  requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
