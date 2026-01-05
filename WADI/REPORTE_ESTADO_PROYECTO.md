@@ -1,65 +1,51 @@
-# Reporte de Estado del Proyecto WADI
+# REPORTE DE ESTADO DEL PROYECTO: WADI V5
 
-**Fecha:** 4 de Enero, 2026
-**Versión Global:** 5.1.0 (API) / 5.2.0 (Frontend)
-**Arquitectura:** Monorepo (PNPM Workspaces)
+**Fecha:** 5 de Enero, 2026
+**Estado:** 🟢 OPERATIVO (Hardened)
 
-## 1. Estructura General
-El proyecto opera bajo una arquitectura de monorepo gestionada por `pnpm`, dividida en aplicaciones y paquetes compartidos:
+## 🏗️ Logros Recientes (Infraestructura & Core)
 
-- **`apps/api`**: Backend en Node.js/Express, recientemente migrado a TypeScript.
-- **`apps/frontend`**: SPA en React 19 con Vite, TailwindCSS y Framer Motion.
-- **`packages/wadi-core`**: Lógica central compartida y contratos de tipos.
-- **`packages/logger`**: Utilidades de logging unificadas.
-- **`packages/wadi-persona`**: Biblioteca desacoplada para la gestión de personalidades (estrategia "Monday").
+### 1. Arquitectura "Monorepo Híbrido"
 
-## 2. Tecnologías Clave
+- Se consolidó todo el código en un monorepo eficiente.
+- **Estrategia Inteligente:** Mantenemos la separación lógica de código (`apps/worker` vs `apps/api`), pero para el deploy en Render usamos un **proceso unificado**.
+- **Beneficio:** Arquitectura profesional de microservicios, pero costo **$0** (Free Tier).
 
-### Backend (API)
-- **Runtime**: Node.js
-- **Framework**: Express v5.2.1
-- **Lenguaje**: TypeScript 5.9 (Strict Mode)
-- **Base de Datos & Auth**: Supabase (@supabase/supabase-js)
-- **AI**: OpenAI SDK
-- **Validación**: Zod (para rutas y contratos de datos)
-- **Testing**: Vitest (Unit testing para lógica de negocio crítica como `wadi-brain`)
-- **Seguridad**: Helmet, JWT, CORS
+### 2. Seguridad & Auth (JWT)
 
-### Frontend
-- **Framework**: React 19
-- **Build Tool**: Vite 7.2
-- **Estilos**: TailwindCSS v3.4 + Framer Motion (para animaciones y estética "Neo-Y2K")
-- **Gestión de Estado**: Zustand (ChatStore, ConfigStore)
-- **Componentes**: Lucide React (Íconos), Storybook (Documentación de UI)
-- **Routing**: React Router v7
+- Implementación de `authenticate` middleware con validación real de tokens.
+- Sistema de permisos RBAC con `requireScope`.
+- Tipado estricto: `req.user` ahora es TypeScript puro, nada de `any`.
+- Rutas críticas (`/inner-sanctum`, `/journal`) blindadas para administradores.
 
-## 3. Estado Actual y Avances Recientes
+### 3. Cerebro Robusto (`wadi-core`)
 
-### Infraestructura Clean
-- **CI/CD**: Workflow único y consolidado en `.github/workflows/ci.yml`. Infraestructura cerrada y validada.
-- **Limpieza**: Eliminación de workflows antiguos y archivos duplicados en subdirectorios.
+- **`runBrain`**: El núcleo de IA ahora está aislado, validado con Zod (`brainSchema`), y tiene mecanismo de reintento automático.
+- **Fallback**: Si OpenAI falla, el sistema se degrada con elegancia en lugar de crashear con un 500.
 
-### API Hardening & TypeScript Migration
-- Se completó la migración de archivos JavaScript a TypeScript en `apps/api/src`.
-- Se habilitó `strict: true` en `tsconfig.json` para garantizar seguridad de tipos.
-- Se implementaron esquemas de validación **Zod** en las rutas principales.
-- Se añadieron pruebas unitarias con **Vitest**, enfocándose en el contrato del cerebro (`wadi-brain.ts`).
+### 4. Motor Asíncrono (Colas)
 
-### UI/UX & Rediseño "Neo-Y2K"
-- El frontend ha adoptado una estética "Neo-Y2K" moderna, utilizando gradientes suaves, glassmorphism y bordes redondeados.
-- **Monday Persona**: Se integró profundamente la personalidad "Monday" (Brillante pero Molesta) mediante el nuevo paquete `@wadi/persona`.
-- **Settings Modal**: Modal de configuración conectado a `useConfigStore`, permitiendo gestión de temas, idioma y "Danger Zone".
-- **Refactor de Chat**: Arquitectura orientada a eventos para el manejo de mensajes y estados de UI.
+- Integración de **Redis + BullMQ**.
+- Infraestructura de `Producer` (API) y `Consumer` (Worker) lista.
+- El worker corre "invisible" junto con la API, escuchando trabajos sin configuración extra.
 
-### Workflows Automatizados
-- **Scripts de Build**: Optimizados para limpiar (`rimraf`) y construir frontend y backend secuencialmente.
-- **Agentes**: Pipelines operativos (`/auto_sync`, `/kivo_pipeline`) definidos para mantenimiento continuo.
-## 4. Métricas y Archivos Clave
-- `apps/api/src/routes.ts`: 26KB - Manejo principal de rutas backend.
-- `apps/frontend/src/index.css`: Definición de variables CSS para temas y estilos globales.
-- `apps/frontend/src/store/`: Contiene la lógica de estado de la aplicación (`chatStore`, `configStore`).
+---
 
-## 5. Próximos Pasos Sugeridos
-- **Cobertura de Tests**: Aumentar la cobertura de pruebas en el frontend (componentes críticos) y expandir los tests de integración en la API.
-- **Optimización de Producción**: Verificar la configuración de `helmet` y seguridad para el despliegue final.
-- **Completar Documentación**: Actualizar `MANUAL.md` y `DEPLOY_GUIDE.md` con los cambios recientes de arquitectura (TS, Zod).
+## 🚧 Pendientes Inmediatos (Next Steps)
+
+1.  **Cableado Final del Chat**:
+    - La infraestructura de cola está lista, pero el endpoint `POST /chat` **todavía procesa síncronamente**.
+    - _Acción:_ Modificar `routes.ts` para que, en vez de esperar a la IA, simplemente despache el trabajo a la cola y devuelva un `jobId`.
+
+2.  **Frontend Auth**:
+    - Asegurar que el cliente (React) esté enviando el header `Authorization: Bearer <token>` en cada request, ahora que la API lo exige.
+
+3.  **Observabilidad**:
+    - Verificar en los logs de Render que el "Worker" interno esté procesando mensajes correctamente cuando activemos el switch asíncrono.
+
+## 📊 Métricas Técnicas
+
+- **Node Version:** 20.x
+- **Build System:** PNPM Workspace
+- **Base de Datos:** Supabase (Postgres)
+- **Cache/Queue:** Redis (Internal Render)
