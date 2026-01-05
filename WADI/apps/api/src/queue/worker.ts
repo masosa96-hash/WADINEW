@@ -13,8 +13,6 @@ export function startWorker() {
     return;
   }
 
-  const connection = createRedis();
-
   console.log("[Worker] Starting chat worker...");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,8 +35,8 @@ export function startWorker() {
       };
     },
     {
-      connection: connection as any,
-      concurrency: 5,
+      connection: createRedis() as any,
+      concurrency: 3,
       removeOnComplete: { count: 100 },
       removeOnFail: { count: 500 },
     }
