@@ -17,6 +17,7 @@ const pdf = require("pdf-parse");
 import { wadiPreFlight } from "./layers/human_pattern/index.js";
 import { authenticate } from "./middleware/authenticate.js";
 import { requireScope } from "./middleware/require-scope.js";
+import { chatQueue } from "./queue/chatQueue.js";
 
 interface AuthenticatedRequest extends Request {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,14 +175,18 @@ router.post(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const guestSessions = new Map<string, any[]>();
 
+// --- REPLACED: ASYNC CHAT ENDPOINT ---
 router.post(
   "/chat",
   authenticate,
   validateChatInput,
+  requireScope("chat:write"),
   asyncHandler(async (req, res) => {
     let user = req.user;
+    
+    // Fallback for missing user in request (should be handled by authenticate/requireScope, but for safety)
+    const userId = user?.id || "anonymous_" + Date.now();
 
-    // Guest Mode: If no user, user stays null, but we proceed carefully.
     const {
       message,
       conversationId,
@@ -191,25 +196,14 @@ router.post(
       attachments,
       isMobile,
       customSystemPrompt,
+      memory
     } = req.body;
 
     let currentConversationId = conversationId;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let history: any[] = [];
-    let profile = {
-      efficiency_rank: "VISITANTE",
-      efficiency_points: 0,
-      active_focus: null,
-      custom_instructions: null,
-    };
-    let pastFailures: string[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let knowledgeBase: any[] = [];
 
-    // --- CASE A: AUTHENTICATED USER ---
-    if (user) {
-      if (!currentConversationId) {
-        const { data: newConv } = await supabase
+    // 1. Create Conversation if needed (SYC, before queueing)
+    if (user && !currentConversationId) {
+       const { data: newConv } = await supabase
           .from("conversations")
           .insert([
             {
@@ -221,222 +215,71 @@ router.post(
           ])
           .select()
           .single();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        currentConversationId = (newConv as any).id;
-      }
-
-      await supabase.from("messages").insert({
-        conversation_id: currentConversationId,
-        user_id: user.id,
-        role: "user",
-        content: message,
-        attachments: attachments || [],
-      });
-
-      const { data: dbHistory } = await supabase
-        .from("messages")
-        .select("role, content")
-        .eq("conversation_id", currentConversationId)
-        .order("created_at", { ascending: true });
-      history = dbHistory || [];
-
-      // [SAFETY]: If DB read missed the insert (race condition), manually add current message
-      if (history.length === 0) {
-        history.push({ role: "user", content: message });
-      }
-
-      const { data: dbProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (dbProfile) profile = dbProfile;
-
-      pastFailures = await fetchUserCriminalRecord(user.id);
-      knowledgeBase = await fetchKnowledgeBase(user.id);
-    }
-    // --- CASE B: GUEST MODE (IN-MEMORY) ---
-    else {
-      if (!currentConversationId) {
-        currentConversationId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        guestSessions.set(currentConversationId, []);
-      }
-
-      if (!guestSessions.has(currentConversationId)) {
-        guestSessions.set(currentConversationId, []);
-      }
-      history = guestSessions.get(currentConversationId) || [];
-
-      // Add User Message to Memory
-      history.push({ role: "user", content: message });
-
-      profile = {
-        efficiency_rank: "VISITANTE_CURIOSO",
-        efficiency_points: 0,
-        active_focus: null,
-        custom_instructions: null,
-      };
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         currentConversationId = (newConv as any).id;
     }
 
-    // --- HUMAN PATTERN LAYER (WADI V1) ---
-    // WADI responde desde experiencia acumulada, no desde definiciones abstractas.
-    // Si puede describir un patrón humano, no explica teoría.
-
-    // --- HUMAN PATTERN LAYER (WADI V1) ---
-    // SKIP IF PANIC MODE
-    if (mode !== "panic") {
-      const preFlightData = wadiPreFlight(message);
-
-      if (preFlightData) {
-        console.log(`[WADI HUMAN LAYER] Response sent. HALTING.`);
-        return res.json({
-          reply: preFlightData.reply,
-          detectedPattern: preFlightData.pattern,
-          conversationId: currentConversationId,
-          efficiencyPoints: profile.efficiency_points,
-        });
-      }
-    }
-
-    // --- COMMON: GENERATE AI RESPONSE ---
-
-    // [FIX]: Remove current msg from history for prompt context, and limit to recent history
-    const previousHistory = history.slice(0, -1).slice(-20);
-    const messageCount = history.length - 1; // Correct count of previous messages
-
-    const fullSystemPrompt = generateSystemPrompt(
-      mode || "normal",
-      topic || "general",
-      // explainLevel || "normal",
-      {}, // sessionPrefs
-      "hostile",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (req.body as any).isMobile,
-      messageCount,
-      pastFailures,
-      profile.efficiency_rank,
-      profile.efficiency_points,
-      profile.active_focus,
-      req.body.memory || {}, // Pass memory
-      knowledgeBase, // Pass knowledge
-      profile.custom_instructions // Pass dynamic instructions from DB
-    );
-
-    // [DEBUG OVERRIDE]
-    const finalSystemPrompt = customSystemPrompt || fullSystemPrompt;
-
-    const userContent = await processAttachments(message, attachments);
-
-    // Prepare OpenAI Messages: System + Previous History + Current User Message
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const openAIHistory = previousHistory.map((m: any) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-      try {
-      // --- RUN BRAIN (CORE) ---
-      console.log(`[AI START] Running Brain for conv ${currentConversationId}...`);
-      
-      const fullMessages = [
-        { role: "system", content: finalSystemPrompt },
-        ...openAIHistory,
-        { role: "user", content: userContent },
-      ];
-
-      const result = await runBrain(fullMessages); 
-
-      console.log(`[AI END] Result:`, result.meta);
-
-      if (result.meta?.degraded) {
-        console.warn("[BRAIN WARNING] Degraded response returned.", result.meta);
-      }
-
-      const reply = result.response;
-      
-      let newPoints = profile.efficiency_points;
-      let newRank = profile.efficiency_rank;
-      let systemDeath = false;
-
-      // Persistence Update
-      if (user) {
-        let pointChange = 0;
-        
-        // Logic adaptation: Use structured data + regex on text
-        if (reply.includes("[FOCO_LIBERADO]")) {
-          pointChange = 20;
-        } else if (reply.includes("[FORCE_DECISION]")) {
-          pointChange = -10;
-        } else if (result.smokeIndex > 50) {
-          // Penalize high smoke index directly
-          pointChange = -Math.floor(result.smokeIndex / 5);
-        } else if (reply.includes("[DECONSTRUCT_START]")) {
-           // Keep legacy check just in case
-           pointChange = -5;
-        }
-
-        newPoints += pointChange;
-        
-        // System Death logic
-        systemDeath = newPoints <= -50;
-
-        if (systemDeath) {
-          await supabase.from("messages").delete().eq("user_id", user.id);
-          await supabase.from("conversations").delete().eq("user_id", user.id);
-          newPoints = 0;
-        }
-
-        newRank = calculateRank(newPoints);
-
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          efficiency_points: newPoints,
-          efficiency_rank: newRank,
-          active_focus: reply.includes("[FOCO_LIBERADO]")
-            ? null
-            : profile.active_focus,
-          updated_at: new Date().toISOString(),
-        });
-
-        if (!systemDeath) {
-          // Store just the text response, ignoring risks/metadata in DB for now
-          // (Can be enhanced to store metadata in a separate column later)
-          await supabase.from("messages").insert({
+    // 2. Insert User Message immediately so it appears secure
+    if (user && currentConversationId) {
+        await supabase.from("messages").insert({
             conversation_id: currentConversationId,
             user_id: user.id,
-            role: "assistant",
-            content: reply,
-          });
-        }
-      } else {
-        const session = guestSessions.get(currentConversationId);
-        if (session) {
-          session.push({ role: "assistant", content: reply });
-        }
-      }
-
-      res.json({
-        reply: systemDeath ? "SYSTEM FAILURE" : reply,
-        conversationId: currentConversationId,
-        efficiencyPoints: newPoints,
-        efficiencyRank: newRank,
-        systemDeath,
-        isGuest: !user,
-        meta: result.meta // Expose meta for client debugging if needed
-      });
-
-    } catch (error: any) {
-      console.error("[AI CRITICAL ERROR]:", error);
-       res.json({
-        reply: "Error crítico en el núcleo de WADI. (Fallback de emergencia).",
-        conversationId: currentConversationId,
-        efficiencyPoints: profile.efficiency_points,
-      });
+            role: "user",
+            content: message,
+            attachments: attachments || [],
+        });
     }
+
+    // 3. Add to Queue
+    const job = await chatQueue.add("chat", {
+       userId,
+       message,
+       conversationId: currentConversationId, 
+       // Pass all context the worker needs
+       mode,
+       topic,
+       // explainLevel, 
+       isMobile,
+       attachments,
+       customSystemPrompt,
+       memory
+    });
+
+    // 4. Respond Async
+    res.status(202).json({
+      jobId: job.id,
+      conversationId: currentConversationId,
+      status: "queued"
+    });
   })
 );
 
 // --- PROYECTOS (Simplificados) ---
+// --- PROYECTOS (Simplificados) ---
+// --- REPLACED: ASYNC JOB STATUS ENDPOINT ---
+router.get(
+  "/chat/job/:jobId",
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const job = await chatQueue.getJob(req.params.jobId);
+
+    if (!job) {
+      return res.status(404).json({ status: "not_found" });
+    }
+
+    const state = await job.getState();
+    const result = job.returnvalue;
+
+    return res.json({
+      jobId: job.id,
+      status: state,
+      result: state === "completed" ? result : null,
+      error: state === "failed" ? job.failedReason : null,
+      progress: job.progress
+    });
+  })
+);
+
 // --- PROYECTOS (Simplificados) ---
 router.get(
   "/projects",
