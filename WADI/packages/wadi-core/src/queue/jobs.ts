@@ -13,6 +13,9 @@ export type ChatJobInput = {
   customSystemPrompt?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   memory?: any;
+  // Pre-computed OpenAI messages
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  messages?: any[]; 
 };
 
 export type ChatJobOutput = {

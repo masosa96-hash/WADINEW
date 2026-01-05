@@ -49,3 +49,43 @@
 - **Build System:** PNPM Workspace
 - **Base de Datos:** Supabase (Postgres)
 - **Cache/Queue:** Redis (Internal Render)
+
+# HITO ALCANZADO: BETA SÓLIDO (V 5.0)
+**Fecha:** 05/01/2026
+**Estado:** 🟢DEPLOYED & READY
+
+## 🏆 Logros Críticos (La "Madurez" del Sistema)
+El proyecto ha dejado de ser un prototipo frágil. Ahora tiene una arquitectura de **software de producción**:
+
+1.  **Cerebro Asíncrono (BullMQ + Redis)**
+    *   **Antes:** Si la IA tardaba 30s, el navegador cortaba la conexión (Timeout).
+    *   **Ahora:** El frontend recibe un ticket (`jobId`), cuelga, y espera. El servidor procesa en background sin límites de tiempo. **Cero Timeouts.**
+
+2.  **Infraestructura Resiliente**
+    *   **Worker Integrado:** Corre en el mismo proceso que la API (ahorro de costos en Render), pero lógicamente separado.
+    *   **Redis Singleton:** Conexión robusta que sobrevive a reinicios y micro-cortes de red.
+    *   **Polling Inteligente:** El frontend consulta estado cada 1s, sin saturar al servidor.
+
+3.  **Seguridad & Tipado**
+    *   **Auth:** JWT Middleware (`requireScope`) protegiendo las rutas.
+    *   **TypeScript:** `ChatJobInput` y contratos de API sincronizados entre Core, API y Worker. Build robusto.
+
+## 🚀 ¿Está listo para usar?
+**SÍ. ABSOLUTAMENTE.**
+Es el momento de empezar a usar WADI ("Monday") para trabajar de verdad.
+
+### Qué puedes hacer YA:
+*   ✅ **Chat Profundo:** Hablar temas complejos sin miedo a que se corte la respuesta a la mitad.
+*   ✅ **Cristalizar Proyectos:** Convertir una idea del chat en un Proyecto formal en la DB con un click.
+*   ✅ **Subir Archivos:** El sistema ingesta PDFs/Textos (aunque el RAG es básico aún).
+*   ✅ **Memoria a Largo Plazo:** Monday recuerda tus "fracasos" y "preferencias" (Wadi Knowledge Base).
+
+### Qué falta (Roadmap vNext):
+*   RAG Avanzado (Vectores reales en pgvector).
+*   Streaming de texto (Ver la respuesta letra por letra en lugar de esperar al bloque final).
+*   Edición de proyectos más compleja desde el UI.
+
+## Conclusión
+**El sistema es estable.** La base es sólida como una roca. Ya no estás peleando contra `ECONNREFUSED` ni `Timeouts`. Estás listo para iterar sobre el **producto**, no sobre la **infraestructura**.
+
+**WADI ESTÁ ONLINE.**

@@ -23,8 +23,8 @@ export function startWorker() {
         `[Worker] Processing job ${job.id} for user ${job.data.userId}`
       );
 
-      // Construct the messages array for runBrain from the simple input
-      const messages = [{ role: "user", content: job.data.message }];
+      // Use pre-computed messages from API if available (Legacy/Fallback: simple user msg)
+      const messages = job.data.messages || [{ role: "user", content: job.data.message }];
 
       const result = await runBrain(messages);
 

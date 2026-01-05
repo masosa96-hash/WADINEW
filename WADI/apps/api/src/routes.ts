@@ -230,19 +230,95 @@ router.post(
         });
     }
 
-    // 3. Add to Queue
+    // --- CONTEXT GATHERING (Restored from Sync Version) ---
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let history: any[] = [];
+    let profile = {
+      efficiency_rank: "VISITANTE",
+      efficiency_points: 0,
+      active_focus: null,
+      custom_instructions: null,
+    };
+    let pastFailures: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let knowledgeBase: any[] = [];
+
+    if (user && currentConversationId) {
+       // Fetch History
+       const { data: dbHistory } = await supabase
+        .from("messages")
+        .select("role, content")
+        .eq("conversation_id", currentConversationId)
+        .order("created_at", { ascending: true });
+      history = dbHistory || [];
+      
+      // Safety: ensure current msg is in history if DB race condition
+       if (history.length === 0 || history[history.length - 1].content !== message) {
+         history.push({ role: "user", content: message });
+       }
+
+       // Fetch Profile
+       const { data: dbProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (dbProfile) profile = dbProfile;
+
+      // Fetch Memory
+      pastFailures = await fetchUserCriminalRecord(user.id);
+      knowledgeBase = await fetchKnowledgeBase(user.id);
+    } else {
+        history.push({ role: "user", content: message });
+    }
+
+    // --- GENERATE SYSTEM PROMPT & MESSAGES ---
+    // Remove current msg from history for prompt context (it's added at the end)
+    const previousHistory = history.slice(0, -1).slice(-20);
+    const messageCount = Math.max(0, history.length - 1);
+
+     const fullSystemPrompt = generateSystemPrompt(
+      mode || "normal",
+      topic || "general",
+      {}, // sessionPrefs
+      "hostile",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (req.body as any).isMobile,
+      messageCount,
+      pastFailures,
+      profile.efficiency_rank,
+      profile.efficiency_points,
+      profile.active_focus,
+      memory || {}, 
+      knowledgeBase, 
+      profile.custom_instructions
+    );
+
+    const finalSystemPrompt = customSystemPrompt || fullSystemPrompt;
+    const userContent = await processAttachments(message, attachments);
+
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const openAIHistory = previousHistory.map((m: any) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    const fullMessages = [
+        { role: "system", content: finalSystemPrompt },
+        ...openAIHistory,
+        { role: "user", content: userContent },
+    ];
+
+    // 3. Add to Queue with PRE-BUILT MESSAGES
     const job = await chatQueue.add("chat", {
        userId,
        message,
        conversationId: currentConversationId, 
-       // Pass all context the worker needs
+       messages: fullMessages, // CRITICAL: Pass the brain context
        mode,
        topic,
-       // explainLevel, 
        isMobile,
        attachments,
-       customSystemPrompt,
-       memory
     });
 
     // 4. Respond Async
