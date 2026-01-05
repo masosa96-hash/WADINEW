@@ -49,3 +49,6 @@ jobs:
 
       - name: Unit Tests (All Apps)
         run: pnpm -r test
+
+      - name: Verify db types present
+        run: test -s WADI/packages/wadi-db-types/src/database.ts

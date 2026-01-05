@@ -11,6 +11,7 @@ El proyecto opera bajo una arquitectura de monorepo gestionada por `pnpm`, divid
 - **`apps/frontend`**: SPA en React 19 con Vite, TailwindCSS y Framer Motion.
 - **`packages/wadi-core`**: Lógica central compartida y contratos de tipos.
 - **`packages/logger`**: Utilidades de logging unificadas.
+- **`packages/wadi-persona`**: Biblioteca desacoplada para la gestión de personalidades (estrategia "Monday").
 
 ## 2. Tecnologías Clave
 
@@ -34,24 +35,25 @@ El proyecto opera bajo una arquitectura de monorepo gestionada por `pnpm`, divid
 
 ## 3. Estado Actual y Avances Recientes
 
+### Infraestructura Clean
+- **CI/CD**: Workflow único y consolidado en `.github/workflows/ci.yml`. Infraestructura cerrada y validada.
+- **Limpieza**: Eliminación de workflows antiguos y archivos duplicados en subdirectorios.
+
 ### API Hardening & TypeScript Migration
-- Se completó la migración de archivos JavaScript a TypeScript en `apps/api/src` (excepto scripts auxiliares como `register_user.js`).
+- Se completó la migración de archivos JavaScript a TypeScript en `apps/api/src`.
 - Se habilitó `strict: true` en `tsconfig.json` para garantizar seguridad de tipos.
 - Se implementaron esquemas de validación **Zod** en las rutas principales.
 - Se añadieron pruebas unitarias con **Vitest**, enfocándose en el contrato del cerebro (`wadi-brain.ts`).
 
 ### UI/UX & Rediseño "Neo-Y2K"
 - El frontend ha adoptado una estética "Neo-Y2K" moderna, utilizando gradientes suaves, glassmorphism y bordes redondeados.
-- **Monday Persona**: Se integró profundamente la personalidad "Monday" (Brillante pero Molesta) en el sistema.
-- **Settings Modal**: Se integró un modal de configuración conectado a `useConfigStore`, permitiendo gestión de temas, idioma y una "Danger Zone" para borrado de datos.
-- **Refactor de Chat**: Se migró hacia una arquitectura orientada a eventos para el manejo de mensajes y estados de UI.
+- **Monday Persona**: Se integró profundamente la personalidad "Monday" (Brillante pero Molesta) mediante el nuevo paquete `@wadi/persona`.
+- **Settings Modal**: Modal de configuración conectado a `useConfigStore`, permitiendo gestión de temas, idioma y "Danger Zone".
+- **Refactor de Chat**: Arquitectura orientada a eventos para el manejo de mensajes y estados de UI.
 
-### Infraestructura y Workflows
+### Workflows Automatizados
 - **Scripts de Build**: Optimizados para limpiar (`rimraf`) y construir frontend y backend secuencialmente.
-- **Workflows de Agente**:
-  - `/auto_sync`: Sincronización automática con Git.
-  - `/kivo_pipeline`: Pipeline de validación y despliegue para Kivo.
-
+- **Agentes**: Pipelines operativos (`/auto_sync`, `/kivo_pipeline`) definidos para mantenimiento continuo.
 ## 4. Métricas y Archivos Clave
 - `apps/api/src/routes.ts`: 26KB - Manejo principal de rutas backend.
 - `apps/frontend/src/index.css`: Definición de variables CSS para temas y estilos globales.
