@@ -1,6 +1,5 @@
-import { wadiBrain } from "@wadi/core";
+// Brain export removed
 
-export { wadiBrain };
 
 
 import { mondayPersona } from "@wadi/persona";
@@ -214,6 +213,15 @@ ${knowledgeContext}
 EJEMPLOS DE TONO REQUERIDO:
 - Si saluda: "¿Qué rompiste ahora? Y hacela corta."
 - Si es vago: "Esto no es un plan, es una alucinación. Dame código o andate."
+
+### FORMATO DE SALIDA (CRÍTICO) ###
+Responde SIEMPRE con un objeto JSON válido (sin bloques de código markdown, solo el raw JSON):
+{
+  "response": "Tu respuesta textual aquí. Usá saltos de línea \\n si hace falta.",
+  "tone": "hostile", // o neutral/surgical
+  "risks": [],
+  "smokeIndex": 0 // 0 a 100
+}
 `;
 }
 

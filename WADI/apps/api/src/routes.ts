@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
+import { runBrain } from "@wadi/core";
 import { openai, AI_MODEL } from "./openai.js";
 import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain.js";
 import { supabase } from "./supabase.js";
@@ -332,40 +333,26 @@ router.post(
       content: m.content,
     }));
 
-    try {
-      console.log(
-        `[AI START] Calling model for conv ${currentConversationId}...`
-      );
+      try {
+      // --- RUN BRAIN (CORE) ---
+      console.log(`[AI START] Running Brain for conv ${currentConversationId}...`);
+      
+      const fullMessages = [
+        { role: "system", content: finalSystemPrompt },
+        ...openAIHistory,
+        { role: "user", content: userContent },
+      ];
 
-      // 3. TIMEOUT SAFETY (25s)
-      const timeoutMs = 25000;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const result = await runBrain(fullMessages); 
 
-      // MODEL SELECTION: Use GPT-4o for vision (if attachments exist), else GPT-4o-mini (AI_MODEL)
-      const hasImages = attachments && attachments.length > 0;
-      const modelToUse = hasImages ? "gpt-4o" : AI_MODEL;
+      console.log(`[AI END] Result:`, result.meta);
 
-      const completion = await Promise.race([
-        openai.chat.completions.create({
-          model: modelToUse,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          messages: [
-            { role: "system", content: finalSystemPrompt },
-            ...openAIHistory,
-            { role: "user", content: userContent },
-          ] as any, // Cast to any to avoid complex OpenAI type matching for now
-        }),
-        new Promise<any>((_, reject) =>
-          setTimeout(() => reject(new Error("AI_TIMEOUT")), timeoutMs)
-        ),
-      ]);
-      clearTimeout(timeoutId);
+      if (result.meta?.degraded) {
+        console.warn("[BRAIN WARNING] Degraded response returned.", result.meta);
+      }
 
-      console.log(`[AI END] Response received.`);
-
-      const reply = completion.choices[0].message.content;
-
+      const reply = result.response;
+      
       let newPoints = profile.efficiency_points;
       let newRank = profile.efficiency_rank;
       let systemDeath = false;
@@ -373,17 +360,23 @@ router.post(
       // Persistence Update
       if (user) {
         let pointChange = 0;
+        
+        // Logic adaptation: Use structured data + regex on text
         if (reply.includes("[FOCO_LIBERADO]")) {
           pointChange = 20;
         } else if (reply.includes("[FORCE_DECISION]")) {
           pointChange = -10;
+        } else if (result.smokeIndex > 50) {
+          // Penalize high smoke index directly
+          pointChange = -Math.floor(result.smokeIndex / 5);
         } else if (reply.includes("[DECONSTRUCT_START]")) {
-          // Smoke Index: Penalty for excessive noise
-          const noiseCount = (reply.match(/"category":\s*"RUIDO"/g) || [])
-            .length;
-          if (noiseCount > 3) pointChange = -10;
+           // Keep legacy check just in case
+           pointChange = -5;
         }
+
         newPoints += pointChange;
+        
+        // System Death logic
         systemDeath = newPoints <= -50;
 
         if (systemDeath) {
@@ -405,6 +398,8 @@ router.post(
         });
 
         if (!systemDeath) {
+          // Store just the text response, ignoring risks/metadata in DB for now
+          // (Can be enhanced to store metadata in a separate column later)
           await supabase.from("messages").insert({
             conversation_id: currentConversationId,
             user_id: user.id,
@@ -426,20 +421,13 @@ router.post(
         efficiencyRank: newRank,
         systemDeath,
         isGuest: !user,
+        meta: result.meta // Expose meta for client debugging if needed
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.error("[AI ERROR]:", error);
-      let errorReply =
-        "El sistema colapsó por su propia complejidad. O OpenAI está caído. Probá de nuevo.";
-      if (error.message === "AI_TIMEOUT") {
-        errorReply =
-          "El modelo se quedó pensando demasiado. Tu pregunta debe ser fascinante o terriblemente aburrida. Simplificala.";
-      }
 
-      // Return a safe fallback instead of hanging
-      res.json({
-        reply: errorReply,
+    } catch (error: any) {
+      console.error("[AI CRITICAL ERROR]:", error);
+       res.json({
+        reply: "Error crítico en el núcleo de WADI. (Fallback de emergencia).",
         conversationId: currentConversationId,
         efficiencyPoints: profile.efficiency_points,
       });
