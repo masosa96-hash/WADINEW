@@ -208,27 +208,58 @@ export const useChatStore = create<ChatState>()(
           const data = await response.json();
 
           if (response.ok) {
+            // Updated conversation ID if new
             if (!activeId && data.conversationId) {
               set({ activeId: data.conversationId });
               get().fetchConversations();
             }
-            if (activeId || data.conversationId) {
-              const convId = activeId || data.conversationId;
-              const { data: msgs } = await supabase
-                .from("messages")
-                .select("*")
-                .eq("conversation_id", convId)
-                .order("created_at", { ascending: true });
-              if (msgs) set({ messages: msgs as Message[] });
-            }
+
+            // Start Polling
+            const jobId = data.jobId;
+            const pollInterval = setInterval(async () => {
+              try {
+                const pollRes = await fetch(`${API_URL}/api/chat/job/${jobId}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                const pollData = await pollRes.json();
+
+                if (pollData.status === "completed") {
+                  clearInterval(pollInterval);
+                  set({ isTyping: false });
+                  
+                  // Force refresh messages to ensure we have the latest
+                  // (Supabase realtime might have picked it up, but this is safe)
+                  const convId = get().activeId;
+                  if (convId) {
+                     const { data: msgs } = await supabase
+                      .from("messages")
+                      .select("*")
+                      .eq("conversation_id", convId)
+                      .order("created_at", { ascending: true });
+                     if (msgs) set({ messages: msgs as Message[] });
+                  }
+                  
+                  useLogStore.getState().addLog("WADI ha respondido (Async).", "success");
+                } 
+                else if (pollData.status === "failed") {
+                  clearInterval(pollInterval);
+                  set({ isTyping: false });
+                  useLogStore.getState().addLog(`Error en worker: ${pollData.error}`, "error");
+                }
+              } catch (err) {
+                 console.error("Polling error", err);
+                 // Don't clear interval, retry.
+              }
+            }, 1000);
+          } else {
+             throw new Error("API request failed");
           }
         } catch (error) {
           console.error("Error sending message:", error);
+          set({ isTyping: false });
           useLogStore
             .getState()
             .addLog("Error enviando mensaje al cerebro.", "error");
-        } finally {
-          set({ isTyping: false });
         }
       },
 
