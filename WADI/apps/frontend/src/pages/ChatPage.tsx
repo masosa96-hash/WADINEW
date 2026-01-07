@@ -113,11 +113,7 @@ export default function ChatPage() {
       <OperationsMonitor />
       <Dropzone />
 
-      <main 
-        className="flex h-full max-w-7xl mx-auto w-full gap-4 pt-16 md:pt-4 px-2 md:px-0 font-mono"
-        role="main"
-        aria-label="Interfaz de Chat WADI"
-      >
+      <div className="flex h-full max-w-7xl mx-auto w-full gap-4 pt-16 md:pt-4 px-2 md:px-0 font-mono">
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col h-full relative z-10">
           {!hasMessages ? (
@@ -213,7 +209,7 @@ export default function ChatPage() {
             />
           </div>
         </div>
-      </main>
+      </div>
     </Layout>
   );
 }
