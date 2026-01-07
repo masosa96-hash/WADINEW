@@ -8,8 +8,9 @@ import { useChatStore, type Message } from "./store/chatStore";
 import "./styles/tokens.css";
 import "./index.css";
 
-// 1. Service Worker Registration
-// 1. Service Worker Registration
+// 1. Service Worker Registration (TEMPORARILY DISABLED)
+// TODO: Re-enable after fixing SW issues
+/*
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
@@ -25,6 +26,7 @@ if ("serviceWorker" in navigator) {
       });
   });
 }
+*/
 
 // 2. Monday's Standalone Detection
 const isStandalone =
