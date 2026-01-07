@@ -104,25 +104,30 @@ export function TerminalInput({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col gap-2 relative mb-6 font-mono">
+    <div className="w-full max-w-3xl mx-auto flex flex-col gap-3 relative">
       {/* File Preview */}
       {selectedFile && (
-        <div className="absolute -top-12 left-0 right-0 flex justify-center z-20">
-          <div className="bg-[var(--bg-panel)] border border-[var(--border-subtle)] px-3 py-1.5 flex items-center gap-3">
-            <span className="text-[10px] text-[var(--text-primary)] truncate max-w-[200px]">
-              {selectedFile.name} [{(selectedFile.size / 1024).toFixed(0)}KB]
+        <div className="flex justify-center animate-enter">
+          <div className="bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-lg)] px-4 py-2 flex items-center gap-3 shadow-lg">
+            <Paperclip size={14} className="text-[var(--wadi-primary)]" />
+            <span className="text-xs text-[var(--wadi-text)] truncate max-w-[240px] font-medium">
+              {selectedFile.name}
+            </span>
+            <span className="text-xs text-[var(--wadi-text-dim)]">
+              {(selectedFile.size / 1024).toFixed(0)}KB
             </span>
             <button
               onClick={() => setSelectedFile(null)}
-              className="text-[var(--text-secondary)] hover:text-[var(--danger)]"
+              className="text-[var(--wadi-text-dim)] hover:text-[var(--wadi-danger)] transition-colors ml-2"
+              aria-label="Remover archivo"
             >
-              <X size={12} />
+              <X size={14} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Main Input Bar */}
+      {/* Main Input Pill */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -130,7 +135,7 @@ export function TerminalInput({
         }}
         className="w-full"
       >
-        <div className="w-full flex items-center bg-[var(--bg-main)] border border-[var(--border-subtle)] focus-within:border-[var(--text-primary)] transition-colors">
+        <div className="w-full flex items-center bg-[var(--wadi-surface-glass)] backdrop-blur-2xl border border-[var(--wadi-border)] rounded-[var(--radius-pill)] transition-all duration-200 focus-within:border-[var(--wadi-primary)] focus-within:ring-2 focus-within:ring-[var(--wadi-primary-ring)] shadow-lg hover:shadow-xl">
           <input
             type="file"
             ref={fileInputRef}
@@ -139,23 +144,26 @@ export function TerminalInput({
             accept="image/*,.txt,.md,.pdf,.csv,.json"
           />
 
+          {/* Attach Button */}
           <button
             type="button"
-            className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-r border-[var(--border-subtle)] hover:bg-[var(--bg-panel)]"
+            className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-[var(--wadi-text-dim)] hover:text-[var(--wadi-primary)] transition-colors rounded-l-[var(--radius-pill)]"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
+            aria-label="Adjuntar archivo"
           >
-            <Paperclip size={16} />
+            <Paperclip size={18} />
           </button>
 
+          {/* Text Input */}
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={handlePaste}
-            placeholder="Comando o instrucción..."
-            className="flex-1 bg-transparent border-none outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm px-4 h-10"
+            placeholder="¿Qué necesitás?"
+            className="flex-1 bg-transparent border-none outline-none text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-dim)] text-sm px-2 h-12 font-[var(--font-sans)]"
             autoComplete="off"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -165,30 +173,28 @@ export function TerminalInput({
             }}
           />
 
-          {input.length > 0 && (
-            <div className="text-[10px] text-[var(--text-muted)] px-2">
+          {/* Character Count (subtle) */}
+          {input.length > 50 && (
+            <div className="text-[10px] text-[var(--wadi-text-dim)] px-2 tabular-nums">
               {input.length}
             </div>
           )}
 
+          {/* Send Button */}
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || isLoading}
-            className={`w-10 h-10 flex items-center justify-center border-l border-[var(--border-subtle)] transition-colors
-              ${input.trim() || selectedFile ? "text-[var(--text-primary)] hover:bg-[var(--bg-panel)]" : "text-[var(--text-muted)] cursor-not-allowed"}
+            className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-r-[var(--radius-pill)] transition-all duration-200
+              ${
+                input.trim() || selectedFile
+                  ? "text-white bg-[var(--wadi-primary)] hover:bg-[#7c3aed] shadow-md shadow-[var(--wadi-primary-glow)]"
+                  : "text-[var(--wadi-text-dim)] cursor-not-allowed"
+              }
             `}
+            aria-label="Enviar mensaje"
           >
-            <ArrowRight size={16} />
+            <ArrowRight size={18} />
           </button>
-        </div>
-
-        <div className="flex justify-between mt-1 px-1">
-          <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest">
-            WADI_SYSTEM_READY
-          </span>
-          <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest">
-            SECURE_CHANNEL
-          </span>
         </div>
       </form>
     </div>
