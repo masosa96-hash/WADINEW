@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useLayoutEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useChatStore, type Attachment } from "../store/chatStore";
 import { useStoreHydration } from "../hooks/useStoreHydration";
@@ -13,7 +13,7 @@ import { MessageBubble } from "../components/MessageBubble";
 
 export default function ChatPage() {
   const { conversationId } = useParams();
-  const navigate = useNavigate();
+
   const hydrated = useStoreHydration();
 
   const {
@@ -26,7 +26,6 @@ export default function ChatPage() {
     conversationId: storeConversationId,
     isTyping,
     subscribeToMessages,
-    startNewChat,
   } = useChatStore();
 
   useEffect(() => {
