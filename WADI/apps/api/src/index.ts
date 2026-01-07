@@ -50,6 +50,11 @@ app.use(
           "https://hcaptcha.com",
           "https://fonts.googleapis.com",
         ],
+        styleSrcElem: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://fonts.googleapis.com",
+        ],
         imgSrc: [
           "'self'",
           "data:",
