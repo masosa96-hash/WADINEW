@@ -84,7 +84,7 @@ export async function ingestDocument(text: string, options: IngestOptions) {
   const sb = options.supabase || getSupabase();
   const ai = options.openai || getOpenAI();
 
-  const errors = [];
+  const errors: string[] = [];
 
   // Parallelize embeddings (with concurrency limit if needed, but for now Promise.all for speed)
   // Batching 5 at a time to avoid rate limits
