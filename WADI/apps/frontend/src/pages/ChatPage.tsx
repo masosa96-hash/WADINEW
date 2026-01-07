@@ -113,19 +113,65 @@ export default function ChatPage() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col h-full relative z-10">
           {!hasMessages ? (
-            // EMPTY STATE (Minimalist)
-            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
-              <div className="w-16 h-16 border-2 border-[var(--text-primary)] flex items-center justify-center">
-                <div className="w-4 h-4 bg-[var(--text-primary)] animate-pulse" />
+            // EMPTY STATE (Minimalist Pro)
+            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
+              {/* Logo/Icon */}
+              <div className="relative">
+                <div className="w-20 h-20 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--wadi-primary)] to-[var(--wadi-accent)] flex items-center justify-center shadow-2xl shadow-[var(--wadi-primary-glow)] animate-pulse-slow">
+                  <span className="text-3xl font-bold text-white">W</span>
+                </div>
               </div>
 
+              {/* Welcome Text */}
               <div className="text-center max-w-md space-y-2">
-                <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-widest uppercase">
-                  SISTEMA_WADI_V5
+                <h1 className="text-heading text-[var(--wadi-text)]">
+                  ¿En qué puedo ayudarte?
                 </h1>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Esperando input. Sé preciso.
+                <p className="text-body">
+                  Preguntame lo que necesites. Puedo analizar documentos, ayudarte con código, o simplemente charlar.
                 </p>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+                <button
+                  onClick={() => handleSendMessage("Ayudame a organizar un proyecto nuevo")}
+                  className="wadi-card text-left group"
+                >
+                  <div className="text-2xl mb-2">📋</div>
+                  <h3 className="text-sm font-semibold text-[var(--wadi-text)] mb-1">
+                    Organizar Proyecto
+                  </h3>
+                  <p className="text-xs text-[var(--wadi-text-secondary)]">
+                    Planificá y estructurá ideas
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleSendMessage("Necesito analizar este código y mejorarlo")}
+                  className="wadi-card text-left group"
+                >
+                  <div className="text-2xl mb-2">💻</div>
+                  <h3 className="text-sm font-semibold text-[var(--wadi-text)] mb-1">
+                    Revisar Código
+                  </h3>
+                  <p className="text-xs text-[var(--wadi-text-secondary)]">
+                    Debug y optimización
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleSendMessage("Quiero hacer un brainstorming sobre una idea")}
+                  className="wadi-card text-left group"
+                >
+                  <div className="text-2xl mb-2">💡</div>
+                  <h3 className="text-sm font-semibold text-[var(--wadi-text)] mb-1">
+                    Brainstorming
+                  </h3>
+                  <p className="text-xs text-[var(--wadi-text-secondary)]">
+                    Explorá posibilidades
+                  </p>
+                </button>
               </div>
             </div>
           ) : (

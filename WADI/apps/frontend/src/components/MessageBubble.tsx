@@ -17,30 +17,43 @@ export function MessageBubble({
   const isUser = role === "user";
 
   return (
-    <div
-      className={`flex w-full mb-6 ${isUser ? "justify-end" : "justify-start"}`}
-    >
+    <div className="flex w-full mb-8 animate-enter">
       <div
-        className={`max-w-[90%] md:max-w-[75%] px-4 py-3 border transition-colors ${
+        className={`w-full max-w-4xl px-6 py-4 rounded-[var(--radius-lg)] transition-all duration-200 ${
           !isUser
-            ? "border-[var(--border-subtle)] bg-[var(--bg-panel)] text-[var(--text-primary)]"
-            : "border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
+            ? "bg-[var(--wadi-surface)] border border-[var(--wadi-border)] hover:border-[var(--wadi-border-hover)]"
+            : "bg-transparent border border-transparent"
         }`}
       >
-        {/* Role Identifier */}
-        <span className="text-[10px] uppercase tracking-widest font-mono text-[var(--text-muted)] block mb-2 font-bold">
-          {!isUser ? "WADI_SYSTEM" : "USER_INPUT"}
-        </span>
+        {/* Role Label */}
+        <div className="flex items-center gap-2 mb-3">
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${
+              !isUser ? "bg-[var(--wadi-primary)]" : "bg-[var(--wadi-text-dim)]"
+            }`}
+          />
+          <span className="text-xs font-medium text-[var(--wadi-text-dim)] uppercase tracking-wide">
+            {!isUser ? "WADI" : "Vos"}
+          </span>
+          {timestamp && (
+            <span className="text-xs text-[var(--wadi-text-dim)] ml-auto">
+              {new Date(timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
+        </div>
 
-        {/* Render Attachments */}
+        {/* Attachments */}
         {attachments && attachments.length > 0 && (
-          <div className="flex flex-col gap-2 mb-3">
+          <div className="flex flex-col gap-2 mb-4">
             {attachments.map((att, idx) => {
               if (att.type.startsWith("image/")) {
                 return (
                   <div
                     key={idx}
-                    className="relative mb-3 overflow-hidden border border-[var(--border-subtle)]"
+                    className="relative overflow-hidden rounded-[var(--radius-md)] border border-[var(--wadi-border)] cursor-pointer hover:border-[var(--wadi-primary)] transition-colors"
                   >
                     <img
                       src={att.url}
@@ -57,29 +70,26 @@ export function MessageBubble({
                   href={att.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 p-2 bg-[var(--bg-main)] border border-[var(--border-subtle)] text-xs hover:text-[var(--text-primary)] transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-md)] text-sm hover:border-[var(--wadi-primary)] transition-colors"
                 >
-                  <AttachmentIcon size={14} />
-                  <span className="truncate max-w-[200px]">{att.name}</span>
+                  <AttachmentIcon size={16} className="text-[var(--wadi-primary)]" />
+                  <span className="truncate text-[var(--wadi-text)]">{att.name}</span>
                 </a>
               );
             })}
           </div>
         )}
 
-        <div className="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+        {/* Message Content */}
+        <div
+          className={`text-sm leading-relaxed whitespace-pre-wrap ${
+            !isUser
+              ? "text-[var(--wadi-text)] font-[var(--font-sans)]"
+              : "text-[var(--wadi-text-secondary)] font-[var(--font-sans)]"
+          }`}
+        >
           {content.trim()}
         </div>
-
-        {/* Minimalist Time */}
-        {timestamp && (
-          <span className="text-[9px] mt-2 block text-right text-[var(--text-muted)] font-mono tracking-widest opacity-50">
-            {new Date(timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        )}
       </div>
     </div>
   );
