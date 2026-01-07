@@ -19,19 +19,71 @@ export function startWorker() {
   worker = new Worker<any, any, string>(
     "chat",
     async (job) => {
-      console.log(
-        `[Worker] Processing job ${job.id} for user ${job.data.userId}`
-      );
+      const start = Date.now();
+      const { id, data } = job;
+      console.log(`[Worker] 🚀 Processing job ${id} for user ${data.userId}`);
+      
+      // 1. RAG Retrieve (Async Step)
+      let ragContext = "";
+      try {
+          // Dynamic import or usage if available. Importing from @wadi/core now.
+          const { searchKnowledgeBase } = await import("@wadi/core");
+          
+          if (data.message && data.userId) {
+             const docs = await searchKnowledgeBase(data.message, { userId: data.userId, limit: 3 });
+             if (docs && docs.length > 0) {
+                 ragContext = docs.map((d: any) => `[DOC_ID:${d.id}]: ${d.content}`).join("\n---\n");
+                 console.log(`[Worker] 🧠 RAG Found ${docs.length} docs for job ${id}`);
+             }
+          }
+      } catch (e) {
+          console.error(`[Worker] ⚠️ RAG Error for job ${id}:`, e);
+          // Continue without RAG
+      }
 
+      // 2. Inject Context into Messages
       // Use pre-computed messages from API if available (Legacy/Fallback: simple user msg)
-      const messages = job.data.messages || [{ role: "user", content: job.data.message }];
+      let messages = data.messages || [{ role: "user", content: data.message }];
+      
+      if (ragContext) {
+          // Strategy: Inject as System message just before the last User message
+          // OR prepend to the specific user message. 
+          // Let's prepend to the User content for strongest attention.
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg.role === "user") {
+              // Modify NOT in place if we want to be pure, but here we can mutate the local var
+              // Use specific marker for Brain to recognize context
+              const originalContent = typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
+              // Check if complex content (array) - if so, this is harder. 
+              // Assuming string for now based on routes.ts userContent handling (it can be array if images).
+              
+              if (Array.isArray(lastMsg.content)) {
+                  // If content is array (multimodal), add text block at start
+                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (lastMsg.content as any[]).unshift({ type: "text", text: `## CONTEXTO RECUPERADO (RAG):\n${ragContext}\n\n## USUARIO:\n` });
+              } else {
+                  lastMsg.content = `## CONTEXTO RECUPERADO (RAG):\n${ragContext}\n\n## USUARIO:\n${originalContent}`;
+              }
+          } else {
+              // If last msg is not user (weird), just push a system message
+              messages.push({ role: "system", content: `CONTEXTO RAG:\n${ragContext}` });
+          }
+      }
 
+      // 3. Execution
       const result = await runBrain(messages);
+
+      const duration = Date.now() - start;
+      console.log(`[Worker] ✅ Job ${id} Done in ${duration}ms`);
 
       return {
         ok: true,
         response: result,
         degraded: result.meta?.degraded,
+        metrics: {
+            duration,
+            ragDocs: ragContext ? 1 : 0
+        }
       };
     },
     {
@@ -43,10 +95,10 @@ export function startWorker() {
   );
 
   worker.on("completed", (job) => {
-    console.log(`[Worker] Job ${job.id} completed!`);
+    // console.log(`[Worker] Job ${job.id} completed!`); // Handled inside logic for timing
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`[Worker] Job ${job?.id} failed: ${err.message}`);
+    console.error(`[Worker] ❌ Job ${job?.id} failed: ${err.message}`);
   });
 }

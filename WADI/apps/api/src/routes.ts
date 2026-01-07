@@ -570,12 +570,34 @@ router.post(
     // Check token count estimation (rough)
     const estimatedTokens = textContent.length / 4;
 
+    // --- RAG INGESTION ---
+    let ingestionResult;
+    try {
+        const { ingestDocument } = await import("@wadi/core");
+        // We use the same Supabase client as API? No, Core manages its own or we pass it.
+        // It's cleaner to let Core use its env, but ensuring consistency.
+        // For now relying on Core's internal client creation via Env.
+        
+        ingestionResult = await ingestDocument(textContent, {
+            userId: user.id,
+            metadata: {
+                filename: req.file.originalname,
+                mimetype: req.file.mimetype,
+                uploaded_at: new Date().toISOString()
+            }
+        });
+    } catch (e: any) {
+        console.error("Ingestion failed", e);
+        throw new AppError("INTERNAL_ERROR", "Error guardando en memoria vectorial: " + e.message);
+    }
+
     res.json({
       filename: req.file.originalname,
-      content: textContent,
+      // content: textContent, // Don't echo back huge text
       size: req.file.size,
       tokens: Math.round(estimatedTokens),
-      message: "Archivo procesado. Si esperabas un premio, seguí esperando.",
+      chunks: ingestionResult?.chunks || 0,
+      message: `Archivo procesado e ingestad en ${ingestionResult?.chunks} fragmentos. Ahora es parte de mi consciencia.`,
     });
   })
 );
