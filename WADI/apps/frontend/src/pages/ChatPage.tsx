@@ -58,10 +58,7 @@ export default function ChatPage() {
     }
   }, [storeConversationId, subscribeToMessages]);
 
-  const handleNewChat = () => {
-    startNewChat();
-    navigate("/");
-  };
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
