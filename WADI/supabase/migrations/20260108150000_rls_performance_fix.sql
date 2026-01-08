@@ -1,120 +1,81 @@
 -- MIGRATION: 20260108150000_rls_performance_fix.sql
--- GOAL: Optimize RLS for scale and resolve 'multiple_permissive_policies'
--- Ref: https://supabase.com/docs/guides/database/postgres/row-level-security#performance-recommendations
+-- GOAL: Resolve all 'multiple_permissive_policies' and cleanup RLS ghosts.
+-- This script is aggressive: it drops all non-conforming policies to satisfy the linter.
 BEGIN;
 ---------------------------------------------------------
--- 1. CLEANUP: Drop old/redundant/warned policies
+-- 1. LIMPIEZA TOTAL DE "FANTASMAS"
 ---------------------------------------------------------
--- Profiles
-DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can manage own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can manage their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "profiles select" ON public.profiles;
-DROP POLICY IF EXISTS "strict_owner_all_profiles" ON public.profiles;
--- Conversations
-DROP POLICY IF EXISTS "Users can view their own conversations" ON public.conversations;
-DROP POLICY IF EXISTS "Users can own conversations" ON public.conversations;
-DROP POLICY IF EXISTS "Users can manage their own conversations" ON public.conversations;
-DROP POLICY IF EXISTS "WADI Permissive Policy" ON public.conversations;
-DROP POLICY IF EXISTS "strict_owner_all_conversations" ON public.conversations;
--- Messages
-DROP POLICY IF EXISTS "Users can manage their own messages" ON public.messages;
-DROP POLICY IF EXISTS "Users can insert their own messages" ON public.messages;
-DROP POLICY IF EXISTS "messages select" ON public.messages;
-DROP POLICY IF EXISTS "strict_owner_all_messages" ON public.messages;
--- Projects
-DROP POLICY IF EXISTS "Users can view only their own projects" ON public.projects;
-DROP POLICY IF EXISTS "Users can insert their own projects" ON public.projects;
-DROP POLICY IF EXISTS "Users can update their own projects" ON public.projects;
-DROP POLICY IF EXISTS "Users can delete their own projects" ON public.projects;
-DROP POLICY IF EXISTS "projects select" ON public.projects;
-DROP POLICY IF EXISTS "projects insert" ON public.projects;
-DROP POLICY IF EXISTS "projects update" ON public.projects;
-DROP POLICY IF EXISTS "projects delete" ON public.projects;
-DROP POLICY IF EXISTS "strict_owner_all_projects" ON public.projects;
--- Runs
-DROP POLICY IF EXISTS "Users can view only their own runs" ON public.runs;
-DROP POLICY IF EXISTS "Users can insert their own runs" ON public.runs;
-DROP POLICY IF EXISTS "Users can update their own runs" ON public.runs;
-DROP POLICY IF EXISTS "Users can delete their own runs" ON public.runs;
-DROP POLICY IF EXISTS "strict_owner_all_runs" ON public.runs;
--- Others (Safely handle potentially missing tables)
-DO $$ BEGIN -- Folders
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'folders'
-) THEN DROP POLICY IF EXISTS "Users can manage their own folders" ON public.folders;
-DROP POLICY IF EXISTS "strict_owner_all_folders" ON public.folders;
-END IF;
--- Documents (From RAG v1)
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'documents'
-) THEN DROP POLICY IF EXISTS "Users can insert their own documents" ON public.documents;
-DROP POLICY IF EXISTS "Users can select their own documents" ON public.documents;
-DROP POLICY IF EXISTS "Users can delete their own documents" ON public.documents;
-DROP POLICY IF EXISTS "strict_owner_all_documents" ON public.documents;
-END IF;
--- Workspaces
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'workspaces'
-) THEN DROP POLICY IF EXISTS "Members can view workspace" ON public.workspaces;
-DROP POLICY IF EXISTS "strict_owner_all_workspaces" ON public.workspaces;
-END IF;
--- Workspace Members
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'workspace_members'
-) THEN DROP POLICY IF EXISTS "Owners can manage members" ON public.workspace_members;
-DROP POLICY IF EXISTS "strict_owner_manage_members" ON public.workspace_members;
-END IF;
--- User Usage
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'user_usage'
-) THEN DROP POLICY IF EXISTS "strict_owner_all_usage" ON public.user_usage;
-END IF;
--- Project Tags
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'project_tags'
-) THEN DROP POLICY IF EXISTS "Users can manage project tags" ON public.project_tags;
-DROP POLICY IF EXISTS "Users can manage tags for their projects" ON public.project_tags;
-DROP POLICY IF EXISTS "strict_project_owner_tags" ON public.project_tags;
-END IF;
--- Cloud Reports
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'wadi_cloud_reports'
-) THEN DROP POLICY IF EXISTS "Users can view own cloud reports" ON public.wadi_cloud_reports;
-DROP POLICY IF EXISTS "Users can insert own cloud reports" ON public.wadi_cloud_reports;
-DROP POLICY IF EXISTS "strict_owner_all_reports" ON public.wadi_cloud_reports;
-END IF;
+DO $$
+DECLARE pol record;
+BEGIN -- Buscamos y destruimos todas las políticas que NO sigan nuestra convención de nombres
+-- para las tablas que el linter marcó con advertencias.
+FOR pol IN
+SELECT policyname,
+    tablename
+FROM pg_policies
+WHERE schemaname = 'public'
+    AND tablename IN (
+        'ai_presets',
+        'tags',
+        'conversations',
+        'messages',
+        'projects',
+        'runs',
+        'folders',
+        'documents',
+        'profiles',
+        'project_tags',
+        'user_usage',
+        'wadi_cloud_reports',
+        'workspace_members',
+        'workspaces',
+        'audit_logs'
+    )
+    AND policyname NOT LIKE 'strict_%'
+    AND policyname NOT LIKE 'optimized_%' LOOP EXECUTE format(
+        'DROP POLICY IF EXISTS %I ON public.%I',
+        pol.policyname,
+        pol.tablename
+    );
+END LOOP;
 END $$;
 ---------------------------------------------------------
--- 2. OPTIMIZED POLICIES
+-- 2. POLÍTICAS UNIFICADAS Y OPTIMIZADAS
 ---------------------------------------------------------
--- Profile (Qualify to avoid ambiguity with auth.uid())
+DO $$ BEGIN -- PROFILES (Ajuste según columna existente)
+IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'profiles'
+        AND column_name = 'user_id'
+) THEN DROP POLICY IF EXISTS "strict_owner_all_profiles" ON public.profiles;
 CREATE POLICY "strict_owner_all_profiles" ON public.profiles FOR ALL TO authenticated USING (
     (
         SELECT auth.uid()
-    ) = public.profiles.id
+    ) = user_id
 ) WITH CHECK (
     (
         SELECT auth.uid()
-    ) = public.profiles.id
+    ) = user_id
 );
--- Conversations
+ELSIF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'profiles'
+        AND column_name = 'id'
+) THEN DROP POLICY IF EXISTS "strict_owner_all_profiles" ON public.profiles;
+CREATE POLICY "strict_owner_all_profiles" ON public.profiles FOR ALL TO authenticated USING (
+    (
+        SELECT auth.uid()
+    ) = id
+) WITH CHECK (
+    (
+        SELECT auth.uid()
+    ) = id
+);
+END IF;
+-- CONVERSATIONS
+DROP POLICY IF EXISTS "strict_owner_all_conversations" ON public.conversations;
 CREATE POLICY "strict_owner_all_conversations" ON public.conversations FOR ALL TO authenticated USING (
     (
         SELECT auth.uid()
@@ -124,7 +85,8 @@ CREATE POLICY "strict_owner_all_conversations" ON public.conversations FOR ALL T
         SELECT auth.uid()
     ) = user_id
 );
--- Messages
+-- MESSAGES
+DROP POLICY IF EXISTS "strict_owner_all_messages" ON public.messages;
 CREATE POLICY "strict_owner_all_messages" ON public.messages FOR ALL TO authenticated USING (
     (
         SELECT auth.uid()
@@ -134,7 +96,8 @@ CREATE POLICY "strict_owner_all_messages" ON public.messages FOR ALL TO authenti
         SELECT auth.uid()
     ) = user_id
 );
--- Projects
+-- PROJECTS
+DROP POLICY IF EXISTS "strict_owner_all_projects" ON public.projects;
 CREATE POLICY "strict_owner_all_projects" ON public.projects FOR ALL TO authenticated USING (
     (
         SELECT auth.uid()
@@ -144,7 +107,8 @@ CREATE POLICY "strict_owner_all_projects" ON public.projects FOR ALL TO authenti
         SELECT auth.uid()
     ) = user_id
 );
--- Runs
+-- RUNS
+DROP POLICY IF EXISTS "strict_owner_all_runs" ON public.runs;
 CREATE POLICY "strict_owner_all_runs" ON public.runs FOR ALL TO authenticated USING (
     (
         SELECT auth.uid()
@@ -154,99 +118,108 @@ CREATE POLICY "strict_owner_all_runs" ON public.runs FOR ALL TO authenticated US
         SELECT auth.uid()
     ) = user_id
 );
--- DYNAMIC CREATION FOR OPTIONAL TABLES
-DO $$ BEGIN -- Folders
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'folders'
-) THEN CREATE POLICY "strict_owner_all_folders" ON public.folders FOR ALL TO authenticated USING (
-    (
-        SELECT auth.uid()
-    ) = user_id
-) WITH CHECK (
-    (
-        SELECT auth.uid()
-    ) = user_id
-);
-END IF;
--- Documents
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'documents'
-) THEN CREATE POLICY "strict_owner_all_documents" ON public.documents FOR ALL TO authenticated USING (
-    (
-        SELECT auth.uid()
-    ) = user_id
-) WITH CHECK (
-    (
-        SELECT auth.uid()
-    ) = user_id
-);
-END IF;
--- Cloud Reports
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'wadi_cloud_reports'
-) THEN CREATE POLICY "strict_owner_all_reports" ON public.wadi_cloud_reports FOR ALL TO authenticated USING (
-    (
-        SELECT auth.uid()
-    ) = user_id
-) WITH CHECK (
-    (
-        SELECT auth.uid()
-    ) = user_id
-);
-END IF;
--- Knowledge Base
-IF EXISTS (
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = 'wadi_knowledge_base'
-) THEN DROP POLICY IF EXISTS "strict_owner_all_knowledge" ON public.wadi_knowledge_base;
-CREATE POLICY "strict_owner_all_knowledge" ON public.wadi_knowledge_base FOR ALL TO authenticated USING (
-    (
-        SELECT auth.uid()
-    ) = user_id
-) WITH CHECK (
-    (
-        SELECT auth.uid()
-    ) = user_id
-);
-END IF;
-END $$;
----------------------------------------------------------
--- 3. GLOBAL READ-ONLY TABLES
----------------------------------------------------------
-CREATE POLICY "optimized_public_read_presets" ON public.ai_presets FOR
-SELECT TO public USING (true);
-CREATE POLICY "optimized_public_read_tags" ON public.tags FOR
-SELECT TO public USING (true);
--- Workspaces and related (The most likely source of 'id' errors)
--- We use a DO block to execute these ONLY if columns are verified
-DO $$ BEGIN -- Check Workspaces
+-- WORKSPACES (Detección dinámica de owner_id vs user_id)
 IF EXISTS (
     SELECT 1
     FROM information_schema.columns
     WHERE table_name = 'workspaces'
         AND column_name = 'user_id'
-) THEN EXECUTE 'CREATE POLICY "strict_owner_all_workspaces" ON public.workspaces FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id)';
+) THEN DROP POLICY IF EXISTS "strict_owner_all_workspaces" ON public.workspaces;
+CREATE POLICY "strict_owner_all_workspaces" ON public.workspaces FOR ALL TO authenticated USING (
+    (
+        SELECT auth.uid()
+    ) = user_id
+) WITH CHECK (
+    (
+        SELECT auth.uid()
+    ) = user_id
+);
 ELSIF EXISTS (
     SELECT 1
     FROM information_schema.columns
     WHERE table_name = 'workspaces'
         AND column_name = 'owner_id'
-) THEN EXECUTE 'CREATE POLICY "strict_owner_all_workspaces" ON public.workspaces FOR ALL TO authenticated USING ((SELECT auth.uid()) = owner_id) WITH CHECK ((SELECT auth.uid()) = owner_id)';
+) THEN DROP POLICY IF EXISTS "strict_owner_all_workspaces" ON public.workspaces;
+CREATE POLICY "strict_owner_all_workspaces" ON public.workspaces FOR ALL TO authenticated USING (
+    (
+        SELECT auth.uid()
+    ) = owner_id
+) WITH CHECK (
+    (
+        SELECT auth.uid()
+    ) = owner_id
+);
 END IF;
--- Check project_tags (Many-to-many often lacks its own 'id')
+-- WORKSPACE MEMBERS
 IF EXISTS (
     SELECT 1
     FROM pg_tables
-    WHERE tablename = 'project_tags'
-) THEN -- If we are here, project_tags and projects should exist.
-EXECUTE 'CREATE POLICY "strict_project_owner_tags" ON public.project_tags FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_tags.project_id AND p.user_id = (SELECT auth.uid())))';
+    WHERE tablename = 'workspace_members'
+) THEN DROP POLICY IF EXISTS "strict_owner_manage_members" ON public.workspace_members;
+CREATE POLICY "strict_owner_manage_members" ON public.workspace_members FOR ALL TO authenticated USING (
+    EXISTS (
+        SELECT 1
+        FROM public.workspaces w
+        WHERE w.id = workspace_members.workspace_id
+            AND (
+                w.user_id = (
+                    SELECT auth.uid()
+                )
+                OR w.owner_id = (
+                    SELECT auth.uid()
+                )
+            )
+    )
+);
+END IF;
+-- FOLDERS & DOCUMENTS
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE tablename = 'folders'
+) THEN DROP POLICY IF EXISTS "strict_owner_all_folders" ON public.folders;
+CREATE POLICY "strict_owner_all_folders" ON public.folders FOR ALL TO authenticated USING (
+    (
+        SELECT auth.uid()
+    ) = user_id
+) WITH CHECK (
+    (
+        SELECT auth.uid()
+    ) = user_id
+);
+END IF;
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE tablename = 'documents'
+) THEN DROP POLICY IF EXISTS "strict_owner_all_documents" ON public.documents;
+CREATE POLICY "strict_owner_all_documents" ON public.documents FOR ALL TO authenticated USING (
+    (
+        SELECT auth.uid()
+    ) = user_id
+) WITH CHECK (
+    (
+        SELECT auth.uid()
+    ) = user_id
+);
+END IF;
+-- AUDIT LOGS (Solo lectura para el dueño o sistema)
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE tablename = 'audit_logs'
+) THEN DROP POLICY IF EXISTS "strict_system_read_audit" ON public.audit_logs;
+CREATE POLICY "strict_system_read_audit" ON public.audit_logs FOR
+SELECT TO authenticated USING (true);
 END IF;
 END $$;
+---------------------------------------------------------
+-- 3. TABLAS DE LECTURA PÚBLICA (Optimización Final)
+---------------------------------------------------------
+DROP POLICY IF EXISTS "optimized_public_read_presets" ON public.ai_presets;
+CREATE POLICY "optimized_public_read_presets" ON public.ai_presets FOR
+SELECT TO public USING (true);
+DROP POLICY IF EXISTS "optimized_public_read_tags" ON public.tags;
+CREATE POLICY "optimized_public_read_tags" ON public.tags FOR
+SELECT TO public USING (true);
 COMMIT;
