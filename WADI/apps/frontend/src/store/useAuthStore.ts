@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
 
 interface AuthResponse {
-  data: any;
+  data: unknown;
   error: { message: string; status?: number } | null;
 }
 
@@ -16,7 +16,7 @@ interface AuthState {
     password: string,
     captchaToken?: string
   ) => Promise<AuthResponse>;
-  verifyOtp: (email: string, token: string, type?: 'signup' | 'login') => Promise<AuthResponse>;
+  verifyOtp: (email: string, token: string, type?: 'signup' | 'login' | 'recovery' | 'invite' | 'magiclink' | 'email_change') => Promise<AuthResponse>;
   loginAsGuest: () => Promise<AuthResponse>;
   convertGuestToUser: (
     email: string,
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
 
     set({ user: data.user, loading: false });
-    return { data, error };
+    return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
   signUp: async (email, password, captchaToken) => {
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     // If confirmation is required, the user will be null or session will be null
     set({ user: data.user, loading: false });
-    return { data, error };
+    return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
   verifyOtp: async (email, token, type = 'signup') => {
@@ -88,7 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     set({ loading: false });
-    return { data, error };
+    return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
   loginAsGuest: async () => {
