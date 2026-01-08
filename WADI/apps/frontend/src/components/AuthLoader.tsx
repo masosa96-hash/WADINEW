@@ -26,13 +26,16 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
       .then(({ data: { session } }) => {
         console.log("[WADI_AUTH]: Sesión recuperada:", session?.user?.id || "None");
         setUser(session?.user || null);
+        
+        // Ensure the global store loading state is also updated
+        useAuthStore.setState({ loading: false });
 
         if (!session) {
           loginAsGuest()
             .then(({ error: loginErr }) => {
               if (loginErr) {
                 console.error("[WADI_AUTH]: Guest login error:", loginErr);
-                setError(`Error de autenticación: ${loginErr.message}`);
+                setError(`Error de identidad: ${loginErr.message}`);
               }
               setReady(true);
             })
@@ -47,8 +50,9 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
       })
       .catch(err => {
         console.error("[WADI_AUTH]: Session error:", err);
-        setError("Error crítico de red con Supabase.");
-        setReady(true); // Don't block UI
+        setError("Error crítico de red. Revisa tu conexión.");
+        useAuthStore.setState({ loading: false });
+        setReady(true);
       });
 
     // 2. Listen for changes
