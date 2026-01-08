@@ -49,6 +49,42 @@ export interface Database {
         Insert: Partial<Database["public"]["Tables"]["projects"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["projects"]["Row"]>;
       };
+      wadi_reflections: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          content: string;
+          priority: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["wadi_reflections"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["wadi_reflections"]["Row"]>;
+      };
+      wadi_knowledge_base: {
+        Row: {
+          id: string;
+          user_id: string;
+          knowledge_point: string;
+          category: string;
+          confidence_score: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["wadi_knowledge_base"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["wadi_knowledge_base"]["Row"]>;
+      };
+      wadi_cloud_reports: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          content: string;
+          type: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["wadi_cloud_reports"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["wadi_cloud_reports"]["Row"]>;
+      };
     };
   };
 }
