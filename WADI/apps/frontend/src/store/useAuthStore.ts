@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: type as any,
+      type: type as any, // Supabase type union is strict, but our param is compatible
     });
 
     if (!error) {
@@ -168,9 +168,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         return { data: signInData, error: null };
       }
 
-      // Real error
       set({ loading: false });
-      return { data, error };
+      return { data: data as unknown, error: error as { message: string; status?: number } | null };
     }
 
     // Success (New User Conversion)
