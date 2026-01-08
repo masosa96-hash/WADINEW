@@ -4,7 +4,7 @@ import { supabase } from "../config/supabase";
 
 interface AuthResponse {
   data: any;
-  error: any;
+  error: { message: string; status?: number } | null;
 }
 
 interface AuthState {

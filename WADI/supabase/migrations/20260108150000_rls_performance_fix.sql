@@ -3,9 +3,7 @@
 -- Consonlidated, robust and using TO authenticated for security (Advisors 0012, 0008).
 DO $$
 DECLARE pol record;
-BEGIN ---------------------------------------------------------
--- 1. LIMPIEZA TOTAL DE "FANTASMAS"
----------------------------------------------------------
+BEGIN -- 1. LIMPIEZA TOTAL DE POLIZAS NO ESTANDAR
 FOR pol IN
 SELECT policyname,
     tablename
@@ -35,9 +33,7 @@ WHERE schemaname = 'public'
         pol.tablename
     );
 END LOOP;
----------------------------------------------------------
 -- 2. POLÍTICAS UNIFICADAS Y OPTIMIZADAS (TO authenticated)
----------------------------------------------------------
 -- PROFILES
 IF EXISTS (
     SELECT 1
@@ -142,9 +138,7 @@ IF EXISTS (
 ) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_system_read_audit" ON public.audit_logs';
 EXECUTE 'CREATE POLICY "strict_system_read_audit" ON public.audit_logs FOR SELECT TO authenticated USING (true)';
 END IF;
----------------------------------------------------------
 -- 3. TABLAS DE LECTURA PÚBLICA (TO public)
----------------------------------------------------------
 IF EXISTS (
     SELECT 1
     FROM pg_tables

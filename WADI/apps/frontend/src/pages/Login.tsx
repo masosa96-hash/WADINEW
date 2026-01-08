@@ -35,8 +35,9 @@ export default function Login() {
         const { error } = await verifyOtp(email, otpToken, isRegistering ? 'signup' : 'login');
         if (error) throw error;
         navigate("/projects");
-      } catch (err: any) {
-        setErrorMsg(err.message || "Código inválido o expirado.");
+      } catch (err) {
+        const error = err as Error;
+        setErrorMsg(error.message || "Código inválido o expirado.");
       }
       return;
     }
@@ -67,9 +68,9 @@ export default function Login() {
         if (error) throw error;
         navigate("/projects");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setErrorMsg(err.message || "Ocurrió un error inesperado.");
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || "Ocurrió un error inesperado.");
     }
   };
 
