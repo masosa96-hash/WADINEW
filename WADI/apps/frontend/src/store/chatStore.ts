@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "../config/supabase";
 import { useLogStore } from "./logStore";
+import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 import imageCompression from "browser-image-compression";
 
 const rawUrl = import.meta.env.VITE_API_URL;
@@ -137,7 +138,7 @@ export const useChatStore = create<ChatState>()(
           .order("updated_at", { ascending: false });
 
         if (error) {
-           console.error("[WADI_CHAT]: Error cargando conversaciones:", error);
+           handleSupabaseError(error, "Cargando conversaciones");
         } else {
            console.log("[WADI_CHAT]: Conversaciones recibidas:", data?.length || 0);
         }

@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Expose supabase to window for console debugging
-if (typeof window !== "undefined") {
+// 🔍 Debugging: Solo expone supabase en desarrollo
+if (import.meta.env.DEV && typeof window !== "undefined") {
   (window as unknown as { supabase: unknown }).supabase = supabase;
 }

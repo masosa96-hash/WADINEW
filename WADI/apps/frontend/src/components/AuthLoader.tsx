@@ -11,16 +11,18 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("[WADI_AUTH]: Iniciando AuthLoader...");
     
-    // Failsafe timeout: Force entry after 5s if stuck
+    // 🛠️ BYPASS DE DESARROLLO (Advisor 0001 Fix)
+    // Si después de 3000ms sigue cargando, forzamos la entrada para evitar bloqueos por Rate Limits
     const failsafe = setTimeout(() => {
       setReady((currentReady) => {
         if (!currentReady) {
-          console.warn("[WADI_AUTH]: Carga inicial excedió el tiempo límite, forzando entrada.");
+          console.warn("⚠️ BYPASS ACTIVO: Forzando entrada al chatbot (Carga excedió 3s)");
+          useAuthStore.setState({ loading: false });
           return true; // Force ready
         }
         return currentReady;
       });
-    }, 5000);
+    }, 3000);
 
     // Timeout to detect if Supabase is hanging (Visual feedback)
     const visualTimeout = setTimeout(() => {

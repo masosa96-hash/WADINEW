@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "../config/supabase";
+import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 
 interface SettingsState {
   language: string;
@@ -47,8 +48,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         .single();
 
       if (error) {
-        console.warn("[WADI_SETTINGS]: Error o perfil no existente:", error.message);
-        // If it's a 406 (Not Acceptable) or 404, we don't treat it as a crash
+        handleSupabaseError(error, "Recuperando perfil (Settings)");
         return;
       }
 
