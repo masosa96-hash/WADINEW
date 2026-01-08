@@ -71,14 +71,13 @@ export default function Login() {
           setErrorMsg("Por favor completá el CAPTCHA.");
           return;
         }
-        const { data, error } = await signUp(email, password, captchaToken);
-        if (error) throw error;
+        const response = await signUp(email, password, captchaToken);
+        if (response.error) throw response.error;
 
-        // Cast unknown data to access user/session for confirmation check
-        const signupData = data as { user: { id: string } | null; session: { access_token: string } | null };
+        const signupData = response.data as { user: { id: string } | null; session: { access_token: string } | null };
 
         // If user is created but not session (needs confirmation)
-        if (signupData.user && !signupData.session) {
+        if (signupData?.user && !signupData?.session) {
           setNeedsOtp(true);
           const isPhone = email.startsWith("+") || /^\d+$/.test(email);
           setSuccessMsg(`¡Cuenta creada! Revisá tu ${isPhone ? 'teléfono' : 'email'} para verificarla.`);

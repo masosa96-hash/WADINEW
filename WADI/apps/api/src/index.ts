@@ -5,13 +5,13 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import routes from "./routes"; // TS file
-import kivoRoutes from "./routes/kivo.js"; // JS file
-import monitoringRoutes from "./routes/monitoring.js"; // JS file
+import kivoRoutes from "./routes/kivo";
+import monitoringRoutes from "./routes/monitoring";
 
-import { requestLogger } from "./middleware/requestLogger.js";
-import { rateLimiter } from "./middleware/rateLimiter.js";
-import { errorHandler } from "./middleware/errorHandler.js";
-import { startWorker } from "./queue/worker.js";
+import { requestLogger } from "./middleware/requestLogger";
+import { rateLimiter } from "./middleware/rateLimiter";
+import { errorHandler } from "./middleware/errorHandler";
+import { startWorker } from "./queue/worker";
 
 // Initialize Worker in the same process
 startWorker();

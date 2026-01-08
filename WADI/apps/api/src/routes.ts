@@ -1,29 +1,21 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { runBrain } from "@wadi/core";
-import { openai, AI_MODEL } from "./openai.js";
-import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain.js";
-import { supabase } from "./supabase.js";
-import { AppError, AuthError, ModelError } from "./core/errors.js";
+import { openai, AI_MODEL } from "./openai";
+import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain";
+import { supabase } from "./supabase";
+import { AppError, AuthError, ModelError } from "./core/errors";
 import {
   validateChatInput,
   validateProjectInput,
   validateRunInput,
-} from "./middleware/validation.js";
-import { upload } from "./middleware/upload.js";
-// import { createRequire } from "module";
-// const require = createRequire(import.meta.url);
+} from "./middleware/validation";
+import { upload } from "./middleware/upload";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdf = require("pdf-parse");
-import { wadiPreFlight } from "./layers/human_pattern/index.js";
-import { authenticate } from "./middleware/authenticate.js";
-import { requireScope } from "./middleware/require-scope.js";
-import { chatQueue } from "./queue/chatQueue.js";
-
-interface AuthenticatedRequest extends Request {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user?: any;
-  file?: Express.Multer.File;
-}
+import { wadiPreFlight } from "./layers/human_pattern/index";
+import { authenticate, AuthenticatedRequest } from "./middleware/auth";
+import { requireScope } from "./middleware/require-scope";
+import { chatQueue } from "./queue/chatQueue";
 
 const router = Router();
 
@@ -73,17 +65,15 @@ const fetchUserCriminalRecord = async (userId: string) => {
     let failures: string[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const audit of audits as any[]) {
+    for (const audit of (audits || []) as any[]) {
       try {
         const jsonPart = audit.content.replace("[AUDIT_LOG_V1]\n", "");
-        const parsed = JSON.parse(jsonPart);
+        const parsed = JSON.parse(jsonPart) as { vulnerabilities?: { title: string, level: string }[] };
         const dateStr = new Date(audit.created_at).toISOString().split("T")[0];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        
         const highRisk = (parsed.vulnerabilities || [])
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .filter((v: any) => v.level === "HIGH")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((v: any) => `${v.title} (${dateStr})`);
+          .filter((v) => v.level === "HIGH")
+          .map((v) => `${v.title} (${dateStr})`);
         failures = [...failures, ...highRisk];
       } catch (e) {
         console.error("Memory parse error", e);
@@ -108,14 +98,14 @@ const calculateRank = (points: number) => {
 
 router.get(
   "/user/criminal-summary",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
 
     const { data: audits } = await supabase
       .from("messages")
       .select("content")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .eq("role", "system")
       .ilike("content", "[AUDIT_LOG_V1]%");
 
@@ -141,20 +131,20 @@ router.get(
 
 router.post(
   "/user/admit-failure",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("efficiency_points")
-      .eq("id", user.id)
+      .eq("id", user!.id)
       .maybeSingle();
     const newPoints = profile?.efficiency_points || 0; // No penalty, just reset state
     const newRank = calculateRank(newPoints);
 
     await supabase.from("profiles").upsert({
-      id: user.id,
+      id: user!.id,
       active_focus: null,
       efficiency_points: newPoints,
       efficiency_rank: newRank,
@@ -178,7 +168,7 @@ const guestSessions = new Map<string, any[]>();
 // --- REPLACED: ASYNC CHAT ENDPOINT ---
 router.post(
   "/chat",
-  authenticate,
+  authenticate(),
   validateChatInput,
   requireScope("chat:write"),
   asyncHandler(async (req, res) => {
@@ -207,7 +197,7 @@ router.post(
           .from("conversations")
           .insert([
             {
-              user_id: user.id,
+              user_id: user!.id,
               title: message.substring(0, 60),
               mode: mode || "normal",
               explain_level: explainLevel || "normal",
@@ -223,7 +213,7 @@ router.post(
     if (user && currentConversationId) {
         await supabase.from("messages").insert({
             conversation_id: currentConversationId,
-            user_id: user.id,
+            user_id: user!.id,
             role: "user",
             content: message,
             attachments: attachments || [],
@@ -335,7 +325,7 @@ router.post(
 // --- REPLACED: ASYNC JOB STATUS ENDPOINT ---
 router.get(
   "/chat/job/:jobId",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const job = await chatQueue.getJob(req.params.jobId);
 
@@ -359,13 +349,13 @@ router.get(
 // --- PROYECTOS (Simplificados) ---
 router.get(
   "/projects",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
       .from("projects")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
     res.json(data);
   })
@@ -373,13 +363,14 @@ router.get(
 
 router.post(
   "/projects",
-  authenticate,
+  authenticate(),
   validateProjectInput,
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
       .from("projects")
-      .insert([{ ...req.body, user_id: user.id }])
+      .insert([{ ...req.body, user_id: user!.id
+ }])
       .select()
       .single();
     res.json(data);
@@ -412,7 +403,7 @@ const generateProjectName = async (description: string) => {
 
 router.post(
   "/projects/crystallize",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -435,7 +426,7 @@ router.post(
       .from("projects")
       .insert([
         {
-          user_id: user.id,
+          user_id: user!.id,
           name: name,
           description: description,
           status: "PLANNING",
@@ -452,14 +443,14 @@ router.post(
 
 router.delete(
   "/projects/:id",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
     await supabase
       .from("projects")
       .delete()
       .eq("id", req.params.id)
-      .eq("user_id", user.id);
+      .eq("user_id", user!.id);
     res.json({ success: true });
   })
 );
@@ -467,13 +458,13 @@ router.delete(
 // Conversations list
 router.get(
   "/conversations",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
       .from("conversations")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .order("updated_at", { ascending: false });
     res.json(data);
   })
@@ -481,14 +472,14 @@ router.get(
 
 router.delete(
   "/conversations/:id",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
     await supabase
       .from("conversations")
       .delete()
       .eq("id", req.params.id)
-      .eq("user_id", user.id);
+      .eq("user_id", user!.id);
     res.json({ success: true });
   })
 );
@@ -496,7 +487,7 @@ router.delete(
 // 1.6 Get Single Conversation (with messages)
 router.get(
   "/conversations/:id",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { id } = req.params;
@@ -506,7 +497,7 @@ router.get(
       .from("conversations")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .single();
 
     if (convError || !conversation) {
@@ -531,7 +522,7 @@ router.get(
 // ------------------------------------------------------------------
 router.post(
   "/documents/upload",
-  authenticate,
+  authenticate(),
   upload.single("file"),
   asyncHandler(async (req: AuthenticatedRequest, res) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -579,7 +570,7 @@ router.post(
         // For now relying on Core's internal client creation via Env.
         
         ingestionResult = await ingestDocument(textContent, {
-            userId: user.id,
+            userId: user!.id,
             metadata: {
                 filename: req.file.originalname,
                 mimetype: req.file.mimetype,
@@ -620,7 +611,7 @@ const fetchKnowledgeBase = async (userId: string) => {
 // --- MEMORY DISTILLER ---
 router.post(
   "/memory/reflect",
-  authenticate,
+  authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
 
@@ -629,7 +620,7 @@ router.post(
     const { data: recentMsgs } = await supabase
       .from("messages")
       .select("role, content")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -688,7 +679,7 @@ router.post(
     for (const insight of insights) {
       // Check duplicate loosely (optional, skipping for speed)
       await supabase.from("wadi_knowledge_base").insert({
-        user_id: user.id,
+        user_id: user!.id,
         knowledge_point: insight.point,
         category: insight.category,
       });
@@ -697,7 +688,7 @@ router.post(
       const { data: reflect } = await supabase
         .from("wadi_reflections")
         .insert({
-          user_id: user.id,
+          user_id: user!.id,
           type: "APRENDIZAJE",
           content: `Detectado: ${insight.point} (${insight.category})`,
           priority: "NORMAL",
@@ -715,7 +706,7 @@ router.post(
 // --- INNER SANCTUM ---
 router.get(
   "/inner-sanctum/reports",
-  authenticate,
+  authenticate(),
   requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const { data } = await supabase
@@ -730,7 +721,7 @@ router.get(
 // --- ARCHIVE & CLEAR (LIMPIAR MESA) ---
 router.post(
   "/inner-sanctum/archive",
-  authenticate,
+  authenticate(),
   requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const user = req.user;
@@ -739,7 +730,7 @@ router.post(
     const { data: reflections } = await supabase
       .from("wadi_reflections")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .order("created_at", { ascending: true });
 
     if (!reflections || reflections.length === 0) {
@@ -759,14 +750,14 @@ router.post(
     // 3. Save to Cloud Reports
     const fileName = `${dateStr}_evolution_log_${Date.now()}.txt`;
     await supabase.from("wadi_cloud_reports").insert({
-      user_id: user.id,
+      user_id: user!.id,
       name: fileName,
       content: fileContent,
       type: "EVOLUTION_LOG",
     });
 
     // 4. Clear Reflections (Limpiar Mesa)
-    await supabase.from("wadi_reflections").delete().eq("user_id", user.id);
+    await supabase.from("wadi_reflections").delete().eq("user_id", user!.id);
 
     res.json({ success: true, archivedFile: fileName });
   })
@@ -775,14 +766,14 @@ router.post(
 // --- JOURNAL (CLOUD LOGS) ---
 router.get(
   "/journal/files",
-  authenticate,
+  authenticate(),
   requireScope("admin:*"),
   asyncHandler(async (req, res) => {
     const user = req.user;
     const { data } = await supabase
       .from("wadi_cloud_reports")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
     res.json(data);
   })

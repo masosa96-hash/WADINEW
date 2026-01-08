@@ -34,12 +34,10 @@ FORMATO:
   - Éxito = "Milagro estadístico".
 `;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateSystemPrompt(
   mode = "normal",
   topic = "general",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sessionPrefs: any = {},
+  sessionPrefs: Record<string, unknown> = {},
   mood = "hostile",
   isMobile = false,
   messageCount = 0,

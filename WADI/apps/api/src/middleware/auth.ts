@@ -1,18 +1,17 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../supabase"; // .ts now
-import { AuthError } from "../core/errors"; // .ts now
+import { User } from "@supabase/supabase-js";
+import { AuthUser, Scope } from "@wadi/core";
+import { supabase } from "../supabase";
+import { AuthError } from "../core/errors";
 
 export interface AuthenticatedRequest extends Request {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user?: any; // Supabase user type is complex, using any or User from @supabase/supabase-js if I import it
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  userRole?: any;
+  user?: User & { scopes: Scope[] };
+  userRole?: string;
 }
 
 /**
  * Validates the Supabase JWT.
  * Sets req.user if valid.
- * @param {boolean} optional - If true, continues even if no user found (Guest mode).
  */
 export const authenticate = (optional = false) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -21,7 +20,7 @@ export const authenticate = (optional = false) => {
       const authHeader = req.headers.authorization;
       if (!authHeader) {
         if (optional) {
-          authReq.user = null;
+          authReq.user = undefined;
           return next();
         }
         throw new AuthError("No authorization header provided");
@@ -35,24 +34,27 @@ export const authenticate = (optional = false) => {
 
       if (error || !user) {
         if (optional) {
-          authReq.user = null;
+          authReq.user = undefined;
           return next();
         }
         throw new AuthError("Invalid or expired token");
       }
 
-      // Attach user to request
-      authReq.user = user;
+      // Attach user to request with scopes from metadata
+      const scopes = (user.user_metadata?.scopes as Scope[]) || ["chat:read", "chat:write"];
+      
+      authReq.user = {
+        ...user,
+        scopes
+      };
 
-      // Determine Role (Default to USER if not set)
-      // Since this is a simple implementation, we check user_metadata.
-      // E.g. user.user_metadata.role
+      // Determine Role
       authReq.userRole = user.user_metadata?.role || "USER";
 
       next();
     } catch (err) {
       if (optional) {
-        authReq.user = null;
+        (authReq as any).user = undefined;
         return next();
       }
       next(err);
@@ -68,7 +70,7 @@ export const authenticate = (optional = false) => {
 export const authorize = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const authReq = req as AuthenticatedRequest;
-    if (!authReq.user) {
+    if (!authReq.user || !authReq.userRole) {
       return next(new AuthError("User not authenticated"));
     }
 

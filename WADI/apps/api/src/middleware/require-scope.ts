@@ -1,9 +1,11 @@
-import type { Request, Response, NextFunction } from "express";
-import type { Scope } from "@wadi/core";
+import { Request, Response, NextFunction } from "express";
+import { Scope } from "@wadi/core";
+import { AuthenticatedRequest } from "./auth";
 
 export function requireScope(scope: Scope) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const authReq = req as unknown as AuthenticatedRequest;
+    const user = authReq.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthenticated" });
     }

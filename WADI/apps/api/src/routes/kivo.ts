@@ -1,8 +1,12 @@
 import express from "express";
 import { openai, AI_MODEL } from "../openai";
+import { authenticate } from "../middleware/auth";
 import { WADI_SYSTEM_PROMPT } from "../wadi-brain";
 
 const router = express.Router();
+
+// All Kivo routes require authentication
+router.use(authenticate());
 
 // GET /api/kivo (status)
 router.get("/", (req, res) => {
