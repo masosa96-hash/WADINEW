@@ -10,9 +10,10 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn, signUp, verifyOtp, loading } = useAuthStore();
+  const { signIn, signUp, verifyOtp, resetPassword, loading } = useAuthStore();
 
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [needsOtp, setNeedsOtp] = useState(false);
   const [otpToken, setOtpToken] = useState("");
   const [email, setEmail] = useState("");
@@ -25,6 +26,23 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
+
+    if (isResettingPassword) {
+      if (!email) {
+        setErrorMsg("Por favor ingresá tu email.");
+        return;
+      }
+      try {
+        const { error } = await resetPassword(email);
+        if (error) throw error;
+        setSuccessMsg("¡Listo! Si el email existe, recibirás un link para cambiar tu contraseña.");
+        setIsResettingPassword(false);
+      } catch (err) {
+        const error = err as Error;
+        setErrorMsg(error.message || "Error al enviar el email de recuperación.");
+      }
+      return;
+    }
 
     if (needsOtp) {
       if (!otpToken) {
@@ -150,7 +168,15 @@ export default function Login() {
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
         >
-          {needsOtp ? (
+          {isResettingPassword ? (
+            <Input
+              label="Email de recuperación"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nombre@ejemplo.com"
+            />
+          ) : needsOtp ? (
             <Input
               label="Código de Verificación"
               type="text"
@@ -162,11 +188,11 @@ export default function Login() {
           ) : (
             <>
               <Input
-                label="Email"
-                type="email"
+                label="Email o Teléfono"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nombre@ejemplo.com"
+                placeholder="nombre@ejemplo.com o +54911..."
               />
 
               <Input
@@ -194,6 +220,23 @@ export default function Login() {
                   />
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => setIsResettingPassword(true)}
+                style={{
+                  alignSelf: "flex-end",
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  fontSize: "0.8rem",
+                  cursor: "pointer",
+                  padding: 0,
+                  marginTop: "-0.5rem",
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </>
           )}
 
@@ -205,18 +248,21 @@ export default function Login() {
           >
             {loading
               ? "Procesando..."
-              : needsOtp
-                ? "Verificar Código"
-                : isRegistering
-                  ? "Registrarse"
-                  : "Continuar"}
+              : isResettingPassword
+                ? "Enviar instrucciones"
+                : needsOtp
+                  ? "Verificar Código"
+                  : isRegistering
+                    ? "Registrarse"
+                    : "Continuar"}
           </Button>
 
-          {needsOtp && (
+          {(needsOtp || isResettingPassword) && (
             <button
               type="button"
               onClick={() => {
                 setNeedsOtp(false);
+                setIsResettingPassword(false);
                 setSuccessMsg("");
               }}
               style={{

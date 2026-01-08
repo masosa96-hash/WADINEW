@@ -10,18 +10,20 @@ interface AuthResponse {
 interface AuthState {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<AuthResponse>;
+  signIn: (identifier: string, password: string) => Promise<AuthResponse>;
   signUp: (
-    email: string,
+    identifier: string,
     password: string,
     captchaToken?: string
   ) => Promise<AuthResponse>;
-  verifyOtp: (email: string, token: string, type?: 'signup' | 'login' | 'recovery' | 'invite' | 'magiclink' | 'email_change') => Promise<AuthResponse>;
+  verifyOtp: (identifier: string, token: string, type?: 'signup' | 'login' | 'recovery' | 'invite' | 'magiclink' | 'email_change') => Promise<AuthResponse>;
   loginAsGuest: () => Promise<AuthResponse>;
   convertGuestToUser: (
     email: string,
     password: string
   ) => Promise<AuthResponse>;
+  resetPassword: (email: string) => Promise<AuthResponse>;
+  updatePassword: (password: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
   initializeAuth: () => Promise<void>;
@@ -47,41 +49,44 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  signIn: async (email, password) => {
+  signIn: async (identifier, password) => {
     set({ loading: true });
+    
+    const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
+    const options = isPhone 
+      ? { phone: identifier, password } 
+      : { email: identifier, password };
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword(options);
 
     set({ user: data.user, loading: false });
     return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
-  signUp: async (email, password, captchaToken) => {
+  signUp: async (identifier, password, captchaToken) => {
     set({ loading: true });
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { captchaToken },
-    });
+    const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
+    const options = isPhone
+      ? { phone: identifier, password }
+      : { email: identifier, password, options: { captchaToken } };
+
+    const { data, error } = await supabase.auth.signUp(options as any);
 
     // If confirmation is required, the user will be null or session will be null
     set({ user: data.user, loading: false });
     return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
-  verifyOtp: async (email, token, type = 'signup') => {
+  verifyOtp: async (identifier, token, type = 'signup') => {
     set({ loading: true });
     
-    // Type mapping: Subabase uses 'signup', 'login' (magiclink), etc.
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: type as any, // Supabase type union is strict, but our param is compatible
-    });
+    const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
+    const options = isPhone 
+      ? { phone: identifier, token, type: 'sms' as const } 
+      : { email: identifier, token, type: type as any };
+
+    const { data, error } = await supabase.auth.verifyOtp(options);
 
     if (!error) {
       set({ user: data.user });
@@ -175,6 +180,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Success (New User Conversion)
     set({ user: data.user, loading: false });
     return { data, error };
+  },
+
+  resetPassword: async (email) => {
+    set({ loading: true });
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    set({ loading: false });
+    return { data: data as unknown, error: error as { message: string; status?: number } | null };
+  },
+
+  updatePassword: async (password) => {
+    set({ loading: true });
+    const { data, error } = await supabase.auth.updateUser({ password });
+    set({ loading: false });
+    return { data: data as unknown, error: error as { message: string; status?: number } | null };
   },
 
   signOut: async () => {

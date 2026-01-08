@@ -12,6 +12,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import DashboardPage from "./pages/DashboardPage";
 import InnerSanctum from "./pages/InnerSanctum";
 import JournalPage from "./pages/JournalPage";
+import ResetPassword from "./pages/ResetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,14 @@ export const router = createBrowserRouter([
     element: (
       <AuthLoader>
         <Login />
+      </AuthLoader>
+    ),
+  },
+  {
+    path: "/reset-password",
+    element: (
+      <AuthLoader>
+        <ResetPassword />
       </AuthLoader>
     ),
   },
