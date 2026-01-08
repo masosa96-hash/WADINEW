@@ -67,11 +67,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true });
 
     const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
-    const options = isPhone
-      ? { phone: identifier, password }
-      : { email: identifier, password, options: { captchaToken } };
-
-    const { data, error } = await supabase.auth.signUp(options as any);
+    
+    const { data, error } = await (isPhone 
+      ? supabase.auth.signUp({ phone: identifier, password })
+      : supabase.auth.signUp({ email: identifier, password, options: { captchaToken } }));
 
     // If confirmation is required, the user will be null or session will be null
     set({ user: data.user, loading: false });
@@ -82,11 +81,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true });
     
     const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
-    const options = isPhone 
-      ? { phone: identifier, token, type: 'sms' as const } 
-      : { email: identifier, token, type: type as any };
-
-    const { data, error } = await supabase.auth.verifyOtp(options);
+    
+    const { data, error } = await (isPhone 
+      ? supabase.auth.verifyOtp({ phone: identifier, token, type: 'sms' })
+      : supabase.auth.verifyOtp({ email: identifier, token, type: type as 'signup' | 'invite' | 'magiclink' | 'recovery' | 'email_change' }));
 
     if (!error) {
       set({ user: data.user });

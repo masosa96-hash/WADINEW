@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { Card } from "../components/common/Card";
@@ -7,7 +7,7 @@ import { Button } from "../components/common/Button";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const { updatePassword, loading, user } = useAuthStore();
+  const { updatePassword, loading } = useAuthStore();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");

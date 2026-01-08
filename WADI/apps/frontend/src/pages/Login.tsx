@@ -74,8 +74,11 @@ export default function Login() {
         const { data, error } = await signUp(email, password, captchaToken);
         if (error) throw error;
 
+        // Cast unknown data to access user/session for confirmation check
+        const signupData = data as { user: { id: string } | null; session: { access_token: string } | null };
+
         // If user is created but not session (needs confirmation)
-        if (data.user && !data.session) {
+        if (signupData.user && !signupData.session) {
           setNeedsOtp(true);
           setSuccessMsg("¡Cuenta creada! Revisá tu email e ingresá el código.");
         } else {
