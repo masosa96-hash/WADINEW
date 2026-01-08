@@ -181,6 +181,15 @@ ELSIF EXISTS (
 ) THEN EXECUTE 'CREATE POLICY "strict_owner_manage_members" ON public.workspace_members FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.workspaces w WHERE w.id = workspace_members.workspace_id AND w.owner_id = (SELECT auth.uid())))';
 END IF;
 END IF;
+-- AUDIT LOGS
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE schemaname = 'public'
+        AND tablename = 'audit_logs'
+) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_system_read_audit" ON public.audit_logs';
+EXECUTE 'CREATE POLICY "strict_system_read_audit" ON public.audit_logs FOR SELECT TO authenticated USING (true)';
+END IF;
 -- PUBLIC READ (AI Presets & Tags)
 IF EXISTS (
     SELECT 1

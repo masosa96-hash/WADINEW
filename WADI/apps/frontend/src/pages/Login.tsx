@@ -80,7 +80,8 @@ export default function Login() {
         // If user is created but not session (needs confirmation)
         if (signupData.user && !signupData.session) {
           setNeedsOtp(true);
-          setSuccessMsg("¡Cuenta creada! Revisá tu email e ingresá el código.");
+          const isPhone = email.startsWith("+") || /^\d+$/.test(email);
+          setSuccessMsg(`¡Cuenta creada! Revisá tu ${isPhone ? 'teléfono' : 'email'} para verificarla.`);
         } else {
           navigate("/projects");
         }

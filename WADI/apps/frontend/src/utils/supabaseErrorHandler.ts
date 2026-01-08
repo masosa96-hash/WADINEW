@@ -4,7 +4,8 @@ import { useLogStore } from "../store/logStore";
 /**
  * Detects and handles Supabase/PostgreSQL errors, specifically RLS blocks (42501).
  */
-export const handleSupabaseError = (error: PostgrestError | Error | any, context: string) => {
+export const handleSupabaseError = (error: PostgrestError | Error | { message: string, code?: string } | null | unknown, context: string) => {
+  const err = error as any;
   if (!error) return;
 
   const errorCode = (error as PostgrestError).code || "";
