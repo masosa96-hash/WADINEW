@@ -10,17 +10,36 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn, signUp, loading } = useAuthStore();
+  const { signIn, signUp, verifyOtp, loading } = useAuthStore();
 
   const [isRegistering, setIsRegistering] = useState(false);
+  const [needsOtp, setNeedsOtp] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    setSuccessMsg("");
+
+    if (needsOtp) {
+      if (!otpToken) {
+        setErrorMsg("Por favor ingresá el código de 6 dígitos.");
+        return;
+      }
+      try {
+        const { error } = await verifyOtp(email, otpToken, isRegistering ? 'signup' : 'login');
+        if (error) throw error;
+        navigate("/projects");
+      } catch (err: any) {
+        setErrorMsg(err.message || "Código inválido o expirado.");
+      }
+      return;
+    }
 
     if (!email || !password) {
       setErrorMsg("Por favor completá todos los campos.");
@@ -33,9 +52,16 @@ export default function Login() {
           setErrorMsg("Por favor completá el CAPTCHA.");
           return;
         }
-        const { error } = await signUp(email, password, captchaToken);
+        const { data, error } = await signUp(email, password, captchaToken);
         if (error) throw error;
-        navigate("/projects");
+
+        // If user is created but not session (needs confirmation)
+        if (data.user && !data.session) {
+          setNeedsOtp(true);
+          setSuccessMsg("¡Cuenta creada! Revisá tu email e ingresá el código.");
+        } else {
+          navigate("/projects");
+        }
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
@@ -85,7 +111,7 @@ export default function Login() {
           </p>
         </div>
 
-        {/* ERROR */}
+        {/* MESSAGES */}
         {errorMsg && (
           <div
             style={{
@@ -102,44 +128,72 @@ export default function Login() {
           </div>
         )}
 
-        {/* FORM */}
+        {successMsg && (
+          <div
+            style={{
+              background: "rgba(80, 255, 80, 0.1)",
+              border: "1px solid rgba(80, 255, 80, 0.3)",
+              color: "#6bff6b",
+              padding: "10px",
+              borderRadius: "8px",
+              marginBottom: "1rem",
+              fontSize: "0.9rem",
+            }}
+          >
+            {successMsg}
+          </div>
+        )}
+
         {/* FORM */}
         <form
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
         >
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="nombre@ejemplo.com"
-          />
-
-          <Input
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-
-          {isRegistering && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "1rem",
-              }}
-            >
-              <HCaptcha
-                sitekey={
-                  import.meta.env.VITE_HCAPTCHA_SITE_KEY ||
-                  "10000000-ffff-ffff-ffff-000000000001"
-                }
-                onVerify={(token) => setCaptchaToken(token)}
+          {needsOtp ? (
+            <Input
+              label="Código de Verificación"
+              type="text"
+              value={otpToken}
+              onChange={(e) => setOtpToken(e.target.value)}
+              placeholder="123456"
+              maxLength={6}
+            />
+          ) : (
+            <>
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nombre@ejemplo.com"
               />
-            </div>
+
+              <Input
+                label="Contraseña"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+
+              {isRegistering && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "1rem",
+                  }}
+                >
+                  <HCaptcha
+                    sitekey={
+                      import.meta.env.VITE_HCAPTCHA_SITE_KEY ||
+                      "10000000-ffff-ffff-ffff-000000000001"
+                    }
+                    onVerify={(token) => setCaptchaToken(token)}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <Button
@@ -150,40 +204,65 @@ export default function Login() {
           >
             {loading
               ? "Procesando..."
-              : isRegistering
-                ? "Registrarse"
-                : "Continuar"}
+              : needsOtp
+                ? "Verificar Código"
+                : isRegistering
+                  ? "Registrarse"
+                  : "Continuar"}
           </Button>
+
+          {needsOtp && (
+            <button
+              type="button"
+              onClick={() => {
+                setNeedsOtp(false);
+                setSuccessMsg("");
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-secondary)",
+                fontSize: "0.8rem",
+                marginTop: "0.5rem",
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+            >
+              Volver al formulario
+            </button>
+          )}
         </form>
 
         {/* TOGGLE LOGIN/REGISTER */}
-        <div
-          style={{
-            marginTop: "1.5rem",
-            fontSize: "0.9rem",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {isRegistering ? "¿Ya tenés cuenta? " : "¿No tenés cuenta? "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegistering(!isRegistering);
-              setErrorMsg("");
-              setCaptchaToken(""); // Reset captcha on toggle
-            }}
+        {!needsOtp && (
+          <div
             style={{
-              background: "none",
-              border: "none",
-              color: "var(--accent-primary)",
-              fontWeight: 600,
-              cursor: "pointer",
-              padding: 0,
+              marginTop: "1.5rem",
+              fontSize: "0.9rem",
+              color: "var(--text-secondary)",
             }}
           >
-            {isRegistering ? "Iniciar Sesión" : "Registrate"}
-          </button>
-        </div>
+            {isRegistering ? "¿Ya tenés cuenta? " : "¿No tenés cuenta? "}
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setErrorMsg("");
+                setCaptchaToken(""); // Reset captcha on toggle
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--accent-primary)",
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              {isRegistering ? "Iniciar Sesión" : "Registrate"}
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );

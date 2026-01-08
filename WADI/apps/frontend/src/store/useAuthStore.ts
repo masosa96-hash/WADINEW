@@ -3,9 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
 
 interface AuthResponse {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any;
 }
 
@@ -18,6 +16,7 @@ interface AuthState {
     password: string,
     captchaToken?: string
   ) => Promise<AuthResponse>;
+  verifyOtp: (email: string, token: string, type?: 'signup' | 'login') => Promise<AuthResponse>;
   loginAsGuest: () => Promise<AuthResponse>;
   convertGuestToUser: (
     email: string,
@@ -69,7 +68,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       options: { captchaToken },
     });
 
+    // If confirmation is required, the user will be null or session will be null
     set({ user: data.user, loading: false });
+    return { data, error };
+  },
+
+  verifyOtp: async (email, token, type = 'signup') => {
+    set({ loading: true });
+    
+    // Type mapping: Subabase uses 'signup', 'login' (magiclink), etc.
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: type as any,
+    });
+
+    if (!error) {
+      set({ user: data.user });
+    }
+    
+    set({ loading: false });
     return { data, error };
   },
 
