@@ -1,10 +1,10 @@
 -- MIGRATION: 20260108150000_rls_performance_fix.sql
 -- GOAL: Resolve all 'multiple_permissive_policies' and cleanup RLS ghosts.
 -- Consonlidated, robust and using TO authenticated for security.
-DO $$
+DO $BODY$
 DECLARE pol record;
 BEGIN ---------------------------------------------------------
--- 1. LIMPIEZA DE POLIZAS GHOST (No "strict_" o "optimized_")
+-- 1. LIMPIEZA DE POLIZAS GHOST
 ---------------------------------------------------------
 FOR pol IN
 SELECT policyname,
@@ -38,7 +38,7 @@ END LOOP;
 ---------------------------------------------------------
 -- 2. POLÍTICAS UNIFICADAS (TO authenticated)
 ---------------------------------------------------------
--- PROFILES (Check id vs user_id)
+-- PROFILES
 IF EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -57,32 +57,36 @@ ELSIF EXISTS (
 EXECUTE 'CREATE POLICY "strict_owner_all_profiles" ON public.profiles FOR ALL TO authenticated USING ((SELECT auth.uid()) = id) WITH CHECK ((SELECT auth.uid()) = id)';
 END IF;
 -- Standard Owner-Based Tables
-PERFORM 1
-FROM pg_tables
-WHERE schemaname = 'public'
-    AND tablename = 'conversations';
-IF FOUND THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_conversations" ON public.conversations';
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE schemaname = 'public'
+        AND tablename = 'conversations'
+) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_conversations" ON public.conversations';
 EXECUTE 'CREATE POLICY "strict_owner_all_conversations" ON public.conversations FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id)';
 END IF;
-PERFORM 1
-FROM pg_tables
-WHERE schemaname = 'public'
-    AND tablename = 'messages';
-IF FOUND THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_messages" ON public.messages';
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE schemaname = 'public'
+        AND tablename = 'messages'
+) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_messages" ON public.messages';
 EXECUTE 'CREATE POLICY "strict_owner_all_messages" ON public.messages FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id)';
 END IF;
-PERFORM 1
-FROM pg_tables
-WHERE schemaname = 'public'
-    AND tablename = 'projects';
-IF FOUND THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_projects" ON public.projects';
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE schemaname = 'public'
+        AND tablename = 'projects'
+) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_projects" ON public.projects';
 EXECUTE 'CREATE POLICY "strict_owner_all_projects" ON public.projects FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id)';
 END IF;
-PERFORM 1
-FROM pg_tables
-WHERE schemaname = 'public'
-    AND tablename = 'runs';
-IF FOUND THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_runs" ON public.runs';
+IF EXISTS (
+    SELECT 1
+    FROM pg_tables
+    WHERE schemaname = 'public'
+        AND tablename = 'runs'
+) THEN EXECUTE 'DROP POLICY IF EXISTS "strict_owner_all_runs" ON public.runs';
 EXECUTE 'CREATE POLICY "strict_owner_all_runs" ON public.runs FOR ALL TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id)';
 END IF;
 -- WORKSPACES
@@ -143,5 +147,4 @@ IF EXISTS (
 ) THEN EXECUTE 'DROP POLICY IF EXISTS "optimized_public_read_tags" ON public.tags';
 EXECUTE 'CREATE POLICY "optimized_public_read_tags" ON public.tags FOR SELECT TO public USING (true)';
 END IF;
-END;
-$$;
+END $BODY$;
