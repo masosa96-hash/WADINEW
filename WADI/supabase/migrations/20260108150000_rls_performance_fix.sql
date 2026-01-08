@@ -1,15 +1,13 @@
 -- MIGRATION: 20260108150000_rls_performance_fix.sql
 -- GOAL: Resolve all 'multiple_permissive_policies' and cleanup RLS ghosts.
--- This script is aggressive: it drops all non-conforming policies to satisfy the linter.
+-- Fixed: Dynamic column detection for workspaces within workspace_members policy.
 BEGIN;
 ---------------------------------------------------------
 -- 1. LIMPIEZA TOTAL DE "FANTASMAS"
 ---------------------------------------------------------
 DO $$
 DECLARE pol record;
-BEGIN -- Buscamos y destruimos todas las políticas que NO sigan nuestra convención de nombres
--- para las tablas que el linter marcó con advertencias.
-FOR pol IN
+BEGIN FOR pol IN
 SELECT policyname,
     tablename
 FROM pg_policies
@@ -42,7 +40,7 @@ END $$;
 ---------------------------------------------------------
 -- 2. POLÍTICAS UNIFICADAS Y OPTIMIZADAS
 ---------------------------------------------------------
-DO $$ BEGIN -- PROFILES (Ajuste según columna existente)
+DO $$ BEGIN -- PROFILES
 IF EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -118,7 +116,7 @@ CREATE POLICY "strict_owner_all_runs" ON public.runs FOR ALL TO authenticated US
         SELECT auth.uid()
     ) = user_id
 );
--- WORKSPACES (Detección dinámica de owner_id vs user_id)
+-- WORKSPACES
 IF EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -150,27 +148,43 @@ CREATE POLICY "strict_owner_all_workspaces" ON public.workspaces FOR ALL TO auth
     ) = owner_id
 );
 END IF;
--- WORKSPACE MEMBERS
+-- WORKSPACE MEMBERS (Fix: Dynamic column check for workspaces join)
 IF EXISTS (
     SELECT 1
     FROM pg_tables
     WHERE tablename = 'workspace_members'
 ) THEN DROP POLICY IF EXISTS "strict_owner_manage_members" ON public.workspace_members;
-CREATE POLICY "strict_owner_manage_members" ON public.workspace_members FOR ALL TO authenticated USING (
+IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'workspaces'
+        AND column_name = 'user_id'
+) THEN CREATE POLICY "strict_owner_manage_members" ON public.workspace_members FOR ALL TO authenticated USING (
     EXISTS (
         SELECT 1
         FROM public.workspaces w
         WHERE w.id = workspace_members.workspace_id
-            AND (
-                w.user_id = (
-                    SELECT auth.uid()
-                )
-                OR w.owner_id = (
-                    SELECT auth.uid()
-                )
+            AND w.user_id = (
+                SELECT auth.uid()
             )
     )
 );
+ELSIF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'workspaces'
+        AND column_name = 'owner_id'
+) THEN CREATE POLICY "strict_owner_manage_members" ON public.workspace_members FOR ALL TO authenticated USING (
+    EXISTS (
+        SELECT 1
+        FROM public.workspaces w
+        WHERE w.id = workspace_members.workspace_id
+            AND w.owner_id = (
+                SELECT auth.uid()
+            )
+    )
+);
+END IF;
 END IF;
 -- FOLDERS & DOCUMENTS
 IF EXISTS (
@@ -203,7 +217,7 @@ CREATE POLICY "strict_owner_all_documents" ON public.documents FOR ALL TO authen
     ) = user_id
 );
 END IF;
--- AUDIT LOGS (Solo lectura para el dueño o sistema)
+-- AUDIT LOGS
 IF EXISTS (
     SELECT 1
     FROM pg_tables
