@@ -101,7 +101,15 @@ export default function ChatPage() {
 
   const hasMessages = messages.length > 0;
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[var(--wadi-bg)]">
+        <div className="animate-pulse tracking-widest text-xs opacity-50 uppercase">
+          Inicializando Memoria...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Layout>

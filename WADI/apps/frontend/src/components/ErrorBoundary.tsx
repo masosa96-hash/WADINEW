@@ -23,23 +23,51 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--wadi-bg)] text-[var(--wadi-alert)] p-8 text-center font-mono-wadi">
-          <h1 className="text-4xl font-bold mb-4">
-            💥 CRITICAL SYSTEM FAILURE
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          backgroundColor: "#0f0f11",
+          color: "#ef4444",
+          padding: "2rem",
+          textAlign: "center",
+          fontFamily: "monospace"
+        }}>
+          <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>
+            💥 ERROR CRÍTICO DEL SISTEMA
           </h1>
-          <p className="text-xl text-[var(--wadi-text)] mb-8">
-            Ni siquiera WADI puede fingir que esto está bien.
+          <p style={{ color: "#fafafa", marginBottom: "2rem" }}>
+            Incluso WADI tiene sus límites. Algo se rompió seriamente.
           </p>
-          <div className="bg-black/50 p-4 rounded border border-[var(--wadi-alert)]/30 text-left max-w-2xl overflow-auto text-xs text-red-300">
-            <p className="font-bold mb-2">ERROR TRACE:</p>
-            <pre>{this.state.error?.message}</pre>
-            <pre className="mt-2 text-[var(--wadi-text-muted)] opacity-50">
-              {this.state.error?.stack}
-            </pre>
+          <div style={{
+            backgroundColor: "rgba(0,0,0,0.5)",
+            padding: "1rem",
+            borderRadius: "8px",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            textAlign: "left",
+            maxWidth: "600px",
+            overflow: "auto",
+            fontSize: "12px",
+            color: "#fca5a5"
+          }}>
+            <p style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>DETALLES DEL ERROR:</p>
+            <pre style={{ whiteSpace: "pre-wrap" }}>{this.state.error?.message}</pre>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="mt-8 px-6 py-2 bg-[var(--wadi-alert)] text-white rounded hover:bg-red-600 transition-colors uppercase font-bold tracking-widest"
+            style={{
+              marginTop: "2rem",
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "999px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              textTransform: "uppercase"
+            }}
           >
             PURGAR & REINICIAR (F5)
           </button>

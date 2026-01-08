@@ -12,12 +12,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { isSidebarOpen, setSidebarOpen, toggleSidebar, resetChat } =
     useChatStore();
-  const { initializeAuth } = useAuthStore(); // New Store
   const navigate = useNavigate();
-
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
 
   const handleNewChat = () => {
     resetChat();

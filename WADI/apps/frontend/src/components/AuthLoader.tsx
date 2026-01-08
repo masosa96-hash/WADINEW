@@ -9,30 +9,36 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("[WADI_AUTH]: Iniciando AuthLoader...");
+    
     // Timeout to detect if Supabase is hanging
     const timeout = setTimeout(() => {
-      if (!ready) {
-        setError("La conexión con el búnker está tardando demasiado. ¿Están configuradas las variables de entorno?");
-      }
-    }, 10000);
+      setReady((currentReady) => {
+        if (!currentReady) {
+          setError("La conexión con el búnker está tardando demasiado. Verifica tu conexión.");
+        }
+        return currentReady;
+      });
+    }, 15000);
 
     // 1. Initial Check
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
+        console.log("[WADI_AUTH]: Sesión recuperada:", session?.user?.id || "None");
         setUser(session?.user || null);
 
         if (!session) {
           loginAsGuest()
             .then(({ error: loginErr }) => {
               if (loginErr) {
-                console.error("Guest login error:", loginErr);
+                console.error("[WADI_AUTH]: Guest login error:", loginErr);
                 setError(`Error de autenticación: ${loginErr.message}`);
               }
               setReady(true);
             })
             .catch(err => {
-              console.error("Anonymous login exception:", err);
-              setError("Excepción en login anónimo. Revisa la consola.");
+              console.error("[WADI_AUTH]: Guest Exception:", err);
+              setError("Fallo en login de emergencia.");
               setReady(true);
             });
         } else {
@@ -40,8 +46,9 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
         }
       })
       .catch(err => {
-        console.error("Session error:", err);
-        setError("No se pudo conectar con Supabase. Verifica VITE_SUPABASE_URL.");
+        console.error("[WADI_AUTH]: Session error:", err);
+        setError("Error crítico de red con Supabase.");
+        setReady(true); // Don't block UI
       });
 
     // 2. Listen for changes
@@ -55,7 +62,7 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [setUser, loginAsGuest, ready]);
+  }, [setUser, loginAsGuest]); // Removed 'ready' to avoid infinite loops
 
   if (!ready) {
     return (
