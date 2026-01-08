@@ -121,16 +121,26 @@ export const useChatStore = create<ChatState>()(
       },
 
       fetchConversations: async () => {
+        console.log("[WADI_CHAT]: Buscando conversaciones...");
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session) {
+           console.warn("[WADI_CHAT]: Sin sesión, abortando fetch.");
+           return;
+        }
 
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("conversations")
           .select("*")
           .eq("user_id", session.user.id)
           .order("updated_at", { ascending: false });
+
+        if (error) {
+           console.error("[WADI_CHAT]: Error cargando conversaciones:", error);
+        } else {
+           console.log("[WADI_CHAT]: Conversaciones recibidas:", data?.length || 0);
+        }
 
         set({ conversations: data || [] });
       },
@@ -309,6 +319,59 @@ export const useChatStore = create<ChatState>()(
       resetChat: () => {
         set({ activeId: null, messages: [], conversationTitle: null });
       },
+
+      fetchSettings: async () => {
+    console.log("[WADI_SETTINGS]: Cargando configuración...");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+       console.warn("[WADI_SETTINGS]: Sin usuario, abortando fetch.");
+       return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("language, theme, custom_instructions")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+         console.warn("[WADI_SETTINGS]: Fallo al recuperar perfil:", error.message);
+      }
+
+      console.log("[WADI_SETTINGS]: Datos de perfil recibidos:", data);
+
+      if (data) {
+        set({
+          language: data.language || "es",
+          theme: data.theme || "system",
+          customInstructions: data.custom_instructions || "",
+        });
+
+        // Update LocalStorage
+        if (data.language) localStorage.setItem("wadi-lang", data.language);
+        if (data.theme) localStorage.setItem("wadi-theme", data.theme);
+        if (data.custom_instructions)
+          localStorage.setItem("wadi-prompt", data.custom_instructions);
+
+        // Apply theme
+        const root = window.document.documentElement;
+        const theme = data.theme || "system";
+        if (theme === "system") {
+          const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+          root.classList.toggle("dark", isDark);
+        } else {
+          root.classList.toggle("dark", theme === "dark");
+        }
+      }
+    } catch (e) {
+       console.error("[WADI_SETTINGS]: Excepción en fetchSettings:", e);
+    }
+  },
 
       wipeChatData: async () => {
         const {

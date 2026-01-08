@@ -23,7 +23,7 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
 
     // 1. Initial Check
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
         console.log("[WADI_AUTH]: Sesión recuperada:", session?.user?.id || "None");
         setUser(session?.user || null);
         
@@ -31,11 +31,14 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
         useAuthStore.setState({ loading: false });
 
         if (!session) {
+          console.log("[WADI_AUTH]: Sin sesión activa. Intentando login anónimo...");
           loginAsGuest()
-            .then(({ error: loginErr }) => {
+            .then(({ data, error: loginErr }) => {
               if (loginErr) {
                 console.error("[WADI_AUTH]: Guest login error:", loginErr);
                 setError(`Error de identidad: ${loginErr.message}`);
+              } else {
+                console.log("[WADI_AUTH]: Guest login exitoso:", data.user?.id);
               }
               setReady(true);
             })
@@ -45,7 +48,20 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
               setReady(true);
             });
         } else {
-          setReady(true);
+          console.log("[WADI_AUTH]: Usuario autenticado. Validando perfil...");
+          try {
+            // Test query to see if RLS allows reading the profile
+            const { data: profile, error: pError } = await supabase
+              .from("profiles")
+              .select("id")
+              .limit(1);
+            
+            console.log("[WADI_AUTH]: Resultado test perfil:", { profile, error: pError });
+            setReady(true);
+          } catch (e) {
+            console.error("[WADI_AUTH]: Excepción validando perfil:", e);
+            setReady(true); // Don't block
+          }
         }
       })
       .catch(err => {

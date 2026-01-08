@@ -29,41 +29,58 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   customInstructions: localStorage.getItem("wadi-prompt") || "",
 
   fetchSettings: async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("language, theme, custom_instructions")
-      .eq("id", user.id)
-      .single();
-
-    if (data) {
-      set({
-        language: data.language || "es",
-        theme: data.theme || "system",
-        customInstructions: data.custom_instructions || "",
-      });
-
-      // Update LocalStorage
-      if (data.language) localStorage.setItem("wadi-lang", data.language);
-      if (data.theme) localStorage.setItem("wadi-theme", data.theme);
-      if (data.custom_instructions)
-        localStorage.setItem("wadi-prompt", data.custom_instructions);
-
-      // Apply theme
-      const root = window.document.documentElement;
-      const theme = data.theme || "system";
-      if (theme === "system") {
-        const isDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        root.classList.toggle("dark", isDark);
-      } else {
-        root.classList.toggle("dark", theme === "dark");
+    console.log("[WADI_SETTINGS]: Cargando configuración...");
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn("[WADI_SETTINGS]: Sin usuario, abortando fetch.");
+        return;
       }
+
+      console.log("[WADI_SETTINGS]: Solicitando perfil para ID:", user.id);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("language, theme, custom_instructions")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.warn("[WADI_SETTINGS]: Error o perfil no existente:", error.message);
+        // If it's a 406 (Not Acceptable) or 404, we don't treat it as a crash
+        return;
+      }
+
+      console.log("[WADI_SETTINGS]: Datos de perfil recibidos:", data);
+
+      if (data) {
+        set({
+          language: data.language || "es",
+          theme: data.theme || "system",
+          customInstructions: data.custom_instructions || "",
+        });
+
+        // Update LocalStorage
+        if (data.language) localStorage.setItem("wadi-lang", data.language);
+        if (data.theme) localStorage.setItem("wadi-theme", data.theme);
+        if (data.custom_instructions)
+          localStorage.setItem("wadi-prompt", data.custom_instructions);
+
+        // Apply theme
+        const root = window.document.documentElement;
+        const theme = data.theme || "system";
+        if (theme === "system") {
+          const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+          root.classList.toggle("dark", isDark);
+        } else {
+          root.classList.toggle("dark", theme === "dark");
+        }
+      }
+    } catch (e) {
+      console.error("[WADI_SETTINGS]: Excepción crítica en fetchSettings:", e);
     }
   },
 
