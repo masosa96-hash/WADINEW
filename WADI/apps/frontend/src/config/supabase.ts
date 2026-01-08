@@ -10,3 +10,8 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Expose supabase to window for console debugging
+if (typeof window !== "undefined") {
+  (window as any).supabase = supabase;
+}

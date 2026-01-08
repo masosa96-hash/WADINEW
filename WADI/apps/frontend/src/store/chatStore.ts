@@ -345,7 +345,13 @@ export const useChatStore = create<ChatState>()(
 
       if (data) {
         set({
-          language: data.language || "es",
+          _language: data.language || "es",
+          get language() {
+            return this._language;
+          },
+          set language(value) {
+            this._language = value;
+          },
           theme: data.theme || "system",
           customInstructions: data.custom_instructions || "",
         });

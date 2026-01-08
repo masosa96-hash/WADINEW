@@ -11,8 +11,19 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("[WADI_AUTH]: Iniciando AuthLoader...");
     
-    // Timeout to detect if Supabase is hanging
-    const timeout = setTimeout(() => {
+    // Failsafe timeout: Force entry after 5s if stuck
+    const failsafe = setTimeout(() => {
+      setReady((currentReady) => {
+        if (!currentReady) {
+          console.warn("[WADI_AUTH]: Carga inicial excedió el tiempo límite, forzando entrada.");
+          return true; // Force ready
+        }
+        return currentReady;
+      });
+    }, 5000);
+
+    // Timeout to detect if Supabase is hanging (Visual feedback)
+    const visualTimeout = setTimeout(() => {
       setReady((currentReady) => {
         if (!currentReady) {
           setError("La conexión con el búnker está tardando demasiado. Verifica tu conexión.");
@@ -79,7 +90,8 @@ export const AuthLoader = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
-      clearTimeout(timeout);
+      clearTimeout(failsafe);
+      clearTimeout(visualTimeout);
       subscription.unsubscribe();
     };
   }, [setUser, loginAsGuest]); // Removed 'ready' to avoid infinite loops
