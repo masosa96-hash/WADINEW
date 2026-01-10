@@ -185,8 +185,22 @@ router.post(
     console.log("[RAW_BRAIN] Processing message:", message);
 
     // Generate System Prompt
-    // const sysPrompt = generateSystemPrompt(...) // DISABLED FOR DEBUG
-    const sysPrompt = "You are WADI, a raw debug brain. Respond in JSON with { response: 'msg' }.";
+    const sysPrompt = generateSystemPrompt(
+        "normal", // mode
+        "general", // topic
+        {}, // sessionPrefs
+        "hostile", // mood
+        false, // isMobile (mock)
+        0, // messageCount (mock)
+        [], // pastFailures
+        "VISITANTE", // rank
+        0, // points
+        null, // focus
+        {}, // memory
+        [], // knowledge
+        null // customInstructions
+    );
+    // const sysPrompt = "You are WADI, a raw debug brain. Respond in JSON with { response: 'msg' }.";
 
     const fullMessages = [
         { role: "system", content: sysPrompt },
