@@ -5,8 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import routes from "./api-routes"; // TS file
-import kivoRoutes from "./routes/kivo";
-import monitoringRoutes from "./routes/monitoring";
+// import kivoRoutes from "./routes/kivo";
+// import monitoringRoutes from "./routes/monitoring";
 
 import { requestLogger } from "./middleware/requestLogger";
 import { rateLimiter } from "./middleware/rateLimiter";
@@ -201,9 +201,9 @@ app.use(express.static(frontendPath));
 app.use("/api", rateLimiter as any);
 app.use("/api", routes); // Main API
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
+// app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use("/system", monitoringRoutes as any);
+// app.use("/system", monitoringRoutes as any);
 
 // Explicit 404 for API to prevent falling through to SPA
 app.all(/\/api\/.*/, (req, res) => {

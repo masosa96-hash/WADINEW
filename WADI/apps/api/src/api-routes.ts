@@ -14,7 +14,7 @@ import {
 import { upload } from "./middleware/upload";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdf = require("pdf-parse");
-import { wadiPreFlight } from "./layers/human_pattern/index";
+// import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
 import { chatQueue } from "./queue/chatQueue";

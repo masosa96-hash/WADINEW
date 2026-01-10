@@ -1,189 +1,30 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
-  /* WADI MINIMALIST PRO PALETTE */
-  --wadi-bg: #0f0f11; /* Matte Carbon Black */
-  --wadi-bg-solid: #0f0f11;
-  --wadi-bg-subtle: #18181b; /* Zinc-900 */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-  --wadi-surface: rgba(255, 255, 255, 0.02); /* Ultra subtle */
-  --wadi-surface-hover: rgba(255, 255, 255, 0.04);
-  --wadi-surface-glass: rgba(24, 24, 27, 0.7); /* Frosted glass */
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
 
-  --wadi-border: rgba(255, 255, 255, 0.06); /* Almost invisible */
-  --wadi-border-hover: rgba(255, 255, 255, 0.12);
-
-  --wadi-primary: #8b5cf6; /* Electric Violet - The Soul */
-  --wadi-primary-dim: rgba(139, 92, 246, 0.1);
-  --wadi-primary-glow: rgba(139, 92, 246, 0.3);
-  --wadi-primary-ring: rgba(139, 92, 246, 0.2); /* For focus rings */
-
-  --wadi-accent: #6366f1; /* Indigo for secondary actions */
-  --wadi-success: #10b981; /* Emerald */
-  --wadi-warning: #f59e0b; /* Amber */
-  --wadi-danger: #ef4444; /* Red */
-
-  --wadi-text: #fafafa; /* Zinc-50 - Pure white tint */
-  --wadi-text-secondary: #a1a1aa; /* Zinc-400 */
-  --wadi-text-dim: #71717a; /* Zinc-500 */
-
-  /* Typography */
-  --font-sans:
-    "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-  /* Spacing & Radius (Increased for modern feel) */
-  --radius-xl: 32px;
-  --radius-lg: 24px;
-  --radius-md: 16px;
-  --radius-sm: 12px;
-  --radius-pill: 9999px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-  html,
-  body,
-  #root {
-    background: var(--wadi-bg);
-    color: var(--wadi-text);
-    font-family: var(--font-sans); /* Outfit as default */
-    height: 100vh; /* Fallback */
-    height: 100dvh;
-    width: 100vw;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    display: flex; /* Fix for full-height children */
-    flex-direction: column;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Focus States for Accessibility */
-  :focus-visible {
-    outline: 2px solid var(--wadi-primary);
-    outline-offset: 2px;
-  }
-
-  button:focus-visible {
-    outline: 2px solid #7c2d12; /* wadi-oxide / orange-900 */
-    outline-offset: 2px;
-  }
-
-  /* Selection */
-  ::selection {
-    background: var(--wadi-primary-dim);
-    color: var(--wadi-text);
-  }
-
-  /* Custom Scrollbar (Minimalist) */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--wadi-bg);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #27272a; /* zinc-800 */
-    border-radius: var(--radius-pill);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--wadi-primary);
-  }
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-@layer components {
-  /* LAYOUT UTILITIES */
-  .wadi-container {
-    @apply max-w-7xl mx-auto px-4 md:px-6 w-full;
-  }
-
-  /* GLASS & SURFACE */
-  .wadi-glass {
-    @apply bg-[var(--wadi-surface-glass)] backdrop-blur-2xl border border-[var(--wadi-border)];
-  }
-
-  .wadi-panel {
-    @apply bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-lg)] transition-all duration-200;
-  }
-
-  .wadi-card {
-    @apply bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-xl)] p-6 transition-all duration-200 hover:border-[var(--wadi-border-hover)] hover:bg-[var(--wadi-surface-hover)];
-  }
-
-  /* TYPOGRAPHY */
-  .text-display {
-    @apply font-bold tracking-tight text-4xl md:text-5xl leading-tight;
-  }
-
-  .text-heading {
-    @apply font-semibold tracking-tight text-2xl md:text-3xl;
-  }
-
-  .text-body {
-    @apply text-base leading-relaxed text-[var(--wadi-text-secondary)];
-  }
-
-  .text-mono {
-    @apply font-[var(--font-mono)] text-sm;
-  }
-
-  /* BUTTONS */
-  .wadi-btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[var(--radius-pill)] font-medium text-sm transition-all duration-200 transform active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none cursor-pointer;
-  }
-
-  .wadi-btn-primary {
-    @apply bg-[var(--wadi-primary)] text-white hover:bg-[#7c3aed] shadow-lg shadow-[var(--wadi-primary-glow)] hover:shadow-xl hover:shadow-[var(--wadi-primary-glow)];
-  }
-
-  .wadi-btn-secondary {
-    @apply bg-[var(--wadi-surface)] text-[var(--wadi-text)] border border-[var(--wadi-border)] hover:bg-[var(--wadi-surface-hover)] hover:border-[var(--wadi-border-hover)];
-  }
-
-  .wadi-btn-ghost {
-    @apply text-[var(--wadi-text-secondary)] hover:text-[var(--wadi-text)] hover:bg-[var(--wadi-surface)];
-  }
-
-  /* INPUT */
-  .wadi-input {
-    @apply w-full bg-[var(--wadi-surface)] border border-[var(--wadi-border)] rounded-[var(--radius-lg)] px-4 py-3 text-[var(--wadi-text)] placeholder:text-[var(--wadi-text-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--wadi-primary-ring)] focus:border-[var(--wadi-primary)] transition-all duration-200;
-  }
-
-  /* ANIMATIONS */
-  .animate-enter {
-    animation: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes enter {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes pulse-slow {
-    0%,
-    100% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
+#root {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
