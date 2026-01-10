@@ -58,6 +58,12 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import React from "react";
 import ReactDOM from "react-dom";
 
+// 🔍 VERSION TAG for Debugging
+console.log(
+  "%c[WADI_VERSION]: 5.1.1 (Frontend Fixes Applied) - Hydration Failsafe Active",
+  "background: #8b5cf6; color: white; padding: 4px; border-radius: 4px; font-weight: bold;"
+);
+
 // Axe Accessibility Auditing (Dev Only)
 if (import.meta.env.DEV) {
   import("@axe-core/react").then((axe) => {
