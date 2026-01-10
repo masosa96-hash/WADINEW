@@ -195,11 +195,12 @@ router.post(
 
     // 1. Create Conversation if needed (SYC, before queueing)
     if (user && !currentConversationId) {
+       const userForDb = user.id; // Safe access
        const { data: newConv } = await supabase
           .from("conversations")
           .insert([
             {
-              user_id: user!.id,
+              user_id: userForDb,
               title: message.substring(0, 60),
               mode: mode || "normal",
               explain_level: explainLevel || "normal",
@@ -215,7 +216,7 @@ router.post(
     if (user && currentConversationId) {
         await supabase.from("messages").insert({
             conversation_id: currentConversationId,
-            user_id: user!.id,
+            user_id: user.id, // Safe access because of (user && ...)
             role: "user",
             content: message,
             attachments: attachments || [],
@@ -248,18 +249,20 @@ router.post(
        if (history.length === 0 || history[history.length - 1].content !== message) {
          history.push({ role: "user", content: message });
        }
-
-       // Fetch Profile
+       
+       // Fetch Profile & Context
        const { data: dbProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (dbProfile) profile = dbProfile;
-
-      // Fetch Memory
-      pastFailures = await fetchUserCriminalRecord(user.id);
-      knowledgeBase = await fetchKnowledgeBase(user.id);
+         .from("profiles")
+         .select("*")
+         .eq("id", user.id)
+         .single();
+         
+       if (dbProfile) {
+           profile = { ...profile, ...dbProfile };
+       }
+       
+       pastFailures = await fetchUserCriminalRecord(user.id);
+       knowledgeBase = await fetchKnowledgeBase(user.id);
     } else {
         history.push({ role: "user", content: message });
     }
