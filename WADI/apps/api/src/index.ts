@@ -197,9 +197,13 @@ app.use(express.static(frontendPath));
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
 // --------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import projectsRouter from "./routes/projects";
+import runsRouter from "./routes/runs";
+
 // app.use("/api", rateLimiter as any);
-app.use("/api", routes); // Main API
+app.use("/api/projects", projectsRouter);
+app.use("/api", runsRouter);
+app.use("/api", routes); // Main API (Legacy/Raw)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

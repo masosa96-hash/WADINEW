@@ -1,98 +1,79 @@
 import { create } from "zustand";
-import { supabase } from "../config/supabase";
-import { fetchWithRetry } from "../utils/api";
+import { API_URL, getHeaders } from "../config/api";
+import { useAuthStore } from "./authStore";
 
 interface Run {
   id: string;
+  project_id: string;
   input: string;
   output: string;
+  model: string;
   created_at: string;
 }
 
 interface RunsState {
   runs: Run[];
   loading: boolean;
+  error: string | null;
+  currentProjectId: string | null;
   fetchRuns: (projectId: string) => Promise<void>;
-  createRun: (projectId: string, input: string) => Promise<void>;
+  createRun: (projectId: string, input: string, model?: string) => Promise<void>;
+  clearRuns: () => void;
 }
-
-const rawUrl = import.meta.env.VITE_API_URL || "https://wadi-wxg7.onrender.com";
-const API_URL = rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
 
 export const useRunsStore = create<RunsState>((set) => ({
   runs: [],
   loading: false,
+  error: null,
+  currentProjectId: null,
 
-  fetchRuns: async (projectId) => {
-    set({ loading: true });
-
+  fetchRuns: async (projectId: string) => {
+    set({ loading: true, error: null, currentProjectId: projectId });
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = useAuthStore.getState().session?.access_token;
+      if (!token) throw new Error("Not authenticated");
 
-      const res = await fetchWithRetry(
-        `${API_URL}/api/projects/${projectId}/runs`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
+      // Uses the route: GET /api/projects/:id/runs
+      // Note: runsRouter uses /projects/:id/runs but mounted at /api
+      // So path is /api/projects/:id/runs
+      const res = await fetch(`${API_URL}/projects/${projectId}/runs`, {
+        headers: getHeaders(token),
+      });
 
-      if (!res.ok) {
-        let msg = `Error: ${res.status}`;
-        try {
-          const err = await res.json();
-          msg = err.error?.message || err.message || msg;
-        } catch {
-          /* ignore */
-        }
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error("Failed to fetch runs");
 
       const data = await res.json();
-      set({ runs: data, loading: false });
-    } catch (e) {
-      console.error("Failed to fetch runs", e);
+      set({ runs: data });
+    } catch (error: any) {
+      set({ error: error.message });
+    } finally {
       set({ loading: false });
     }
   },
 
-  createRun: async (projectId, input) => {
+  createRun: async (projectId: string, input: string, model?: string) => {
+    set({ loading: true, error: null });
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = useAuthStore.getState().session?.access_token;
+      if (!token) throw new Error("Not authenticated");
 
-      const res = await fetchWithRetry(
-        `${API_URL}/api/projects/${projectId}/runs`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({ input }),
-        }
-      );
+      const res = await fetch(`${API_URL}/projects/${projectId}/runs`, {
+        method: "POST",
+        headers: getHeaders(token),
+        body: JSON.stringify({ input, model }),
+      });
 
-      if (!res.ok) {
-        let msg = `Error: ${res.status}`;
-        try {
-          const err = await res.json();
-          msg = err.error?.message || err.message || msg;
-        } catch {
-          /* ignore */
-        }
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error("Failed to create run");
 
-      const data = await res.json();
-      set((state) => ({ runs: [data, ...state.runs] }));
-    } catch (e) {
-      console.error("Failed to create run", e);
-      throw e;
+      const newRun = await res.json();
+      set((state) => ({ runs: [newRun, ...state.runs] }));
+    } catch (error: any) {
+      set({ error: error.message });
+      throw error;
+    } finally {
+      set({ loading: false });
     }
   },
+
+  clearRuns: () => set({ runs: [], error: null, currentProjectId: null }),
 }));

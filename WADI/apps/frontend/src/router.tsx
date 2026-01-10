@@ -1,118 +1,52 @@
-import { createBrowserRouter } from "react-router-dom";
-import { AuthLoader } from "./components/AuthLoader";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/authStore";
+import App from "./App";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
-import ChatPage from "./pages/ChatPage";
-import { AuditReport } from "./components/auditor/AuditReport";
 
-import IntroWadi from "./pages/IntroWadi";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import DashboardPage from "./pages/DashboardPage";
-import InnerSanctum from "./pages/InnerSanctum";
-import JournalPage from "./pages/JournalPage";
-import ResetPassword from "./pages/ResetPassword";
+// Auth Guard
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { session } = useAuthStore();
+  if (!session) return <Navigate to="/login" replace />;
+  return children;
+};
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <IntroWadi />,
-  },
-  {
-    path: "/terminos",
-    element: <TermsPage />,
-  },
-  {
-    path: "/privacidad",
-    element: <PrivacyPage />,
-  },
-  {
-    path: "/login",
-    element: (
-      <AuthLoader>
-        <Login />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/reset-password",
-    element: (
-      <AuthLoader>
-        <ResetPassword />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/projects",
-    element: (
-      <AuthLoader>
-        <Projects />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/projects/:id",
-    element: (
-      <AuthLoader>
-        <ProjectDetail />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/chat",
-    element: (
-      <AuthLoader>
-        <ChatPage />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/chat/:conversationId",
-    element: (
-      <AuthLoader>
-        <ChatPage />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/c/:conversationId",
-    element: (
-      <AuthLoader>
-        <ChatPage />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/chat/:conversationId/audit",
-    element: (
-      <AuthLoader>
-        <AuditReport />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/dashboard",
-    element: (
-      <AuthLoader>
-        <DashboardPage />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/inner-sanctum",
-    element: (
-      <AuthLoader>
-        <InnerSanctum />
-      </AuthLoader>
-    ),
-  },
-  {
-    path: "/journal",
-    element: (
-      <AuthLoader>
-        <JournalPage />
-      </AuthLoader>
-    ),
+    element: <App />,
+    children: [
+      {
+        path: "login",
+        element: <Login />,
+      },
+      {
+        path: "register",
+        element: <Register />,
+      },
+      {
+        path: "projects",
+        element: (
+          <ProtectedRoute>
+            <Projects />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "projects/:id",
+        element: (
+          <ProtectedRoute>
+            <ProjectDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "",
+        element: <Navigate to="/projects" replace />,
+      },
+    ],
   },
 ]);
+

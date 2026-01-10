@@ -1,18 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("[WADI_CONFIG_ERROR]: VITE_SUPABASE_URL o VITE_SUPABASE_KEY no están definidas. Usando modo offline/fallback para evitar crash.");
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Missing Supabase credentials");
 }
 
 export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseKey || "placeholder_key"
+  supabaseUrl || "",
+  supabaseAnonKey || ""
 );
-
-// 🔍 Debugging: Solo expone supabase en desarrollo
-if (import.meta.env.DEV && typeof window !== "undefined") {
-  (window as unknown as { supabase: unknown }).supabase = supabase;
-}
