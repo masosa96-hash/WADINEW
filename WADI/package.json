@@ -2,12 +2,13 @@
   "name": "wadi-app",
   "version": "5.1.0",
   "scripts": {
-    "dev": "pnpm --filter frontend run dev",
+    "dev": "pnpm --filter \"./apps/*\" --parallel run dev",
+    "dev:frontend": "pnpm --filter frontend run dev",
+    "dev:api": "pnpm --filter wadi-api run dev",
     "lint": "eslint .",
     "format": "prettier --write .",
     "build": "pnpm install && pnpm -r build",
     "smoke:api": "node apps/api/dist/index.js",
-    "smoke:health": "node -e \"const http=require('http');http.get('http://127.0.0.1:'+process.env.PORT+'/system/health',r=>{if(r.statusCode!==200){process.exit(1)};process.exit(0)}).on('error',()=>process.exit(1));\"",
     "start": "pnpm --filter wadi-api run start",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > packages/wadi-db-types/src/database.ts"
   },

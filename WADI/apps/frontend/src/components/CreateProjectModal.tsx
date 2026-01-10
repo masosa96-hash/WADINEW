@@ -21,49 +21,54 @@ export default function CreateProjectModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-white">Create New Project</h2>
+    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="glass-panel p-8 w-full max-w-md relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+        
+        <h2 className="text-2xl font-bold mb-6 text-white">Create New Project</h2>
         
         {error && (
-          <div className="bg-red-500 text-white p-2 rounded mb-4 text-sm">
+          <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-3 rounded-lg mb-4 text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-1 text-gray-300">Project Name</label>
+            <label className="block mb-2 text-sm font-medium text-slate-300">Project Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
+              className="glass-input w-full text-white placeholder-slate-500"
+              placeholder="e.g., Quantum AI Rewrite"
               required
+              autoFocus
             />
           </div>
           <div>
-            <label className="block mb-1 text-gray-300">Description (Optional)</label>
+            <label className="block mb-2 text-sm font-medium text-slate-300">Description (Optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
+              className="glass-input w-full text-white placeholder-slate-500 resize-none"
               rows={3}
+              placeholder="Briefly describe your goals..."
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded text-gray-400 hover:text-white hover:bg-gray-700"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating..." : "Create Project"}
             </button>

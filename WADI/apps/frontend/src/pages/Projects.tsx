@@ -14,22 +14,26 @@ export default function Projects() {
   }, [fetchProjects]);
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <header className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <header className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Projects</h1>
-          <p className="text-gray-400 text-sm">Welcome, {user?.email}</p>
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-2">
+            My Projects
+          </h1>
+          <p className="text-slate-400 font-medium">
+            Welcome back, <span className="text-slate-200">{user?.email}</span>
+          </p>
         </div>
         <div className="flex gap-4">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow"
+            className="btn-primary flex items-center gap-2"
           >
-            + New Project
+            <span>+</span> New Project
           </button>
           <button
             onClick={() => signOut()}
-            className="px-4 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 rounded"
+            className="btn-secondary"
           >
             Logout
           </button>
@@ -37,21 +41,24 @@ export default function Projects() {
       </header>
 
       {error && (
-        <div className="bg-red-900 border border-red-700 text-red-200 p-4 rounded mb-6">
-          Error: {error}
+        <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-8 flex items-center gap-2">
+           ⚠️ Error: {error}
         </div>
       )}
 
       {loading && projects.length === 0 ? (
-        <div className="text-center text-gray-500 py-12">Loading projects...</div>
+        <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
       ) : (
         <>
           {projects.length === 0 ? (
-            <div className="text-center py-20 border-2 border-dashed border-gray-700 rounded-lg">
-              <p className="text-gray-500 mb-4">You haven't created any projects yet.</p>
+            <div className="glass-panel text-center py-24 border-dashed border-2 border-slate-700/50">
+              <h3 className="text-xl font-semibold text-slate-300 mb-2">No projects yet</h3>
+              <p className="text-slate-500 mb-6 max-w-sm mx-auto">Start your journey by creating your first AI project implementation.</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded border border-gray-600"
+                className="btn-primary"
               >
                 Create your first project
               </button>

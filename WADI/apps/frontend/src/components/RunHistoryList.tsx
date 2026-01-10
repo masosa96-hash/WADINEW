@@ -9,7 +9,7 @@ interface Run {
 export default function RunHistoryList({ runs }: { runs: Run[] }) {
   if (runs.length === 0) {
     return (
-      <div className="text-center text-gray-500 py-10">
+      <div className="glass-panel text-center text-slate-500 py-16 border-dashed border-2 border-slate-700/30">
         No runs yet. Start by entering a prompt above.
       </div>
     );
@@ -18,24 +18,27 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
   return (
     <div className="space-y-6">
       {runs.map((run) => (
-        <div key={run.id} className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-          <div className="bg-gray-750 p-3 border-b border-gray-700 flex justify-between items-center bg-opacity-50">
-            <span className="text-xs text-gray-400 font-mono">
+        <div key={run.id} className="glass-panel overflow-hidden transition-all hover:border-slate-600/50">
+          <div className="bg-slate-900/30 p-3 border-b border-slate-700/30 flex justify-between items-center backdrop-blur-sm">
+            <span className="text-xs text-slate-400 font-mono flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50"></span>
                 {new Date(run.created_at).toLocaleString()}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-blue-300">
+            <span className="text-xs px-2 py-0.5 rounded-md bg-blue-900/30 text-blue-300 border border-blue-500/20 font-mono">
                 {run.model}
             </span>
           </div>
           
-          <div className="p-4 space-y-4">
+          <div className="p-5 space-y-4">
             <div>
-                <strong className="block text-green-400 text-sm mb-1">INPUT</strong>
-                <div className="text-gray-300 whitespace-pre-wrap">{run.input}</div>
+                <strong className="text-xs uppercase tracking-wider text-slate-500 mb-2 block">Input</strong>
+                <div className="text-slate-200 whitespace-pre-wrap font-light leading-relaxed">{run.input}</div>
             </div>
-            <div className="border-t border-gray-750 pt-4">
-                 <strong className="block text-blue-400 text-sm mb-1">OUTPUT</strong>
-                 <div className="text-white whitespace-pre-wrap font-mono text-sm bg-gray-900 p-3 rounded">
+            
+            <div className="relative">
+                 <div className="absolute -left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-r"></div>
+                 <strong className="text-xs uppercase tracking-wider text-blue-400 mb-2 block pl-2">Output</strong>
+                 <div className="text-slate-100 whitespace-pre-wrap font-mono text-sm bg-slate-950/50 p-4 rounded-xl border border-slate-800 shadow-inner">
                     {run.output}
                  </div>
             </div>
