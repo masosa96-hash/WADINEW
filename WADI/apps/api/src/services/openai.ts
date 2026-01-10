@@ -15,18 +15,27 @@ const openai = new OpenAI({
   baseURL: useGroq ? "https://api.groq.com/openai/v1" : undefined,
 });
 
+import { generateSystemPrompt } from "../wadi-brain";
+
 export const getChatCompletion = async (
   prompt: string,
-  model: string = "gpt-3.5-turbo"
+  model: string = "gpt-3.5-turbo",
+  systemPrompt: string = ""
 ) => {
   try {
     const aiModel = useGroq
       ? (process.env.GROQ_MODEL || "llama-3.1-8b-instant")
       : model;
 
+    // Generate Default Brain if not provided (Simplest integration for Beta 1)
+    const activeSystem = systemPrompt || generateSystemPrompt();
+
     const response = await openai.chat.completions.create({
       model: aiModel,
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: activeSystem },
+        { role: "user", content: prompt }
+      ],
     });
 
     return response.choices[0].message.content;
