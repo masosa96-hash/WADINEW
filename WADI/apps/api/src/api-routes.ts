@@ -196,7 +196,7 @@ router.post(
     // 1. Create Conversation if needed (SYC, before queueing)
     if (user && !currentConversationId) {
        const userForDb = user.id; // Safe access
-       const { data: newConv } = await supabase
+       const { data: newConv, error: convError } = await supabase
           .from("conversations")
           .insert([
             {
@@ -208,8 +208,15 @@ router.post(
           ])
           .select()
           .single();
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         currentConversationId = (newConv as any).id;
+
+         if (convError) {
+             console.error("[API_CHAT_ERROR] Failed to create conversation:", convError);
+         }
+         
+         if (newConv) {
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             currentConversationId = (newConv as any).id;
+         }
     }
 
     // 2. Insert User Message immediately so it appears secure
