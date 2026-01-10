@@ -175,8 +175,9 @@ router.post(
   requireScope("chat:write"),
   asyncHandler(async (req, res) => {
     let user = req.user;
+    console.log("[DEBUG_CHAT] Request received. User ID:", user?.id || "ANON");
     
-    // Fallback for missing user in request (should be handled by authenticate/requireScope, but for safety)
+    // Fallback for missing user in request
     const userId = user?.id || "anonymous_" + Date.now();
 
     const {
@@ -210,7 +211,9 @@ router.post(
           .single();
 
          if (convError) {
-             console.error("[API_CHAT_ERROR] Failed to create conversation:", convError);
+             console.error("[DEBUG_CHAT] Failed to create conversation:", convError);
+         } else {
+             console.log("[DEBUG_CHAT] Conversation created/found. ID:", currentConversationId);
          }
          
          if (newConv) {
@@ -313,6 +316,7 @@ router.post(
 
     // 3. Add to Queue with PRE-BUILT MESSAGES
     try {
+      console.log("[DEBUG_CHAT] Adding to queue... ConversationID:", currentConversationId);
       const job = await chatQueue.add("chat", {
          userId,
          message,
@@ -323,6 +327,7 @@ router.post(
          isMobile,
          attachments,
       });
+      console.log("[DEBUG_CHAT] Job added. JobID:", job.id);
 
       // 4. Respond Async
       res.status(202).json({
@@ -331,12 +336,13 @@ router.post(
         status: "queued"
       });
     } catch (error: any) {
-      console.error("[API_CHAT_ERROR] Queue addition failed:", error);
+      console.error("[DEBUG_CHAT] CRITICAL ERROR:", error); 
       // Return detailed error for debugging (Render logs are hard to see)
       res.status(500).json({ 
         error: "QUEUE_ERROR", 
-        message: "No pude conectar con el lóbulo frontal (Redis).",
-        details: error.message 
+        message: "No pude conectar con el lóbulo frontal (Redis)..",
+        details: error.message,
+        stack: error.stack
       });
     }
   })
