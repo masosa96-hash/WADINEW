@@ -7,11 +7,12 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("Missing Supabase credentials in .env");
-  // We might want to throw error or exit, but for now just logging
+  console.error("FATAL: Missing Supabase credentials in environment variables.");
+  console.error("Please ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.");
+  process.exit(1);
 }
 
 export const supabase = createClient(
-  supabaseUrl || "",
-  supabaseServiceKey || ""
+  supabaseUrl,
+  supabaseServiceKey
 );
