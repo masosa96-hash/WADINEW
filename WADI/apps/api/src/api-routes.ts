@@ -302,23 +302,33 @@ router.post(
     ];
 
     // 3. Add to Queue with PRE-BUILT MESSAGES
-    const job = await chatQueue.add("chat", {
-       userId,
-       message,
-       conversationId: currentConversationId, 
-       messages: fullMessages, // CRITICAL: Pass the brain context
-       mode,
-       topic,
-       isMobile,
-       attachments,
-    });
+    try {
+      const job = await chatQueue.add("chat", {
+         userId,
+         message,
+         conversationId: currentConversationId, 
+         messages: fullMessages, // CRITICAL: Pass the brain context
+         mode,
+         topic,
+         isMobile,
+         attachments,
+      });
 
-    // 4. Respond Async
-    res.status(202).json({
-      jobId: job.id,
-      conversationId: currentConversationId,
-      status: "queued"
-    });
+      // 4. Respond Async
+      res.status(202).json({
+        jobId: job.id,
+        conversationId: currentConversationId,
+        status: "queued"
+      });
+    } catch (error: any) {
+      console.error("[API_CHAT_ERROR] Queue addition failed:", error);
+      // Return detailed error for debugging (Render logs are hard to see)
+      res.status(500).json({ 
+        error: "QUEUE_ERROR", 
+        message: "No pude conectar con el lóbulo frontal (Redis).",
+        details: error.message 
+      });
+    }
   })
 );
 

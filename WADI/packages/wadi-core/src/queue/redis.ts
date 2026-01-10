@@ -10,11 +10,15 @@ export function createRedis(): IORedis {
     throw new Error("Missing REDIS_URL");
   }
 
+  // Render/Cloud Redis often needs TLS if protocol is 'rediss:'
+  const isSecure = url.startsWith("rediss:");
+
   // Use lazyConnect: true to avoid throwing immediately on import if Redis is down/unreachable
   redis = new IORedis(url, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     lazyConnect: true,
+    tls: isSecure ? { rejectUnauthorized: false } : undefined, // Relaxed TLS for internal/self-signed
     retryStrategy: (times) => {
       const delay = Math.min(times * 100, 2000);
       return delay;
