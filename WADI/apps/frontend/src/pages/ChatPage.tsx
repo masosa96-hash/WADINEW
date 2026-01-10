@@ -103,7 +103,7 @@ export default function ChatPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--wadi-bg)]">
+      <div className="w-full h-screen flex items-center justify-center bg-[var(--wadi-bg)]">
         <div className="animate-pulse tracking-widest text-xs opacity-50 uppercase">
           Inicializando Memoria...
         </div>
