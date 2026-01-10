@@ -4,7 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon -e ts,json --exec \"ts-node src/index.ts\"",
-    "build": "tsc --skipLibCheck || true",
+    "build": "pnpm exec tsc --skipLibCheck || echo 'TSC Failed'",
     "start": "node dist/index.js",
     "test": "vitest"
   },

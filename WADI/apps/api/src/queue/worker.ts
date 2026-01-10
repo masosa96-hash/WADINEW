@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import { createRedis } from "@wadi/core";
 import { runBrain } from "@wadi/core";
 import { chatQueue } from "./chatQueue.js";
+import { supabase } from "../supabase";
 
 // Singleton worker instance to avoid duplicates in dev
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,6 +73,30 @@ export function startWorker() {
 
       // 3. Execution
       const result = await runBrain(messages);
+
+      // 4. Persistence (SAVE THE RESPONSE)
+      if (data.conversationId && result.response) {
+          try {
+             // Use static import
+             const { error: saveError } = await supabase.from("messages").insert({
+                 conversation_id: data.conversationId,
+                 role: "assistant",
+                 content: result.response,
+                 user_id: null, // Assistant is system
+                 meta: result.meta || {}
+             });
+             
+             if (saveError) {
+                 console.error(`[Worker] ❌ DB Save Failed for job ${id}:`, saveError);
+             } else {
+                 console.log(`[Worker] 💾 Message Saved to DB for conversation ${data.conversationId}`);
+             }
+          } catch (dbErr) {
+             console.error(`[Worker] ❌ Critical DB Error for job ${id}:`, dbErr);
+          }
+      } else {
+          console.warn(`[Worker] ⚠️ Skipping DB Save: No conversationId (${data.conversationId}) or empty response.`);
+      }
 
       const duration = Date.now() - start;
       console.log(`[Worker] ✅ Job ${id} Done in ${duration}ms`);

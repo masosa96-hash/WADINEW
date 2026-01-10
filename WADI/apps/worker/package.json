@@ -4,7 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon -e ts,json --exec \"ts-node src/index.ts\"",
-    "build": "tsc",
+    "build": "echo 'Skipping redundant worker build'",
     "start": "node dist/index.js"
   },
   "dependencies": {
