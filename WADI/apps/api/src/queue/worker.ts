@@ -78,13 +78,14 @@ export function startWorker() {
       if (data.conversationId && result.response) {
           try {
              // Use static import
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
              const { error: saveError } = await supabase.from("messages").insert({
                  conversation_id: data.conversationId,
                  role: "assistant",
                  content: result.response,
                  user_id: null, // Assistant is system
                  meta: result.meta || {}
-             });
+             } as any);
              
              if (saveError) {
                  console.error(`[Worker] ❌ DB Save Failed for job ${id}:`, saveError);
