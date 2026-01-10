@@ -36,7 +36,7 @@ export default function Projects() {
             }
 
             console.log("Creating default GENERAL project...");
-            await createProject({ name: "GENERAL", description: "Default Chat Space" });
+            await createProject("GENERAL", "Default Chat Space");
             // The store updates 'projects', so this effect will run again and find it
           } catch (e) {
             console.error("Failed to create general project", e);
