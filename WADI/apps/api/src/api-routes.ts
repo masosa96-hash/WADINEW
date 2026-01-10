@@ -2,7 +2,9 @@ import { Router, Request, Response, NextFunction } from "express";
 import { runBrain } from "@wadi/core";
 import { openai, AI_MODEL } from "./openai";
 import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain";
-import { supabase } from "./supabase";
+import { supabase as supabaseClient } from "./supabase";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = supabaseClient as any;
 import { AppError, AuthError, ModelError } from "./core/errors";
 import {
   validateChatInput,
@@ -140,7 +142,7 @@ router.post(
       .select("efficiency_points")
       .eq("id", user!.id)
       .maybeSingle();
-    const newPoints = profile?.efficiency_points || 0; // No penalty, just reset state
+    const newPoints = (profile as any)?.efficiency_points || 0; // No penalty, just reset state
     const newRank = calculateRank(newPoints);
 
     await supabase.from("profiles").upsert({
@@ -630,7 +632,7 @@ router.post(
 
     const conversationText = recentMsgs
       .reverse()
-      .map((m) => `${m.role}: ${m.content}`)
+      .map((m: any) => `${m.role}: ${m.content}`)
       .join("\n");
 
     // 2. Ask AI to distill knowledge
@@ -741,7 +743,8 @@ router.post(
     const dateStr = new Date().toISOString().split("T")[0];
     let fileContent = `# WADI EVOLUTION LOG [${dateStr}]\n\n`;
 
-    reflections.forEach((r) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reflections.forEach((r: any) => {
       fileContent += `## [${r.type}] ${new Date(r.created_at).toLocaleTimeString()}\n`;
       fileContent += `Priority: ${r.priority}\n`;
       fileContent += `${r.content}\n\n---\n\n`;
@@ -749,7 +752,7 @@ router.post(
 
     // 3. Save to Cloud Reports
     const fileName = `${dateStr}_evolution_log_${Date.now()}.txt`;
-    await supabase.from("wadi_cloud_reports").insert({
+    await (supabase.from("wadi_cloud_reports") as any).insert({
       user_id: user!.id,
       name: fileName,
       content: fileContent,
