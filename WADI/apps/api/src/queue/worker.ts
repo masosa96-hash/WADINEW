@@ -83,7 +83,9 @@ export function startWorker() {
                  conversation_id: data.conversationId,
                  role: "assistant",
                  content: result.response,
-                 user_id: null, // Assistant is system
+                 // CRITICAL FIX: Associate with user so RLS allows them to see it.
+                 // If anonymous (string ID), keep null to avoid UUID FK violation.
+                 user_id: data.userId.startsWith("anonymous_") ? null : data.userId,
                  meta: result.meta || {}
              } as any);
              
