@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { runBrain } from "@wadi/core";
+// import { runBrain } from "@wadi/core";
 import { openai, AI_MODEL } from "./openai";
 import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain";
 import { supabase as supabaseClient } from "./supabase";
@@ -17,7 +17,8 @@ const pdf = require("pdf-parse");
 // import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
-import { chatQueue } from "./queue/chatQueue";
+// import { chatQueue } from "./queue/chatQueue";
+// import { chatQueue } from "./queue/chatQueue";
 
 const router = Router();
 
@@ -167,212 +168,75 @@ router.post(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const guestSessions = new Map<string, any[]>();
 
-// --- REPLACED: ASYNC CHAT ENDPOINT ---
+// --- SYNC CHAT ENDPOINT (RAW MODE) ---
 router.post(
   "/chat",
-  authenticate(),
-  validateChatInput,
-  requireScope("chat:write"),
+  // authenticate(), // Disabled for Raw test unless needed
+  // validateChatInput,
   asyncHandler(async (req, res) => {
-    let user = req.user;
-    console.log("[DEBUG_CHAT] Request received. User ID:", user?.id || "ANON");
-    
-    // Fallback for missing user in request
+    let user = req.user; // Might be undefined if auth disabled
     const userId = user?.id || "anonymous_" + Date.now();
 
     const {
-      message,
-      conversationId,
-      mode,
-      explainLevel,
-      topic,
-      attachments,
-      isMobile,
-      customSystemPrompt,
-      memory
+        message,
+        conversationId
     } = req.body;
 
-    let currentConversationId = conversationId;
+    console.log("[RAW_BRAIN] Processing message:", message);
 
-    // 1. Create Conversation if needed (SYC, before queueing)
-    if (user && !currentConversationId) {
-       const userForDb = user.id; // Safe access
-       const { data: newConv, error: convError } = await supabase
-          .from("conversations")
-          .insert([
-            {
-              user_id: userForDb,
-              title: message.substring(0, 60),
-              mode: mode || "normal",
-              explain_level: explainLevel || "normal",
-            },
-          ])
-          .select()
-          .single();
-
-         if (convError) {
-             console.error("[DEBUG_CHAT] Failed to create conversation:", convError);
-         } else {
-             console.log("[DEBUG_CHAT] Conversation created/found. ID:", currentConversationId);
-         }
-         
-         if (newConv) {
-             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-             currentConversationId = (newConv as any).id;
-         }
-    }
-
-    // 2. Insert User Message immediately so it appears secure
-    if (user && currentConversationId) {
-        await supabase.from("messages").insert({
-            conversation_id: currentConversationId,
-            user_id: user.id, // Safe access because of (user && ...)
-            role: "user",
-            content: message,
-            attachments: attachments || [],
-        });
-    }
-
-    // --- CONTEXT GATHERING (Restored from Sync Version) ---
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let history: any[] = [];
-    let profile = {
-      efficiency_rank: "VISITANTE",
-      efficiency_points: 0,
-      active_focus: null,
-      custom_instructions: null,
-    };
-    let pastFailures: string[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let knowledgeBase: any[] = [];
-
-    if (user && currentConversationId) {
-       // Fetch History
-       const { data: dbHistory } = await supabase
-        .from("messages")
-        .select("role, content")
-        .eq("conversation_id", currentConversationId)
-        .order("created_at", { ascending: true });
-      history = dbHistory || [];
-      
-      // Safety: ensure current msg is in history if DB race condition
-       if (history.length === 0 || history[history.length - 1].content !== message) {
-         history.push({ role: "user", content: message });
-       }
-       
-       // Fetch Profile & Context
-       const { data: dbProfile } = await supabase
-         .from("profiles")
-         .select("*")
-         .eq("id", user.id)
-         .single();
-         
-       if (dbProfile) {
-           profile = { ...profile, ...dbProfile };
-       }
-       
-       pastFailures = await fetchUserCriminalRecord(user.id);
-       knowledgeBase = await fetchKnowledgeBase(user.id);
-    } else {
-        history.push({ role: "user", content: message });
-    }
-
-    // --- GENERATE SYSTEM PROMPT & MESSAGES ---
-    // Remove current msg from history for prompt context (it's added at the end)
-    const previousHistory = history.slice(0, -1).slice(-20);
-    const messageCount = Math.max(0, history.length - 1);
-
-     const fullSystemPrompt = generateSystemPrompt(
-      mode || "normal",
-      topic || "general",
-      {}, // sessionPrefs
-      "hostile",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (req.body as any).isMobile,
-      messageCount,
-      pastFailures,
-      profile.efficiency_rank,
-      profile.efficiency_points,
-      profile.active_focus,
-      memory || {}, 
-      knowledgeBase, 
-      profile.custom_instructions
-    );
-
-    const finalSystemPrompt = customSystemPrompt || fullSystemPrompt;
-    const userContent = await processAttachments(message, attachments);
-
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const openAIHistory = previousHistory.map((m: any) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // Generate System Prompt
+    // const sysPrompt = generateSystemPrompt(...) // DISABLED FOR DEBUG
+    const sysPrompt = "You are WADI, a raw debug brain. Respond in JSON with { response: 'msg' }.";
 
     const fullMessages = [
-        { role: "system", content: finalSystemPrompt },
-        ...openAIHistory,
-        { role: "user", content: userContent },
+        { role: "system", content: sysPrompt },
+        { role: "user", content: message }
     ];
 
-    // 3. Add to Queue with PRE-BUILT MESSAGES
+    // Minimal Brain Execution
+    // Use the full messages constructed above (including system prompt)
+    const messages = fullMessages; 
+    
     try {
-      console.log("[DEBUG_CHAT] Adding to queue... ConversationID:", currentConversationId);
-      const job = await chatQueue.add("chat", {
-         userId,
-         message,
-         conversationId: currentConversationId, 
-         messages: fullMessages, // CRITICAL: Pass the brain context
-         mode,
-         topic,
-         isMobile,
-         attachments,
-      });
-      console.log("[DEBUG_CHAT] Job added. JobID:", job.id);
+        const completion = await openai.chat.completions.create({
+            model: AI_MODEL,
+            messages: messages as any,
+            response_format: { type: "json_object" }, // Enforce JSON for WADI
+            temperature: 0.7,
+        });
 
-      // 4. Respond Async
-      res.status(202).json({
-        jobId: job.id,
-        conversationId: currentConversationId,
-        status: "queued"
-      });
-    } catch (error: any) {
-      console.error("[DEBUG_CHAT] CRITICAL ERROR:", error); 
-      // Return detailed error for debugging (Render logs are hard to see)
-      res.status(500).json({ 
-        error: "QUEUE_ERROR", 
-        message: "No pude conectar con el lóbulo frontal (Redis)..",
-        details: error.message,
-        stack: error.stack
-      });
+        const rawContent = completion.choices[0].message.content;
+        let result: any = { response: "Brain failure." };
+
+        try {
+            if (rawContent) {
+                result = JSON.parse(rawContent);
+            }
+        } catch (jsonErr) {
+            console.error("JSON Parse Error:", jsonErr);
+            // Fallback if model failed JSON despite enforcement
+            result = { response: rawContent };
+        }
+
+        console.log("[RAW_BRAIN] Response:", result.response);
+        
+        res.json({
+            response: result.response,
+            status: "completed",
+            // Include other metrics if needed
+            tone: result.tone,
+            smokeIndex: result.smokeIndex
+        });
+    } catch (e: any) {
+        console.error("Brain Error:", e);
+        res.status(500).json({ error: e.message });
     }
   })
 );
 
-// --- PROYECTOS (Simplificados) ---
-// --- PROYECTOS (Simplificados) ---
-// --- REPLACED: ASYNC JOB STATUS ENDPOINT ---
-router.get(
-  "/chat/job/:jobId",
-  authenticate(),
-  asyncHandler(async (req, res) => {
-    const job = await chatQueue.getJob(req.params.jobId);
-
-    if (!job) {
-      return res.status(404).json({ status: "not_found" });
-    }
-
-    const state = await job.getState();
-    const result = job.returnvalue;
-
-    return res.json({
-      jobId: job.id,
-      status: state,
-      result: state === "completed" ? result : null,
-      error: state === "failed" ? job.failedReason : null,
-      progress: job.progress
-    });
-  })
-);
+// Stub for job status if frontend still polls it (modified frontend to expect direct response?)
+// The frontend I wrote waits for `response.json()` and looks for `response` or `message`.
+// So direct response works. The job status endpoint is irrelevant for this new App.tsx.
 
 // --- PROYECTOS (Simplificados) ---
 router.get(

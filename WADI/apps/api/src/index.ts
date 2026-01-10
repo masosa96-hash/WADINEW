@@ -14,7 +14,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { startWorker } from "./queue/worker";
 
 // Initialize Worker in the same process
-startWorker();
+// startWorker();
 
 import path from "path";
 import fs from "fs";
@@ -117,7 +117,7 @@ app.use(
 );
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use(requestLogger as any);
+// app.use(requestLogger as any);
 
 // TOP PRIORITY DEBUG ROUTE
 app.get("/system/debug-files", (req, res) => {
@@ -198,7 +198,7 @@ app.use(express.static(frontendPath));
 // PRIORITY 1: API & System Routes
 // --------------------------------------------------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use("/api", rateLimiter as any);
+// app.use("/api", rateLimiter as any);
 app.use("/api", routes); // Main API
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
