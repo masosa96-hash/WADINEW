@@ -56,7 +56,12 @@ function App() {
             padding: '0.5rem 1rem',
             borderRadius: '4px'
           }}>
-            <strong>{msg.role === 'user' ? 'You' : 'WADI'}:</strong> {msg.content}
+            <strong>{msg.role === 'user' ? 'You' : 'WADI'}:</strong> 
+            {typeof msg.content === 'object' ? (
+              <pre style={{textAlign: 'left', whiteSpace: 'pre-wrap'}}>{JSON.stringify(msg.content, null, 2)}</pre>
+            ) : (
+              msg.content
+            )}
           </div>
         ))}
         {loading && <div>Thinking...</div>}
