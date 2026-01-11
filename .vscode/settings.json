@@ -8,5 +8,7 @@
   "git.autofetch": true,
   "agent.confirmCommands": false,
   "ai.confirmCommands": false,
-  "antigravity.confirmCommands": false
+  "antigravity.confirmCommands": false,
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore"
 }

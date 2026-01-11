@@ -1,19 +1,4 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "editor.formatOnSave": true,
   "css.lint.unknownAtRules": "ignore",
-  "sqltools.connections": [
-    {
-      "previewLimit": 50,
-      "server": "db.smkbiguvgiscojwxgbae.supabase.co",
-      "port": 5432,
-      "driver": "PostgreSQL",
-      "name": "WADI Supabase",
-      "database": "postgres",
-      "username": "postgres"
-    }
-  ]
+  "scss.lint.unknownAtRules": "ignore"
 }
