@@ -75,9 +75,7 @@ export default function ProjectDetail() {
                 <RunHistoryList runs={runs} />
             )}
         </div>
-                <RunHistoryList runs={runs} />
-            )}
-        </div>
+
 
         {/* Input Area (Fixed at bottom via flex layout) */}
         <div className="mb-4">
