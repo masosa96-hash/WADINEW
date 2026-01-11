@@ -18,12 +18,12 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="relative group">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl opacity-30 group-hover:opacity-60 transition duration-500 blur"></div>
+        {/* Removed decorative gradient for clean look */}
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Enter your prompt here... (Shift+Enter for new line)"
-        className="relative w-full bg-slate-900 text-white placeholder-slate-500 rounded-xl p-6 pr-24 focus:outline-none min-h-[120px] resize-y shadow-2xl transition-all"
+        placeholder="Escribe tu mensaje... (Shift+Enter para nueva línea)"
+        className="relative w-full glass-input min-h-[100px] resize-y shadow-sm hover:shadow-md transition-all text-base"
         disabled={loading}
         onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -32,14 +32,17 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
             }
         }}
       />
-      <div className="absolute bottom-4 right-4 flex items-center gap-2">
-          {loading && <span className="text-xs text-blue-400 animate-pulse font-mono">PROCESSING...</span>}
+      <div className="absolute bottom-3 right-3 flex items-center gap-2">
+          {loading && <span className="text-xs text-blue-500 animate-pulse font-medium">Processing...</span>}
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="btn-primary py-1.5 px-4 text-sm disabled:opacity-50 disabled:grayscale"
+            className="btn-primary py-2 px-6 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Run &rarr;
+            <span>Enviar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.89 28.89 0 0015.293-7.154.75.75 0 000-1.115A28.89 28.89 0 003.105 2.289z" />
+            </svg>
           </button>
       </div>
     </form>

@@ -29,44 +29,52 @@ export default function ProjectDetail() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl h-screen flex flex-col">
-      <header className="flex justify-between items-center mb-6 relative z-10 glass-panel p-4">
+      <header className="flex justify-between items-center mb-6 relative z-10 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-3">
-             <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-             <h1 className="text-xl font-bold tracking-tight text-white">
-                WADI <span className="opacity-50 font-normal">TERMINAL</span>
-             </h1>
+             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                W
+             </div>
+             <div>
+                <h1 className="text-lg font-bold tracking-tight text-slate-800">
+                    WADI
+                </h1>
+                <p className="text-xs text-slate-500">AI Assistant</p>
+             </div>
         </div>
         
         <div className="flex items-center gap-4">
-             <span className="text-xs font-mono text-slate-500 hidden sm:inline-block">
-                USER: {user?.email}
+             <span className="text-xs font-medium text-slate-500 hidden sm:inline-block bg-slate-100 px-3 py-1 rounded-full">
+                {user?.email}
              </span>
              <button 
                 onClick={handleLogout}
-                className="text-xs text-red-400 hover:text-red-300 transition-colors uppercase font-mono tracking-wider"
+                className="text-xs text-slate-500 hover:text-red-600 transition-colors uppercase font-medium tracking-wide"
             >
-                [Logout]
-             </button>
+                Log out
+            </button>
         </div>
       </header>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 backdrop-blur-sm">
+        <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl mb-6 text-sm font-medium">
           ⚠️ Error: {error}
         </div>
       )}
 
       {/* Main Content Area - Flexible height to push footer down */}
-      <div className="flex-1 overflow-hidden flex flex-col relative z-10">
+      <div className="flex-1 overflow-hidden flex flex-col relative z-10 bg-white/50 rounded-2xl border border-slate-200/50 shadow-sm">
           
         {/* Output Area */}
-        <div className="flex-1 overflow-y-auto mb-6 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 mb-4 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
              {loading && runs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full opacity-50">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-                    <p className="text-sm font-mono text-blue-400">CONNECTING NEURAL LINK...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                    <p className="text-sm font-medium text-slate-400">Loading chat...</p>
                 </div>
             ) : (
+                <RunHistoryList runs={runs} />
+            )}
+        </div>
                 <RunHistoryList runs={runs} />
             )}
         </div>
