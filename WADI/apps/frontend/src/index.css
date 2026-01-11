@@ -57,14 +57,15 @@ body {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
+/* Standard Inputs (Clean) */
 .glass-input {
-  @apply bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition-all;
+  @apply bg-white border border-slate-300 rounded-xl px-4 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400;
 }
 
 .btn-primary {
-  @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium py-2 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95;
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl shadow-md transition-all active:scale-95;
 }
 
 .btn-secondary {
-  @apply bg-slate-700/50 hover:bg-slate-700/80 text-slate-200 font-medium py-2 px-4 rounded-xl border border-slate-600/50 transition-all active:scale-95;
+  @apply bg-white hover:bg-slate-50 text-slate-700 font-medium py-2 px-4 rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95;
 }
