@@ -37,9 +37,12 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
 
       const data = await res.json();
       set({ projects: data });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: "An unknown error occurred" });
+      }    } finally {
       set({ loading: false });
     }
   },
@@ -60,9 +63,13 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
 
       const newProject = await res.json();
       set((state) => ({ projects: [newProject, ...state.projects] }));
-    } catch (error: any) {
-      set({ error: error.message });
-      throw error; // Re-throw to handle in UI
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: "An unknown error occurred" });
+      }
+      throw error;
     } finally {
       set({ loading: false });
     }

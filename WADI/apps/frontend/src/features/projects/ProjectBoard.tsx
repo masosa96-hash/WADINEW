@@ -11,7 +11,7 @@ const COLUMNS = [
 ];
 
 export default function ProjectBoard() {
-  const { projects, fetchProjects, loading } = useProjectsStore();
+  const { projects, fetchProjects } = useProjectsStore();
 
   useEffect(() => {
     fetchProjects();
