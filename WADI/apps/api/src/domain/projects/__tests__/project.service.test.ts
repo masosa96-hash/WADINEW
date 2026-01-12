@@ -99,7 +99,7 @@ describe("ProjectsService", () => {
         mockSelect.mockReturnValueOnce({ single: mockSingle });
         mockSingle.mockReturnValueOnce({ data: null, error: { message: "DB Error" } });
   
-        await expect(ProjectsService.create(userId, { name: "Fail" })).rejects.toThrow("DB Error");
+        await expect(ProjectsService.create(userId, { name: "Fail", description: "Fail description" })).rejects.toThrow("DB Error");
       });
   });
 
