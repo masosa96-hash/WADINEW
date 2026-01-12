@@ -18,7 +18,7 @@ const pdf = require("pdf-parse");
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
 // import { chatQueue } from "./queue/chatQueue";
-// import { chatQueue } from "./queue/chatQueue";
+import { chatQueue } from "./queue/chatQueue";
 
 const router = Router();
 
@@ -97,8 +97,6 @@ const calculateRank = (points: number) => {
 
 // --- ROUTES ---
 
-// --- ROUTES ---
-
 router.get(
   "/user/criminal-summary",
   authenticate(),
@@ -164,91 +162,133 @@ router.post(
 );
 
 // In-memory store for guest sessions (Volatile)
-// In-memory store for guest sessions (Volatile)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const guestSessions = new Map<string, any[]>();
 
-// --- SYNC CHAT ENDPOINT (RAW MODE) ---
+// --- ASYNC CHAT ENDPOINT (BULLMQ) ---
 router.post(
   "/chat",
-  // authenticate(), // Disabled for Raw test unless needed
+  // authenticate(), // Keep disabled for now if testing raw, or enable if frontend sends token
   // validateChatInput,
   asyncHandler(async (req, res) => {
-    let user = req.user; // Might be undefined if auth disabled
+    const user = req.user;
     const userId = user?.id || "anonymous_" + Date.now();
 
     const {
         message,
-        conversationId
+        conversationId,
+        attachments = [],
+        // Optional overrides meant for system prompt generation
+        mode = "normal",
+        topic = "general",
+        tone = "hostile",
     } = req.body;
 
-    console.log("[RAW_BRAIN] Processing message:", message);
-
-    // Generate System Prompt
-    const sysPrompt = generateSystemPrompt(
-        "normal", // mode
-        "general", // topic
-        {}, // sessionPrefs
-        "hostile", // mood
-        false, // isMobile (mock)
-        0, // messageCount (mock)
-        [], // pastFailures
-        "VISITANTE", // rank
-        0, // points
-        null, // focus
-        {}, // memory
-        [], // knowledge
-        null // customInstructions
-    );
-    // const sysPrompt = "You are WADI, a raw debug brain. Respond in JSON with { response: 'msg' }.";
-
-    const fullMessages = [
-        { role: "system", content: sysPrompt },
-        { role: "user", content: message }
-    ];
-
-    // Minimal Brain Execution
-    // Use the full messages constructed above (including system prompt)
-    const messages = fullMessages; 
-    
-    try {
-        const completion = await openai.chat.completions.create({
-            model: AI_MODEL,
-            messages: messages as any,
-            response_format: { type: "json_object" }, // Enforce JSON for WADI
-            temperature: 0.7,
-        });
-
-        const rawContent = completion.choices[0].message.content;
-        let result: any = { response: "Brain failure." };
-
-        try {
-            if (rawContent) {
-                result = JSON.parse(rawContent);
-            }
-        } catch (jsonErr) {
-            console.error("JSON Parse Error:", jsonErr);
-            // Fallback if model failed JSON despite enforcement
-            result = { response: rawContent };
-        }
-
-        console.log("[RAW_BRAIN] Response:", result.response);
-        
-        res.json({
-            response: result.response,
-            status: "completed",
-            // Include other metrics if needed
-            tone: result.tone,
-            smokeIndex: result.smokeIndex
-        });
-    } catch (e: any) {
-        console.error("Brain Error:", e);
-        res.status(500).json({ error: e.message });
+    if (!message) {
+         throw new AppError("BAD_REQUEST", "Message is required", 400);
     }
+
+    console.log(`[ASYNC_BRAIN] Enqueuing job for User: ${userId}`);
+
+    // Fetch user context if authenticated
+    let efficiencyPoints = 0;
+    let rank = "VISITANTE";
+    let pastFailures: string[] = [];
+
+    if (user) {
+        try {
+             // Parallel fetch for speed
+             const [profileReq, failuresReq] = await Promise.all([
+                 supabase.from("profiles").select("efficiency_points, efficiency_rank").eq("id", userId).maybeSingle(),
+                 fetchUserCriminalRecord(userId)
+             ]);
+             
+             if (profileReq.data) {
+                 efficiencyPoints = profileReq.data.efficiency_points || 0;
+                 rank = profileReq.data.efficiency_rank || "CIVIL_PROMEDIO";
+             }
+             pastFailures = failuresReq;
+        } catch (err) {
+            console.error("Error fetching context for job", err);
+        }
+    }
+
+    // Prepare Job Payload
+    const jobData = {
+        userId,
+        conversationId,
+        message,
+        attachments: await processAttachments(message, attachments),
+        systemPromptParams: {
+            mode,
+            topic,
+            tone,
+            isMobile: false, // Could infer from User-Agent
+            messageCount: 0, // Worker can fetch this from DB effectively
+            pastFailures,
+            rank,
+            points: efficiencyPoints,
+            focus: null, // Worker can also fetch this if needed
+            memory: {}, // Raw memory not passed here
+            knowledge: [], // Worker will RAG
+            customInstructions: null 
+        }
+    };
+
+    // Add to Redis Queue
+    const job = await chatQueue.add("chat_process", jobData as any, {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 1000 },
+        removeOnComplete: 100,
+        removeOnFail: 200
+    });
+
+    res.json({
+        jobId: job.id,
+        status: "queued",
+        message: "Procesando en segundo plano..."
+    });
   })
 );
 
-// Stub for job status if frontend still polls it (modified frontend to expect direct response?)
+// --- JOB STATUS ENDPOINT (POLLING) ---
+router.get(
+  "/chat/job/:jobId",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const { jobId } = req.params;
+    
+    if (!jobId) {
+        throw new AppError("BAD_REQUEST", "Job ID missing", 400);
+    }
+
+    const job = await chatQueue.getJob(jobId);
+
+    if (!job) {
+        // 404 is tricky for polling, sometimes better to say "unknown"
+        // but standard REST is 404. Frontend should handle it.
+        return res.status(404).json({ status: "not_found", error: "Job ID not found" });
+    }
+
+    const state = await job.getState();
+    const result = job.returnvalue;
+    const failedReason = job.failedReason;
+
+    // Map BullMQ state to WADI status
+    // states: completed, failed, delayed, active, waiting, prioritized, waiting-children
+    
+    // Safety check: sometimes job is marked completed but returnvalue is null?
+    // Using simple mapping.
+    
+    res.json({
+        jobId,
+        status: state,
+        result,
+        error: failedReason,
+        progress: job.progress
+    });
+  })
+);
 // The frontend I wrote waits for `response.json()` and looks for `response` or `message`.
 // So direct response works. The job status endpoint is irrelevant for this new App.tsx.
 
