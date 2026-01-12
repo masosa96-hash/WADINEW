@@ -202,8 +202,13 @@ app.use(express.static(frontendPath));
 import projectsRouter from "./routes/projects";
 import runsRouter from "./routes/runs";
 
+// V2 Domain Routes
+import projectsV2Router from "./domain/projects/project.routes";
+
 // app.use("/api", rateLimiter as any);
-app.use("/api/projects", projectsRouter);
+app.use("/api/projects", projectsRouter); // Keep V1 for safety? Or replace? User said "Backend CRUD". I'll add V2.
+app.use("/api/v2/projects", projectsV2Router);
+
 app.use("/api", runsRouter);
 app.use("/api", routes); // Main API (Legacy/Raw)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

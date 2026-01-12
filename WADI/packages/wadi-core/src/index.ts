@@ -3,3 +3,4 @@ export * from './auth/types';
 export * from './queue/redis';
 export * from './queue/jobs';
 export * from './rag';
+export * from './types/projects';
