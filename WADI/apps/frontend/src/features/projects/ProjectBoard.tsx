@@ -1,38 +1,8 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import ProjectCard from "../../components/ProjectCard";
+import { useProjectsStore } from "../../store/projectsStore";
 
-// Mock Data for MVP Visualization
-const MOCK_PROJECTS = [
-  {
-    id: "1",
-    name: "WADI MVP",
-    description: "Refactorización completa de la arquitectura y frontend Neo-Y2K.",
-    status: "IN_PROGRESS",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Marketing Launch",
-    description: "Campaña de lanzamiento en Twitter y Product Hunt.",
-    status: "PLANNING",
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-  {
-    id: "3",
-    name: "Legacy Migration",
-    description: "Mover datos antiguos de Mongo a Postgres.",
-    status: "BLOCKED",
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-  },
-  {
-    id: "4",
-    name: "Q1 Finances",
-    description: "Cierre fiscal del primer trimestre.",
-    status: "DONE",
-    created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-  },
-];
-
+// Columns Definition
 const COLUMNS = [
   { id: "PLANNING", label: "Planning", color: "bg-slate-100" },
   { id: "IN_PROGRESS", label: "In Progress", color: "bg-blue-50" },
@@ -41,7 +11,11 @@ const COLUMNS = [
 ];
 
 export default function ProjectBoard() {
-  const [projects] = useState(MOCK_PROJECTS);
+  const { projects, fetchProjects, loading } = useProjectsStore();
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   return (
     <div className="h-full flex flex-col bg-slate-50">

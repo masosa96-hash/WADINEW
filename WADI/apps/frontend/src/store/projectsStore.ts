@@ -29,7 +29,7 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
       const token = useAuthStore.getState().session?.access_token;
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_URL}/projects`, {
+      const res = await fetch(`${API_URL}/api/v2/projects`, {
         headers: getHeaders(token),
       });
 
@@ -50,10 +50,10 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
       const token = useAuthStore.getState().session?.access_token;
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_URL}/projects`, {
+      const res = await fetch(`${API_URL}/api/v2/projects`, {
         method: "POST",
         headers: getHeaders(token),
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, status: "PLANNING" }),
       });
 
       if (!res.ok) throw new Error("Failed to create project");
