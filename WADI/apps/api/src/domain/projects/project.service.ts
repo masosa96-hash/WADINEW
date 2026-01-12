@@ -83,4 +83,31 @@ export class ProjectsService {
     if (error) throw new Error(error.message);
     return true;
   }
+
+  /**
+   * Analyze a project using AI
+   */
+  static async analyzeProject(userId: string, projectId: string) {
+    // 1. Verify project ownership and existence
+    const project = await this.get(userId, projectId);
+    if (!project) throw new Error("Project not found");
+
+    const { AIQueueService } = await import("../../services/aiQueueService");
+
+    // 2. Dispatch AI Job
+    // TODO: Fetch recent activity context if needed
+    const jobInfo = await AIQueueService.dispatch(
+      userId,
+      "SUGGEST_NEXT_ACTIONS",
+      {
+        projects: [project],
+        recentActivity: [], // Placeholder for now
+      }
+    );
+
+    return {
+      message: "AI Analysis started",
+      jobId: jobInfo.jobId,
+    };
+  }
 }

@@ -60,4 +60,15 @@ export class ProjectsController {
       next(error);
     }
   }
+
+  static async analyze(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+      const result = await ProjectsService.analyzeProject(user!.id, id);
+      res.status(202).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
