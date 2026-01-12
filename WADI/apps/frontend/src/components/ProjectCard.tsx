@@ -1,4 +1,15 @@
 import { Link } from "react-router-dom";
+// import { ProjectDTO, ProjectStatus } from "@wadi/core"; // Ideally use DTOs
+// Using local interface for now to match file state, but cleaning visuals.
+
+// Mapping statuses to Badge colors
+const STATUS_STYLES: Record<string, string> = {
+  PLANNING: "bg-slate-100 text-slate-600 border-slate-200",
+  IN_PROGRESS: "bg-blue-50 text-blue-600 border-blue-200",
+  BLOCKED: "bg-red-50 text-red-600 border-red-200",
+  COMPLETED: "bg-emerald-50 text-emerald-600 border-emerald-200",
+  ARCHIVED: "bg-slate-50 text-slate-400 border-slate-100",
+};
 
 interface Project {
   id: string;
@@ -9,39 +20,31 @@ interface Project {
 }
 
 export default function ProjectCard({ project }: { project: Project }) {
-  const statusColors = {
-    active: "bg-green-500/20 text-green-300 border-green-500/30",
-    archived: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-    default: "bg-blue-500/20 text-blue-300 border-blue-500/30"
-  };
-
-  const statusClass = statusColors[project.status as keyof typeof statusColors] || statusColors.default;
+  const statusStyle = STATUS_STYLES[project.status] || STATUS_STYLES.PLANNING;
 
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="glass-panel p-6 hover:scale-[1.02] transition-all duration-300 group relative overflow-hidden"
+      className="group block bg-white rounded-lg border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-      
-      <div className="flex justify-between items-start mb-3 relative">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent truncate pr-4">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
           {project.name}
         </h3>
-        <span className={`text-xs px-2.5 py-1 rounded-full border ${statusClass} font-medium uppercase tracking-wide`}>
-          {project.status || 'Active'}
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${statusStyle}`}>
+          {project.status || 'PLANNING'}
         </span>
       </div>
       
-      <p className="text-slate-400 text-sm mb-6 line-clamp-2 h-10 relative">
-        {project.description || "No description provided."}
+      <p className="text-slate-500 text-xs mb-4 line-clamp-2 h-8 leading-relaxed">
+        {project.description || "Sin descripción."}
       </p>
       
-      <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-700/50 pt-4 relative">
-        <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
-        <span className="text-blue-400 group-hover:translate-x-1 transition-transform">
-          Open Project &rarr;
+      <div className="flex justify-between items-center pt-3 border-t border-slate-50">
+        <span className="text-[10px] text-slate-400 font-medium">
+          {new Date(project.created_at).toLocaleDateString()}
         </span>
+        {/* User avatar or tiny meta could go here */}
       </div>
     </Link>
   );
