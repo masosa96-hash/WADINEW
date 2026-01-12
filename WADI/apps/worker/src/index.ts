@@ -1,4 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: "../../.env" });
+}
 import { Worker } from "bullmq";
 import { createRedis } from "@wadi/core";
 import type { ChatJobInput, ChatJobOutput } from "@wadi/core";
