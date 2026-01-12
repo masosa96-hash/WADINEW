@@ -6,3 +6,5 @@ export * from './rag';
 export * from './types/projects';
 // export * from './types/ai.v1'; // Deprecated
 export * from './types/ai';
+export * from './validators/project';
+
