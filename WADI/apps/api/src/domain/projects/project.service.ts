@@ -27,7 +27,7 @@ export class ProjectsService {
         name: input.name,
         description: input.description,
         status: input.status || ProjectStatus.PLANNING,
-      })
+      } as any)
       .select()
       .single();
 
@@ -60,6 +60,7 @@ export class ProjectsService {
   ): Promise<ProjectDTO> {
     const { data, error } = await supabase
       .from("projects")
+      // @ts-ignore
       .update(updates)
       .eq("user_id", userId)
       .eq("id", projectId)
@@ -109,5 +110,31 @@ export class ProjectsService {
       message: "AI Analysis started",
       jobId: jobInfo.jobId,
     };
+  }
+
+  /**
+   * Save AI Insight (Called by Worker)
+   */
+  static async saveInsight(
+    jobId: string,
+    userId: string,
+    insight: {
+      type: "SUGGESTION" | "WARNING" | "INFO";
+      message: string;
+      confidence: number;
+      relatedProjectId?: string;
+    }
+  ) {
+    const { error } = await supabase.from("ai_insights").insert({
+      job_id: jobId,
+      user_id: userId,
+      type: insight.type,
+      message: insight.message,
+      confidence: insight.confidence,
+      related_project_id: insight.relatedProjectId,
+    } as any);
+
+    if (error) throw new Error(`Failed to save insight: ${error.message}`);
+    return true;
   }
 }

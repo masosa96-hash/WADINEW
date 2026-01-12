@@ -8,7 +8,7 @@ interface AnalyzeButtonProps {
 }
 
 export const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({ projectId }) => {
-  const { isProcessing, startAnalysis, setSuccess, setError } = useAIStore();
+  const { isProcessing, startAnalysis, pollJob, setError } = useAIStore();
   const token = useAuthStore((state) => state.session?.access_token);
 
   const handleAction = async () => {
@@ -29,7 +29,8 @@ export const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({ projectId }) => {
       }
 
       const data = await res.json();
-      setSuccess(data.message);
+      // Backend returns { message: "AI Analysis started", jobId: "..." }
+      pollJob(data.jobId);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

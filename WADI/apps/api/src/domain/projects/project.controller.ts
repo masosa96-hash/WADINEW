@@ -71,4 +71,27 @@ export class ProjectsController {
       next(error);
     }
   }
+
+  static async getAnalysisStatus(req: Request, res: Response, next: NextFunction) {
+      try {
+        const { jobId } = req.params;
+        const { aiQueue } = await import("../../queue/aiQueue");
+        const job = await aiQueue.getJob(jobId);
+
+        if (!job) {
+            return res.status(404).json({ error: "Job not found" });
+        }
+
+        const state = await job.getState();
+        const result = job.returnvalue;
+
+        res.json({
+            jobId,
+            state,
+            result
+        });
+      } catch (error) {
+          next(error);
+      }
+  }
 }

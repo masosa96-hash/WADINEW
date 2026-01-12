@@ -14,6 +14,7 @@ router.post("/", validate(createProjectSchema), ProjectsController.create);
 router.get("/:id", ProjectsController.get);
 router.patch("/:id", validate(updateProjectSchema), ProjectsController.update);
 router.post("/:id/analyze", ProjectsController.analyze);
+router.get("/analysis/:jobId", ProjectsController.getAnalysisStatus);
 router.delete("/:id", ProjectsController.delete);
 
 export default router;
