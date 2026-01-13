@@ -24,6 +24,7 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
         placeholder="> Enter command or instructions..."
         className="relative w-full wadi-input min-h-[80px] bg-wadi-base focus:bg-wadi-surface/50 border-wadi-border focus:border-wadi-accent/50 resize-y transition-all text-sm font-mono scrollbar-thin"
         disabled={loading}
+        autoFocus
         onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();

@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Layout from "./components/Layout";
+import ChatRedirect from "./pages/ChatRedirect";
 
 // Auth Guard
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -43,10 +44,14 @@ export const router = createBrowserRouter([
             path: "projects/:id",
             element: <ProjectDetail />,
            },
-           // Redirect root to projects
+           {
+            path: "chat",
+            element: <ChatRedirect />,
+           },
+           // Redirect root to ChatRedirect
            {
             path: "",
-            element: <Navigate to="/projects" replace />,
+            element: <ChatRedirect />,
            },
         ]
       },

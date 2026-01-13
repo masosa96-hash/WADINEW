@@ -13,9 +13,9 @@ export default function Sidebar() {
   const location = useLocation();
 
   const navItems = [
+    { icon: Terminal, label: "Chat", path: "/" }, // Direct access to ChatRedirect
     { icon: FolderKanban, label: "Projects", path: "/projects" },
-    { icon: Terminal, label: "Chat", path: "/chat" }, // Chat is technically inside projects, but global link for now? Or just remove if context dependent. Re-reading spec: "Projects, Kanban, Chat, Runs / History". Chat usually requires context. Let's keep it but maybe it redirects to last project? For now, simple links.
-    { icon: History, label: "History", path: "/history" }, // Placeholder for Runs
+    { icon: History, label: "History", path: "/history" },
   ];
 
   // Helper to determine active state including sub-routes

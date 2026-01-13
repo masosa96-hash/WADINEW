@@ -27,15 +27,13 @@ export default function ProjectDetail() {
       
       {/* Context info for this view - Minimal */}
       {/* We could push this to the TopBar via a portal later, but for now simple header */}
-      <div className="flex justify-between items-center mb-4 shrink-0 border-b border-wadi-border/50 pb-2">
-         <div className="flex items-center gap-2">
-            <h2 className="text-sm font-mono text-wadi-accent uppercase tracking-widest">Active Session</h2>
-            <span className="text-xs font-mono text-wadi-muted">:: {id?.slice(0,8)}</span>
+      <div className="flex justify-between items-center mb-2 shrink-0 px-2 pt-2">
+         <div className="text-[10px] font-mono text-wadi-muted/50 uppercase tracking-widest">
+            CTX :: {id?.slice(0,8)}
          </div>
-         {/* Status indicator */}
          <div className="flex items-center gap-2">
-            <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-wadi-accent animate-pulse' : 'bg-wadi-muted'}`}></span>
-            <span className="text-[10px] font-mono text-wadi-muted uppercase">{loading ? 'PROCESSING' : 'IDLE'}</span>
+            <span className={`w-1 h-1 rounded-full ${loading ? 'bg-wadi-accent animate-pulse' : 'bg-wadi-muted'}`}></span>
+            <span className="text-[9px] font-mono text-wadi-muted uppercase">{loading ? 'BUSY' : 'READY'}</span>
          </div>
       </div>
 
