@@ -17,29 +17,35 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative group">
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="> Enter command or instructions..."
-        className="relative w-full wadi-input min-h-[80px] bg-wadi-base focus:bg-wadi-surface/50 border-wadi-border focus:border-wadi-accent/50 resize-y transition-all text-sm font-mono scrollbar-thin"
-        disabled={loading}
-        autoFocus
-        onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-            }
-        }}
-      />
+    <form onSubmit={handleSubmit} className="relative group bg-wadi-base border border-wadi-border/50 rounded-md transition-all focus-within:border-wadi-accent/50 focus-within:bg-wadi-surface/30">
+        <div className="flex">
+            <div className="shrink-0 pl-3 pt-3 text-wadi-accent/70 select-none font-mono text-sm font-bold">
+                $
+            </div>
+            <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Enter instructions..."
+                className="w-full wadi-input min-h-[60px] bg-transparent border-none focus:ring-0 resize-y transition-all text-sm font-mono scrollbar-thin pl-2 pt-3"
+                disabled={loading}
+                autoFocus
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                    }
+                }}
+            />
+        </div>
+
       <div className="absolute bottom-2 right-2 flex items-center gap-2">
           {loading && <span className="text-[10px] text-wadi-accent animate-pulse font-mono uppercase">Processing</span>}
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="bg-wadi-surface border border-wadi-border hover:bg-wadi-accent hover:text-wadi-base hover:border-wadi-accent text-wadi-muted transition-all px-3 py-1 rounded text-xs font-mono uppercase tracking-wide disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-[10px] text-wadi-muted hover:text-wadi-accent uppercase tracking-wider font-mono transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-2"
           >
-            EXECUTE
+            [ENTER] TO EXECUTE
           </button>
       </div>
     </form>
