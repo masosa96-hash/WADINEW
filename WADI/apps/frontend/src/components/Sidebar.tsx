@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { 
   FolderKanban, 
   Terminal, 
@@ -10,7 +10,7 @@ import { useAuthStore } from "../store/authStore";
 
 export default function Sidebar() {
   const { signOut } = useAuthStore();
-  const location = useLocation();
+
 
   const navItems = [
     { icon: Terminal, label: "Chat", path: "/" }, // Direct access to ChatRedirect
