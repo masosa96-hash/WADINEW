@@ -7,14 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#0f172a", // Deep midnight blue
-        surface: "rgba(30, 41, 59, 0.7)", // Glassy surface
-        primary: "#3b82f6", // Electric blue
-        accent: "#f472b6", // Neo-pink
+        // Deep Bunker Theme
+        wadi: {
+          base: "#0B0F14",    // Background base
+          surface: "#121821", // Surface
+          border: "#1E2633",  // Sutil border
+          text: "#E6EDF3",    // Primary text
+          muted: "#9AA4B2",   // Secondary text
+          accent: "#2ECC71",  // Technical Green (or #3B82F6 Blue)
+          error: "#991B1B",   // Muted Red
+        }
       },
-      backdropBlur: {
-        xs: '2px',
-      }
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
     },
   },
   plugins: [],

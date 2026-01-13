@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #f8fafc; /* Slate-50 - Clean Light/Neutral start */
+  color-scheme: dark;
+  background-color: #0b0f14;
+  color: #e6edf3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,8 +23,8 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f1f5f9; /* Slate-100 */
-  color: #0f172a; /* Slate-900 */
+  background-color: #0b0f14;
+  color: #e6edf3;
 }
 
 #root {
@@ -32,40 +32,36 @@ body {
   height: 100vh;
 }
 
-/* Custom Scrollbar for cleaner look */
+/* Scrollbar WADI Style */
 ::-webkit-scrollbar {
-    width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: transparent;
+  background: #0b0f14;
 }
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1; /* Slate-300 */
-    border-radius: 4px;
+  background: #1e2633;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; /* Slate-400 */
+  background: #2ecc71;
 }
 
-/* Glassmorphism Utilities */
-/* Utility classes overrides if needed */
-.glass-panel {
-    /* Falling back to clean white cards */
-    background: white;
-    border: 1px solid #e2e8f0; /* Slate-200 */
-    border-radius: 12px;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+/* WADI Utilities */
+.wadi-panel {
+  @apply bg-wadi-surface border border-wadi-border rounded-lg;
+  box-shadow: none;
 }
 
-/* Standard Inputs (Clean) */
-.glass-input {
-  @apply bg-white border border-slate-300 rounded-xl px-4 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400;
+.wadi-input {
+  @apply bg-wadi-base border border-wadi-border rounded px-3 py-2 text-wadi-text font-mono text-sm focus:border-wadi-accent outline-none transition-colors placeholder:text-wadi-muted/50;
 }
 
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl shadow-md transition-all active:scale-95;
+  @apply bg-wadi-surface border border-wadi-accent text-wadi-accent hover:bg-wadi-accent hover:text-white font-mono text-xs uppercase tracking-wide px-4 py-2 rounded transition-all active:scale-95;
 }
 
 .btn-secondary {
-  @apply bg-white hover:bg-slate-50 text-slate-700 font-medium py-2 px-4 rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95;
+  @apply bg-transparent border border-wadi-border text-wadi-muted hover:text-wadi-text hover:border-wadi-text font-mono text-xs uppercase tracking-wide px-4 py-2 rounded transition-all active:scale-95;
 }

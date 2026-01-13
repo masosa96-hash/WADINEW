@@ -30,34 +30,43 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-6 text-center">WADI Login</h2>
+    <div className="flex flex-col items-center justify-center h-screen bg-wadi-base text-wadi-text">
+        
+      <div className="w-full max-w-sm p-8 border border-wadi-border rounded bg-wadi-surface/50">
+        <div className="mb-8 text-center">
+             <h1 className="text-2xl font-mono font-bold tracking-tighter text-wadi-text mb-2">
+                WADI<span className="text-wadi-accent">.SYS</span>
+             </h1>
+             <p className="text-xs font-mono text-wadi-muted uppercase tracking-widest">
+                Technical Execution Assistant
+             </p>
+        </div>
         
         {error && (
-          <div className="bg-red-500 text-white p-2 rounded mb-4 text-sm">
-            {error}
+          <div className="bg-wadi-error/10 border border-wadi-error text-wadi-error p-3 rounded mb-6 text-xs font-mono">
+            ERROR: {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block mb-1">Email</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">Identity</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="wadi-input w-full"
               required
+              autoFocus
             />
           </div>
           <div>
-            <label className="block mb-1">Password</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">Access Key</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="wadi-input w-full"
               required
             />
           </div>
@@ -65,17 +74,25 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50"
+            className="w-full btn-primary py-3 text-sm"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "AUTHENTICATING..." : "INITIATE SESSION"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-400">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-blue-400 hover:underline">
-            Register here
-          </Link>
+        <div className="mt-8 text-center border-t border-wadi-border/50 pt-4">
+          <p className="text-[10px] text-wadi-muted font-mono">
+            NO ACCOUNT?{" "}
+            <Link to="/register" className="text-wadi-accent hover:underline">
+              REGISTER NEW ID
+            </Link>
+          </p>
+        </div>
+      </div>
+      
+      <div className="mt-8 text-center">
+        <p className="text-[9px] font-mono text-wadi-muted/30 uppercase tracking-[0.2em]">
+            System v5.0 // Deep Bunker Layout
         </p>
       </div>
     </div>

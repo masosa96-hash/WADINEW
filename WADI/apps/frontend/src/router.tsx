@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Layout from "./components/Layout";
 
 // Auth Guard
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -26,25 +27,28 @@ export const router = createBrowserRouter([
         path: "register",
         element: <Register />,
       },
+      // Authenticated Routes wrapped in Layout
       {
-        path: "projects",
         element: (
           <ProtectedRoute>
-            <Projects />
+            <Layout />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: "projects/:id",
-        element: (
-          <ProtectedRoute>
-            <ProjectDetail />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "",
-        element: <Navigate to="/projects" replace />,
+        children: [
+           {
+            path: "projects",
+            element: <Projects />,
+           },
+           {
+            path: "projects/:id",
+            element: <ProjectDetail />,
+           },
+           // Redirect root to projects
+           {
+            path: "",
+            element: <Navigate to="/projects" replace />,
+           },
+        ]
       },
     ],
   },

@@ -23,11 +23,11 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
 
   if (runs.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-2xl">
-                💬
+        <div className="flex flex-col items-center justify-center py-20 opacity-30">
+            <div className="text-4xl grayscale mb-2">
+                ◼
             </div>
-            <p className="text-slate-500">No messages yet. Say hello.</p>
+            <p className="text-xs font-mono text-wadi-muted uppercase tracking-widest">NO_DATA_STREAM</p>
         </div>
     );
   }
@@ -41,28 +41,26 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
   const sortedRuns = [...runs].reverse();
 
   return (
-    <div className="space-y-6 pb-4">
+    <div className="space-y-8 pb-4">
       {sortedRuns.map((run) => (
-        <div key={run.id} className="flex flex-col gap-4">
+        <div key={run.id} className="flex flex-col gap-2 font-mono text-sm leading-relaxed group">
           
-          {/* USER BUBBLE (Right) */}
-          <div className="flex justify-end">
-             <div className="max-w-[80%] bg-blue-600 text-white rounded-2xl rounded-tr-sm px-5 py-3 shadow-md">
-                <p className="whitespace-pre-wrap leading-relaxed">{run.input}</p>
-             </div>
+          {/* USER COMMAND */}
+          <div className="flex gap-3 text-wadi-accent/80 border-l-2 border-wadi-accent/20 pl-3 py-1 bg-wadi-surface/10">
+             <span className="shrink-0 pt-0.5 select-none opacity-50">$</span>
+             <p className="whitespace-pre-wrap">{run.input}</p>
           </div>
 
-          {/* AI BUBBLE (Left) */}
-          <div className="flex justify-start">
-             <div className="max-w-[85%] bg-slate-800/80 text-slate-200 rounded-2xl rounded-tl-sm px-5 py-4 shadow-lg border border-slate-700/50 backdrop-blur-sm">
-                <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">
-                    {parseOutput(run.output)}
-                </p>
-                {/* Optional Metadata Footer */}
-                <div className="mt-2 pt-2 border-t border-white/5 opacity-50 flex justify-between items-center text-[10px]">
-                    <span className="font-mono text-xs uppercase tracking-widest text-blue-400">WADI</span>
-                    {/* <span className="font-mono">{run.model}</span> */}
-                </div>
+          {/* WADI RESPONSE */}
+          <div className="pl-6 pr-2 text-wadi-text/90 relative">
+             <div className="absolute left-0 top-0 bottom-0 w-px bg-wadi-border/50"></div>
+             <p className="whitespace-pre-wrap text-sm">{parseOutput(run.output)}</p>
+             
+             {/* Meta Footer */}
+             <div className="mt-2 text-[9px] text-wadi-muted/30 uppercase tracking-wider flex gap-2 select-none opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>:: BYTES_RCVD</span>
+                <span>•</span>
+                <span>{new Date(run.created_at).toLocaleTimeString()}</span>
              </div>
           </div>
 

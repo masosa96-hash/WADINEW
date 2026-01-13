@@ -16,61 +16,62 @@ export default function CreateProjectModal({ onClose }: Props) {
       await createProject(name, description);
       onClose();
     } catch (err) {
-      // Error handled in store state usually, but we also catch for UI flow
+      // Error handled in store state
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-      <div className="glass-panel p-8 w-full max-w-md relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+    <div className="fixed inset-0 bg-wadi-base/90 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="wadi-panel p-8 w-full max-w-md relative overflow-hidden bg-wadi-base border-wadi-border shadow-2xl">
         
-        <h2 className="text-2xl font-bold mb-6 text-white">Create New Project</h2>
+        <h2 className="text-lg font-mono font-bold mb-6 text-wadi-text uppercase tracking-widest">
+            INITIALIZE_PROJECT
+        </h2>
         
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-3 rounded-lg mb-4 text-sm">
-            {error}
+          <div className="bg-wadi-error/10 border border-wadi-error/50 text-wadi-error p-3 rounded mb-4 text-xs font-mono">
+            ERROR: {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block mb-2 text-sm font-medium text-slate-300">Project Name</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">Project Designation</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="glass-input w-full text-white placeholder-slate-500"
-              placeholder="e.g., Quantum AI Rewrite"
+              className="wadi-input w-full"
+              placeholder="PROJECT_CODENAME"
               required
               autoFocus
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-medium text-slate-300">Description (Optional)</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">Scope / Context</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="glass-input w-full text-white placeholder-slate-500 resize-none"
+              className="wadi-input w-full resize-none"
               rows={3}
-              placeholder="Briefly describe your goals..."
+              placeholder="Define operational parameters..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4 border-t border-wadi-border/50">
             <button
               type="button"
               onClick={onClose}
               className="btn-secondary"
             >
-              Cancel
+              ABORT
             </button>
             <button
               type="submit"
               disabled={loading}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating..." : "Create Project"}
+              {loading ? "INITIALIZING..." : "EXECUTE"}
             </button>
           </div>
         </form>
