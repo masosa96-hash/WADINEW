@@ -18,8 +18,7 @@ export default function Sidebar() {
     { icon: History, label: "History", path: "/history" },
   ];
 
-  // Helper to determine active state including sub-routes
-  const isActive = (path: string) => location.pathname.startsWith(path);
+
 
   return (
     <aside className="w-14 h-screen bg-transparent flex flex-col shrink-0 z-50 border-r border-transparent opacity-60 hover:opacity-100 transition-opacity duration-500">
