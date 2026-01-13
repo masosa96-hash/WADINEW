@@ -22,50 +22,45 @@ export default function Sidebar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <aside className="w-64 h-screen bg-wadi-base border-r border-wadi-border flex flex-col shrink-0 z-50">
-      {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-wadi-border">
-        <div className="font-mono font-bold text-xl tracking-tighter text-wadi-text animate-pulse-slow">
-          WADI<span className="text-wadi-accent">.SYS</span>
+    <aside className="w-56 h-screen bg-neutral-50/50 flex flex-col shrink-0 z-50">
+      {/* Brand - Minimal Text */}
+      <div className="h-14 flex items-center px-4">
+        <div className="font-sans font-medium text-lg tracking-tight text-wadi-text">
+          wadi
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
+      {/* Navigation - Clean List */}
+      <nav className="flex-1 py-2 px-2 space-y-0.5">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-2 rounded-md font-mono text-xs uppercase tracking-wide transition-colors
+              flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all
               ${isActive 
-                ? "bg-wadi-surface text-wadi-accent border border-wadi-border/50" 
-                : "text-wadi-muted hover:text-wadi-text hover:bg-wadi-surface/50"}
+                ? "bg-white shadow-sm text-wadi-text font-medium" 
+                : "text-wadi-muted hover:text-wadi-text hover:bg-black/5"}
             `}
           >
-            <item.icon size={16} />
+            <item.icon size={15} strokeWidth={2} className={isActive ? "text-wadi-accent" : "opacity-70"} />
             <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
-      {/* User / Settings */}
-      <div className="p-3 border-t border-wadi-border space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-xs uppercase tracking-wide text-wadi-muted hover:text-wadi-text hover:bg-wadi-surface/50 transition-colors text-left">
-           <Settings size={16} />
-           <span>Settings</span>
-        </button>
-        
-        <div className="pt-2 mt-2 border-t border-wadi-border/30">
-            <div className="px-3 py-2 mb-1">
-                <p className="text-[10px] text-wadi-muted/50 font-mono uppercase">User Scope</p>
-                <p className="text-xs text-wadi-text font-mono truncate">{user?.email}</p>
-            </div>
+      {/* User / Settings - Minimal Footer */}
+      <div className="p-2 mt-auto">
+        <div className="pt-2 border-t border-black/5">
+            <button className="w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm text-wadi-muted hover:text-wadi-text hover:bg-black/5 transition-colors">
+                <Settings size={15} strokeWidth={2} />
+                <span>Settings</span>
+            </button>
             <button 
                 onClick={() => signOut()}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-xs uppercase tracking-wide text-wadi-error hover:bg-wadi-error/10 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm text-wadi-muted hover:text-red-500 hover:bg-red-50 transition-colors mt-0.5"
             >
-                <LogOut size={16} />
+                <LogOut size={15} strokeWidth={2} />
                 <span>Disconnect</span>
             </button>
         </div>

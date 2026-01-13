@@ -23,26 +23,26 @@ export default function ProjectCard({ project }: { project: Project }) {
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group block bg-wadi-base rounded border border-wadi-border p-3 hover:border-wadi-text/30 transition-all duration-150 active:scale-[0.99]"
+      className="group block bg-white rounded-lg shadow-sm border border-transparent hover:shadow-md hover:border-black/5 transition-all duration-200"
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-sm font-mono font-medium text-wadi-text group-hover:text-wadi-accent transition-colors truncate pr-2">
+        <h3 className="text-sm font-medium text-wadi-text group-hover:text-wadi-accent transition-colors truncate pr-2">
           {project.name}
         </h3>
-        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono uppercase tracking-wider ${statusStyle}`}>
-          {project.status === 'IN_PROGRESS' ? 'ACTIVE' : project.status || 'PLAN'}
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide ${statusStyle}`}>
+          {project.status === 'IN_PROGRESS' ? 'Active' : project.status ? project.status.charAt(0) + project.status.slice(1).toLowerCase() : 'Plan'}
         </span>
       </div>
       
-      <p className="text-wadi-muted text-xs mb-3 line-clamp-2 h-8 leading-relaxed font-sans">
+      <p className="text-wadi-muted text-xs mb-4 line-clamp-2 leading-relaxed">
         {project.description || "No description provided."}
       </p>
       
-      <div className="flex justify-between items-center pt-2 border-t border-wadi-border/50">
-        <span className="text-[9px] text-wadi-muted/50 font-mono">
-          ID: {project.id.slice(0, 8)}...
+      <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+        <span className="text-[10px] text-wadi-muted/40 font-mono">
+          #{project.id.slice(0, 4)}
         </span>
-        <span className="text-[9px] text-wadi-muted font-mono">
+        <span className="text-[10px] text-wadi-muted/60">
           {new Date(project.created_at).toLocaleDateString()}
         </span>
       </div>

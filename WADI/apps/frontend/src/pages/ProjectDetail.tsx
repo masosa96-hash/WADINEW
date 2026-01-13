@@ -43,28 +43,25 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {/* Main Chat Area */}
       <div className="flex-1 overflow-hidden flex flex-col relative bg-wadi-surface/30 rounded border border-wadi-border">
           
         {/* Output Area */}
-        <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-wadi-border scrollbar-track-transparent flex flex-col gap-4">
-             {loading && runs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full opacity-50 space-y-2">
-                    <div className="w-2 h-2 bg-wadi-accent animate-ping rounded-full"></div>
-                    <p className="text-xs font-mono text-wadi-muted uppercase tracking-widest">Initializing Context...</p>
-                </div>
-            ) : (
-                <RunHistoryList runs={runs} />
-            )}
+        <div className="flex-1 overflow-y-auto px-4 scrollbar-thin scroll-smooth pb-10">
+          <RunHistoryList runs={runs} />
+          <div ref={bottomRef} className="h-4" />
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t border-wadi-border bg-wadi-base/50 backdrop-blur-sm">
-            <RunInputForm onSubmit={handleRun} loading={loading} />
+        <div className="shrink-0 z-20 bg-white/50 backdrop-blur-sm -mx-6 px-6">
+          <RunInputForm 
+            projectId={id!} 
+            onRunCreated={() => {
+              fetchRuns(id!);
+              setTimeout(scrollToBottom, 100);
+            }} 
+          />
         </div>
 
       </div>
     </div>
   );
 }
-

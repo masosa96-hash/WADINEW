@@ -23,25 +23,14 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
 
   if (runs.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[300px] opacity-40 select-none">
-            <div className="w-16 h-16 border border-wadi-accent rounded-full grid place-items-center mb-6 animate-pulse-slow">
-                <div className="w-2 h-2 bg-wadi-accent rounded-full"></div>
-            </div>
+        <div className="flex flex-col items-center justify-center h-full min-h-[40vh] select-none opacity-0 animate-in fade-in duration-700">
+            <h3 className="text-2xl font-sans font-normal text-wadi-muted/30 mb-2">Ready to create.</h3>
             
-            <h3 className="text-lg font-mono font-bold text-wadi-text tracking-widest mb-1">SYSTEM_READY</h3>
-            <p className="text-xs font-mono text-wadi-muted uppercase mb-8">Awaiting Input Stream</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full px-4">
-                {[
-                    "Initialize Analysis",
-                    "Debug Component",
-                    "Refactor Module",
-                    "Explain Architecture"
-                ].map((hint, i) => (
-                    <div key={i} className="border border-wadi-border/50 p-3 rounded flex items-center gap-3">
-                        <span className="text-wadi-accent/50 text-xs">$</span>
-                        <span className="text-xs font-mono text-wadi-muted">{hint}</span>
-                    </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center max-w-md w-full px-4 text-wadi-muted/40 text-sm font-light">
+                {["Analysis", "Debugging", "Architecture", "Refactoring"].map((hint, i) => (
+                    <span key={i} className="cursor-default hover:text-wadi-muted/60 transition-colors">
+                        {hint}
+                    </span>
                 ))}
             </div>
         </div>
@@ -57,26 +46,21 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
   const sortedRuns = [...runs].reverse();
 
   return (
-    <div className="space-y-8 pb-4">
+    <div className="space-y-12 pb-12 pt-6">
       {sortedRuns.map((run) => (
-        <div key={run.id} className="flex flex-col gap-2 font-mono text-sm leading-relaxed group">
+        <div key={run.id} className="flex flex-col gap-3 group">
           
-          {/* USER COMMAND */}
-          <div className="flex gap-3 text-wadi-accent/80 border-l-2 border-wadi-accent/20 pl-3 py-1 bg-wadi-surface/10">
-             <span className="shrink-0 pt-0.5 select-none opacity-50">$</span>
-             <p className="whitespace-pre-wrap">{run.input}</p>
+          {/* USER COMMAND - Minimal & Airy */}
+          <div className="flex gap-4 text-wadi-text px-2 opacity-80">
+             <span className="shrink-0 font-medium opacity-30 select-none text-sm pt-0.5 max-w-[20px] text-right">You</span>
+             <p className="whitespace-pre-wrap font-sans text-base leading-relaxed">{run.input}</p>
           </div>
 
-          {/* WADI RESPONSE */}
-          <div className="pl-6 pr-2 text-wadi-text/90 relative">
-             <div className="absolute left-0 top-0 bottom-0 w-px bg-wadi-border/50"></div>
-             <p className="whitespace-pre-wrap text-sm">{parseOutput(run.output)}</p>
-             
-             {/* Meta Footer */}
-             <div className="mt-2 text-[9px] text-wadi-muted/30 uppercase tracking-wider flex gap-2 select-none opacity-0 group-hover:opacity-100 transition-opacity">
-                <span>:: BYTES_RCVD</span>
-                <span>•</span>
-                <span>{new Date(run.created_at).toLocaleTimeString()}</span>
+          {/* WADI RESPONSE - Clean Text Block */}
+          <div className="flex gap-4 px-2">
+             <span className="shrink-0 font-medium text-wadi-accent opacity-80 select-none text-sm pt-0.5 max-w-[20px] text-right">AI</span>
+             <div className="text-wadi-text font-sans text-base leading-relaxed max-w-none prose prose-p:my-2 prose-headings:font-medium prose-code:text-sm prose-code:bg-0 prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-100 prose-pre:shadow-none prose-pre:rounded-sm">
+                {parseOutput(run.output)}
              </div>
           </div>
 

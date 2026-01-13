@@ -17,14 +17,40 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #0b0f14;
-  color: #e6edf3;
+@layer base {
+  :root {
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    display: flex;
+    place-items: center;
+    min-width: 320px;
+    min-height: 100vh;
+    @apply bg-wadi-base text-wadi-text font-sans antialiased overflow-hidden selection:bg-wadi-accent/20;
+  }
+
+  /* Minimal Scrollbar - Light */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-wadi-muted/20 rounded-full hover:bg-wadi-muted/40 transition-colors;
+  }
 }
 
 #root {
@@ -32,36 +58,13 @@ body {
   height: 100vh;
 }
 
-/* Scrollbar WADI Style */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0b0f14;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e2633;
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #2ecc71;
-}
-
-/* WADI Utilities */
-.wadi-panel {
-  @apply bg-wadi-surface border border-wadi-border rounded-lg;
-  box-shadow: none;
-}
-
-.wadi-input {
-  @apply bg-wadi-base border border-wadi-border rounded px-3 py-2 text-wadi-text font-mono text-sm focus:border-wadi-accent outline-none transition-colors placeholder:text-wadi-muted/50;
-}
-
-.btn-primary {
-  @apply bg-wadi-surface border border-wadi-accent text-wadi-accent hover:bg-wadi-accent hover:text-white font-mono text-xs uppercase tracking-wide px-4 py-2 rounded transition-all active:scale-95;
-}
-
-.btn-secondary {
-  @apply bg-transparent border border-wadi-border text-wadi-muted hover:text-wadi-text hover:border-wadi-text font-mono text-xs uppercase tracking-wide px-4 py-2 rounded transition-all active:scale-95;
+@layer components {
+  /* Minimal Utilities */
+  .wadi-container {
+    @apply max-w-4xl mx-auto px-4;
+  }
+  
+  .btn-ghost {
+    @apply px-3 py-1.5 rounded text-sm text-wadi-muted hover:text-wadi-text hover:bg-wadi-border/30 transition-colors;
+  }
 }

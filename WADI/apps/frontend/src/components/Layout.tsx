@@ -3,32 +3,23 @@ import Sidebar from "./Sidebar";
 
 export default function Layout() {
   return (
-    <div className="flex w-full h-screen bg-wadi-base overflow-hidden">
+    <div className="flex w-full h-screen bg-wadi-base text-wadi-text overflow-hidden font-sans">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Minimal TopBar - Context Aware */}
-        <header className="h-12 border-b border-wadi-border bg-wadi-base/95 backdrop-blur flex items-center justify-between px-6 shrink-0 z-40">
-            <div className="flex items-center gap-4">
-                 <div className="flex items-center gap-2 text-xs font-mono text-wadi-muted">
-                    <span className="w-2 h-2 rounded-full bg-wadi-accent animate-pulse"></span>
-                    <span>SYSTEM_READY</span>
-                 </div>
-                 <div className="h-4 w-px bg-wadi-border"></div>
-                 {/* Breadcrumbs or Context placeholders could go here */}
-                 <div className="text-xs font-mono text-wadi-text/50">
-                    CONTEXT: <span className="text-wadi-text">GLOBAL</span>
-                 </div>
-            </div>
-            
-            <div className="text-[10px] font-mono text-wadi-muted/30 uppercase tracking-widest">
-                WADI v5.0.0-BETA
-            </div>
-        </header>
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-white shadow-[inset_1px_0_0_0_rgba(0,0,0,0.02)]">
+        {/* Invisible Context Header - Only shows essential status if busy */}
+        <div className="absolute top-4 right-6 z-50 flex items-center pointer-events-none">
+             {/* We can use this area for very subtle status indicators if needed, or leave empty for Zen */}
+             <div className="flex items-center gap-2 opacity-50">
+                 {/* Placeholder for small busy indicator if needed later */}
+             </div>
+        </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto bg-wadi-base relative scrollbar-thin scrollbar-track-wadi-base scrollbar-thumb-wadi-border">
-          <Outlet />
+        <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-black/5 hover:scrollbar-thumb-black/10">
+          <div className="max-w-3xl mx-auto h-full px-6 flex flex-col">
+             <Outlet />
+          </div>
         </div>
       </main>
     </div>

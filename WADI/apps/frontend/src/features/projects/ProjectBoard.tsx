@@ -23,46 +23,46 @@ export default function ProjectBoard() {
     <div className="h-full flex flex-col p-6 overflow-hidden">
       
       {/* Kanban Actions */}
-      <div className="flex justify-between items-center mb-6 shrink-0">
-         <h2 className="text-sm font-mono text-wadi-muted uppercase tracking-wider">Operational View</h2>
+      <div className="flex justify-between items-center mb-8 shrink-0 px-2">
+         <h2 className="text-lg font-medium text-wadi-text">Projects</h2>
          <button 
           onClick={() => setIsCreateModalOpen(true)}
-          className="btn-primary"
+          className="px-4 py-2 bg-wadi-text text-white rounded-md text-sm font-medium hover:bg-black/80 transition-colors shadow-sm"
         >
-          + Initialize Project
+          New Project
         </button>
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2">
-        <div className="h-full flex gap-6 min-w-max">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 px-2">
+        <div className="h-full flex gap-8 min-w-max">
           {COLUMNS.map((col) => {
             const colProjects = projects.filter((p) => (p.status || "PLANNING") === col.id);
             
             return (
-              <div key={col.id} className="w-80 flex flex-col h-full bg-wadi-surface/30 rounded-lg p-2 border border-wadi-border/50">
+              <div key={col.id} className="w-72 flex flex-col h-full rounded-xl bg-gray-50/50">
                 {/* Column Header */}
-                <div className="flex items-center justify-between mb-3 px-2 py-2">
+                <div className="flex items-center justify-between mb-4 px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${col.color}`} />
-                    <h2 className="text-xs font-mono font-bold text-wadi-text uppercase tracking-wider">
+                    <span className={`w-1.5 h-1.5 rounded-full ${col.color}`} />
+                    <h2 className="text-xs font-semibold text-wadi-muted uppercase tracking-wide">
                       {col.label}
                     </h2>
                   </div>
-                  <span className="text-[10px] font-mono text-wadi-muted bg-wadi-base px-2 py-0.5 rounded border border-wadi-border">
+                  <span className="text-[10px] font-medium text-wadi-muted/60">
                     {colProjects.length}
                   </span>
                 </div>
 
                 {/* Cards Container */}
-                <div className="flex-1 overflow-y-auto px-1 pb-2 flex flex-col gap-2 scrollbar-thin scrollbar-thumb-wadi-border">
+                <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-3 scrollbar-none">
                   {colProjects.map((project) => (
                     <ProjectCard key={project.id} project={project} />
                   ))}
                   
                   {colProjects.length === 0 && (
-                    <div className="border border-dashed border-wadi-border rounded p-6 text-center opacity-50">
-                      <p className="text-xs font-mono text-wadi-muted">NO_ACTIVE_TASKS</p>
+                    <div className="border border-dashed border-gray-200 rounded-lg p-8 text-center opacity-40">
+                      <p className="text-sm text-wadi-muted font-light">Empty</p>
                     </div>
                   )}
                 </div>

@@ -16,38 +16,25 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
     setInput("");
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="relative group bg-wadi-base border border-wadi-border/50 rounded-md transition-all focus-within:border-wadi-accent/50 focus-within:bg-wadi-surface/30">
-        <div className="flex">
-            <div className="shrink-0 pl-3 pt-3 text-wadi-accent/70 select-none font-mono text-sm font-bold">
-                $
-            </div>
-            <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Enter instructions..."
-                className="w-full wadi-input min-h-[60px] bg-transparent border-none focus:ring-0 resize-y transition-all text-sm font-mono scrollbar-thin pl-2 pt-3"
-                disabled={loading}
-                autoFocus
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                    }
-                }}
-            />
+    <form onSubmit={handleSubmit} className="relative w-full max-w-3xl mx-auto pb-4 pt-10">
+        <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter command or intention..."
+            className="w-full bg-transparent text-lg font-sans placeholder:text-wadi-muted/30 text-wadi-text resize-none outline-none min-h-[56px] py-3 px-2 border-b border-transparent focus:border-wadi-border/50 transition-colors"
+            style={{ height: 'auto' }}
+            disabled={loading}
+            autoFocus
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                }
+            }}
+        />
+        <div className="flex justify-between items-center px-2 mt-2 opacity-0 focus-within:opacity-100 transition-opacity duration-500">
+             <span className="text-[10px] text-wadi-muted/40 font-medium">Use Enter to submit, Shift+Enter for new line</span>
+             {loading && <span className="text-[10px] text-wadi-accent animate-pulse font-medium">Processing...</span>}
         </div>
-
-      <div className="absolute bottom-2 right-2 flex items-center gap-2">
-          {loading && <span className="text-[10px] text-wadi-accent animate-pulse font-mono uppercase">Processing</span>}
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="text-[10px] text-wadi-muted hover:text-wadi-accent uppercase tracking-wider font-mono transition-colors disabled:opacity-30 disabled:cursor-not-allowed px-2"
-          >
-            [ENTER] TO EXECUTE
-          </button>
-      </div>
     </form>
-  );
 }
