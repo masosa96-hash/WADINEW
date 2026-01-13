@@ -17,7 +17,6 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
   };
 
   return (
-  return (
     <form onSubmit={handleSubmit} className="relative group">
       <textarea
         value={input}
@@ -43,6 +42,5 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
           </button>
       </div>
     </form>
-  );
   );
 }
