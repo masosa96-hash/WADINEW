@@ -1,38 +1,36 @@
-# REPORTE FINAL: SISTEMA OPERATIVO
+# REPORTE FINAL: SISTEMA OPERATIVO (EDICIÓN LIGHT)
 
 **Fecha:** 12 Enero 2026
+**Estado:** 🟡 OPERATIVO (Modo Seguro)
 
-**Estado:** 🟢 COMPLETADO & AUTOMATIZADO
+## ✅ Auditoría y Ejecución Completada
 
-## ✅ Flujo End-to-End Verificado
+El sistema se ha reconfigurado para operar **sin Docker** y **sin dependencias locales complejas**, priorizando la estabilidad inmediata.
 
-### 1. Infraestructura ("Self-Healing")
+### 1. Infraestructura ("Cloud Native")
 
-* **Docker Compose:** Creado `docker-compose.yml` para orquestar API, Redis, Postgres y Worker en local.
-* **Worker:** Implementado `aiWorker.ts` escuchando la cola `ai_processing`.
+*   **Sin Docker:** Se eliminó la dependencia de Docker Desktop.
+*   **Base de Datos:** Conectado directo a **Supabase** (Producción).
+*   **Redis:** *Desactivado temporalmente* (Fallo de DNS en Upstash).
+    *   _Impacto:_ El chat funcionará, pero las funciones "lentas" de IA podrían bloquearse si exceden el timeout del navegador (comportamiento legacy).
 
-### 2. Backend (Blindado)
+### 2. Estado de Servicios
 
-* **Endpoint:** `POST /api/v2/projects/:id/analyze` inicia el proceso.
-* **Polling:** `GET /api/v2/projects/analysis/:jobId` expone estado en tiempo real.
-* **DB:** Los resultados se persisten en `ai_insights` automáticamente (`ProjectsService.saveInsight`).
-* **Calidad:** Middleware global de errores (`error.middleware.ts`) atrapa excepciones no controladas.
+| Servicio | Estado | Puerto | Notas |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | 🟢 ONLINE | `:5173` | Configurado con `VITE_API_URL` correcto. |
+| **API Backend** | 🟢 ONLINE | `:3000` | Modo "Safe" (Worker desactivado). |
+| **Worker IA** | 🔴 PAUSED | - | Requiere URL de Redis válida. |
 
-### 3. Frontend (Reactivo)
+### 3. Instrucciones de Uso
 
-* **Store Inteligente:** `aiStore.ts` ahora hace polling automático cada 3s.
-* **UX:** El botón `AnalyzeButton` pasa de "Analizando..." a resultado final sin recargar.
+El sistema ya está corriendo en tus terminales (background).
 
-### 4. Tests
-
-* `ProjectsService` blindado con pruebas unitarias (`create`, `list`) usando mocks de Supabase.
+1.  Abrí **[http://localhost:5173](http://localhost:5173)** para usar la app.
+2.  Si necesitás reiniciar los servidores:
+    *   API: `cd apps/api && npm run dev`
+    *   Front: `cd apps/frontend && npm run dev`
 
 ---
-
-**Instrucciones de Arranque:**
-
-1. `docker-compose up -d` (Infra)
-2. `npm run dev` (API + Worker)
-3. `npm run dev` (Frontend)
-
-**WADI está listo para operar.** 🚀
+**CONCLUSIÓN:**
+La plataforma es utilizable para navegación, gestión de proyectos y chat básico. Para reactivar la "super-velocidad" asíncrona, solo se necesita corregir la `REDIS_URL` en el futuro.
