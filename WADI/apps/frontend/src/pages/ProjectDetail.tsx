@@ -30,7 +30,7 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-wadi-base relative p-4 lg:p-6 overflow-hidden">
+    <div className="flex flex-col h-full bg-transparent relative p-4 lg:p-6 overflow-hidden">
       
       {/* Context info for this view - Minimal */}
       {/* We could push this to the TopBar via a portal later, but for now simple header */}
@@ -47,7 +47,7 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative">
+      <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col relative">
           
         {/* Output Area */}
         <div className="flex-1 overflow-y-auto scrollbar-none pb-10 mask-fade-top">

@@ -6,7 +6,7 @@ export default function Layout() {
     <div className="flex w-full h-screen bg-wadi-base text-wadi-text overflow-hidden font-sans">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-white shadow-[inset_1px_0_0_0_rgba(0,0,0,0.02)]">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-transparent">
         {/* Invisible Context Header - Only shows essential status if busy */}
         <div className="absolute top-4 right-6 z-50 flex items-center pointer-events-none">
              {/* We can use this area for very subtle status indicators if needed, or leave empty for Zen */}

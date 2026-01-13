@@ -21,8 +21,8 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
         <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter command or intention..."
-            className="w-full bg-transparent text-lg font-sans placeholder:text-wadi-muted/30 text-wadi-text resize-none outline-none min-h-[56px] py-3 px-2 border-b border-transparent focus:border-wadi-border/50 transition-colors"
+            placeholder="Type straight to the point..."
+            className="w-full bg-transparent text-xl font-sans placeholder:text-wadi-muted/20 text-wadi-text resize-none outline-none min-h-[56px] py-3 px-0 border-b border-black/5 focus:border-black/20 transition-all font-light"
             style={{ height: 'auto' }}
             disabled={loading}
             autoFocus

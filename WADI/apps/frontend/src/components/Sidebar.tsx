@@ -22,7 +22,7 @@ export default function Sidebar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <aside className="w-16 h-screen bg-transparent flex flex-col shrink-0 z-50 border-r border-transparent">
+    <aside className="w-14 h-screen bg-transparent flex flex-col shrink-0 z-50 border-r border-transparent opacity-60 hover:opacity-100 transition-opacity duration-500">
       {/* Brand - Minimal Text */}
       <div className="h-14 flex items-center justify-center">
         <div className="font-sans font-bold text-xl tracking-tighter text-wadi-text opacity-20">
