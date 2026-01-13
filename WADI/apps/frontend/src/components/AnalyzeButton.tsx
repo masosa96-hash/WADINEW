@@ -19,7 +19,7 @@ export const AnalyzeButton: React.FC<AnalyzeButtonProps> = ({ projectId }) => {
 
     startAnalysis();
     try {
-      const res = await fetch(`${API_URL}/api/v2/projects/${projectId}/analyze`, {
+      const res = await fetch(`${API_URL}/v2/projects/${projectId}/analyze`, {
         method: "POST",
         headers: getHeaders(token),
       });
