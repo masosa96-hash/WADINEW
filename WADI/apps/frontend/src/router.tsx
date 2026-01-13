@@ -9,7 +9,7 @@ import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
 
 // Auth Guard
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { session } = useAuthStore();
   if (!session) return <Navigate to="/login" replace />;
   return children;

@@ -9,7 +9,7 @@ import {
 import { useAuthStore } from "../store/authStore";
 
 export default function Sidebar() {
-  const { signOut, user } = useAuthStore();
+  const { signOut } = useAuthStore();
   const location = useLocation();
 
   const navItems = [
@@ -43,7 +43,7 @@ export default function Sidebar() {
                 : "text-wadi-muted hover:text-wadi-text hover:bg-black/5"}
             `}
           >
-            <item.icon size={15} strokeWidth={2} className={isActive ? "text-wadi-accent" : "opacity-70"} />
+            <item.icon size={15} strokeWidth={2} className={isActive(item.path) ? "text-wadi-accent" : "opacity-70"} />
             <span>{item.label}</span>
           </NavLink>
         ))}

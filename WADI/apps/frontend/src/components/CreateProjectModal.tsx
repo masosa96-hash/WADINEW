@@ -15,7 +15,7 @@ export default function CreateProjectModal({ onClose }: Props) {
     try {
       await createProject(name, description);
       onClose();
-    } catch (err) {
+    } catch {
       // Error handled in store state
     }
   };

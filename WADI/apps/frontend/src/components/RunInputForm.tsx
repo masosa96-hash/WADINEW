@@ -16,6 +16,7 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
     setInput("");
   };
 
+  return (
     <form onSubmit={handleSubmit} className="relative w-full max-w-3xl mx-auto pb-4 pt-10">
         <textarea
             value={input}
@@ -37,4 +38,5 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
              {loading && <span className="text-[10px] text-wadi-accent animate-pulse font-medium">Processing...</span>}
         </div>
     </form>
+  );
 }

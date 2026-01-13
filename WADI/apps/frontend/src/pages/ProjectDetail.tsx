@@ -1,6 +1,5 @@
-import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
+import { useRef } from "react";
+import { useParams } from "react-router-dom";
 import { useRunsStore } from "../store/runsStore";
 import RunHistoryList from "../components/RunHistoryList";
 import RunInputForm from "../components/RunInputForm";
@@ -10,6 +9,12 @@ export default function ProjectDetail() {
   // const { user, signOut } = useAuthStore(); // User scope moved to Sidebar
   const { runs, loading, error, fetchRuns, createRun, clearRuns } = useRunsStore();
   // const navigate = useNavigate(); // Navigation handled by Sidebar
+  
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (id) fetchRuns(id);
@@ -19,6 +24,8 @@ export default function ProjectDetail() {
   const handleRun = async (input: string) => {
     if (id) {
         await createRun(id, input);
+        fetchRuns(id);
+        setTimeout(scrollToBottom, 100);
     }
   };
 
@@ -53,11 +60,8 @@ export default function ProjectDetail() {
 
         <div className="shrink-0 z-20 bg-white/50 backdrop-blur-sm -mx-6 px-6">
           <RunInputForm 
-            projectId={id!} 
-            onRunCreated={() => {
-              fetchRuns(id!);
-              setTimeout(scrollToBottom, 100);
-            }} 
+            onSubmit={handleRun}
+            loading={loading}
           />
         </div>
 
