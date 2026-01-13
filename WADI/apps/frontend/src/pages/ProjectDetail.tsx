@@ -34,13 +34,10 @@ export default function ProjectDetail() {
       
       {/* Context info for this view - Minimal */}
       {/* We could push this to the TopBar via a portal later, but for now simple header */}
-      <div className="flex justify-between items-center mb-2 shrink-0 px-2 pt-2">
-         <div className="text-[10px] font-mono text-wadi-muted/50 uppercase tracking-widest">
-            CTX :: {id?.slice(0,8)}
-         </div>
-         <div className="flex items-center gap-2">
-            <span className={`w-1 h-1 rounded-full ${loading ? 'bg-wadi-accent animate-pulse' : 'bg-wadi-muted'}`}></span>
-            <span className="text-[9px] font-mono text-wadi-muted uppercase">{loading ? 'BUSY' : 'READY'}</span>
+      <div className="absolute top-4 right-4 z-40 opacity-0 hover:opacity-100 transition-opacity">
+         <div className="text-[10px] font-mono text-wadi-muted/20 uppercase tracking-widest text-right">
+            CTX :: {id?.slice(0,8)} <br/>
+            {loading ? 'BUSY' : 'READY'}
          </div>
       </div>
 
@@ -50,15 +47,15 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden flex flex-col relative bg-wadi-surface/30 rounded border border-wadi-border">
+      <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative">
           
         {/* Output Area */}
-        <div className="flex-1 overflow-y-auto px-4 scrollbar-thin scroll-smooth pb-10">
+        <div className="flex-1 overflow-y-auto scrollbar-none pb-10 mask-fade-top">
           <RunHistoryList runs={runs} />
-          <div ref={bottomRef} className="h-4" />
+          <div ref={bottomRef} className="h-10" />
         </div>
 
-        <div className="shrink-0 z-20 bg-white/50 backdrop-blur-sm -mx-6 px-6">
+        <div className="shrink-0 z-20 w-full pb-6 pt-2">
           <RunInputForm 
             onSubmit={handleRun}
             loading={loading}

@@ -22,11 +22,11 @@ export default function Sidebar() {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <aside className="w-56 h-screen bg-neutral-50/50 flex flex-col shrink-0 z-50">
+    <aside className="w-16 h-screen bg-transparent flex flex-col shrink-0 z-50 border-r border-transparent">
       {/* Brand - Minimal Text */}
-      <div className="h-14 flex items-center px-4">
-        <div className="font-sans font-medium text-lg tracking-tight text-wadi-text">
-          wadi
+      <div className="h-14 flex items-center justify-center">
+        <div className="font-sans font-bold text-xl tracking-tighter text-wadi-text opacity-20">
+          W
         </div>
       </div>
 
@@ -37,31 +37,28 @@ export default function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-all
+              flex items-center justify-center w-10 h-10 rounded-lg transition-all mx-auto
               ${isActive 
-                ? "bg-white shadow-sm text-wadi-text font-medium" 
-                : "text-wadi-muted hover:text-wadi-text hover:bg-black/5"}
+                ? "text-wadi-text bg-black/5" 
+                : "text-wadi-muted/40 hover:text-wadi-text hover:bg-black/5"}
             `}
           >
-            <item.icon size={15} strokeWidth={2} className={isActive(item.path) ? "text-wadi-accent" : "opacity-70"} />
-            <span>{item.label}</span>
+            <item.icon size={20} strokeWidth={2} />
           </NavLink>
         ))}
       </nav>
 
       {/* User / Settings - Minimal Footer */}
       <div className="p-2 mt-auto">
-        <div className="pt-2 border-t border-black/5">
-            <button className="w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm text-wadi-muted hover:text-wadi-text hover:bg-black/5 transition-colors">
-                <Settings size={15} strokeWidth={2} />
-                <span>Settings</span>
+        <div className="pt-4 flex flex-col gap-2 items-center">
+            <button className="w-10 h-10 flex items-center justify-center rounded-lg text-wadi-muted/40 hover:text-wadi-text hover:bg-black/5 transition-colors">
+                <Settings size={20} strokeWidth={2} />
             </button>
             <button 
                 onClick={() => signOut()}
-                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-md text-sm text-wadi-muted hover:text-red-500 hover:bg-red-50 transition-colors mt-0.5"
+                className="w-10 h-10 flex items-center justify-center rounded-lg text-wadi-muted/40 hover:text-red-500 hover:bg-red-50 transition-colors"
             >
-                <LogOut size={15} strokeWidth={2} />
-                <span>Disconnect</span>
+                <LogOut size={20} strokeWidth={2} />
             </button>
         </div>
       </div>

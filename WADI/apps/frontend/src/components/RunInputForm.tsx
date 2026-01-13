@@ -17,7 +17,7 @@ export default function RunInputForm({ onSubmit, loading }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-3xl mx-auto pb-4 pt-10">
+    <form onSubmit={handleSubmit} className="relative w-full max-w-4xl mx-auto">
         <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
