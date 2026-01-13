@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProjectCard from "../../components/ProjectCard";
+import CreateProjectModal from "../../components/CreateProjectModal";
 import { useProjectsStore } from "../../store/projectsStore";
 
 // Columns Definition
@@ -12,6 +13,7 @@ const COLUMNS = [
 
 export default function ProjectBoard() {
   const { projects, fetchProjects } = useProjectsStore();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -25,7 +27,10 @@ export default function ProjectBoard() {
           <h1 className="text-2xl font-semibold text-slate-800 tracking-tight">Projects</h1>
           <p className="text-slate-500 text-sm mt-1">Manage your initiatives and tasks.</p>
         </div>
-        <button className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm active:scale-95">
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm active:scale-95"
+        >
           + New Project
         </button>
       </header>
@@ -68,6 +73,10 @@ export default function ProjectBoard() {
           })}
         </div>
       </div>
+
+      {isCreateModalOpen && (
+        <CreateProjectModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
     </div>
   );
 }
