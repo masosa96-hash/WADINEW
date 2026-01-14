@@ -100,10 +100,10 @@ Sé conciso y sigue tu personalidad.
   return { prompt, decision };
 }
 
-import { openai } from "./openai";
+import { fastLLM, smartLLM, AI_MODELS } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
 
-export const runBrainStream = async (userId: string, userMessage: string, context: any) => {
+export const runBrainStream = async (userId: string, userMessage: string, context: any, provider: 'fast' | 'smart' = 'fast') => {
   // Recuperamos memoria previa (RAG)
   let memory = "";
   try {
@@ -122,8 +122,12 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
         No uses JSON, no envíes metadatos. 
         Memoria del usuario: ${memory}`;
 
-  return await openai.chat.completions.create({
-    model: "gpt-4o",
+  // Select Provider
+  const client = provider === 'fast' ? fastLLM : smartLLM;
+  const model = provider === 'fast' ? AI_MODELS.fast : AI_MODELS.smart;
+
+  return await client.chat.completions.create({
+    model: model,
     stream: true, // Activamos el flujo de tokens
     messages: [
       { 

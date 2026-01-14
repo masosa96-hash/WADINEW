@@ -16,7 +16,8 @@ function isStronger(newId: string, currentId: string): boolean {
   return newStrength > curStrength;
 }
 // import { runBrain } from "@wadi/core";
-import { openai, AI_MODEL } from "./openai";
+// import { openai, AI_MODEL } from "./openai"; // Deprecated
+import { smartLLM, fastLLM, AI_MODELS } from "./services/ai-service";
 import { generateSystemPrompt, generateAuditPrompt, runBrainStream } from "./wadi-brain";
 import { supabase as supabaseClient } from "./supabase";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -540,8 +541,8 @@ router.post(
 // Helper: Generate Technical Project Name
 const generateProjectName = async (description: string) => {
   try {
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+    const completion = await smartLLM.chat.completions.create({
+      model: AI_MODELS.smart,
       messages: [
         {
           role: "system",
@@ -794,8 +795,8 @@ router.post(
       .join("\n");
 
     // 2. Ask AI to distill knowledge
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+    const completion = await smartLLM.chat.completions.create({
+      model: AI_MODELS.smart,
       messages: [
         {
           role: "system",
@@ -932,8 +933,8 @@ router.post(
     const user = req.user;
     const { message, suggestionContent } = req.body;
     
-    // 1. Generate Project Details using LLM
-    const completion = await openai.chat.completions.create({
+// 1. Generate Project Details using LLM
+    const completion = await smartLLM.chat.completions.create({
         model: "gpt-4o",
         messages: [
             { role: "system", content: "Sos un arquitecto de software experto. Tu trabajo es 'cristalizar' ideas vagas en proyectos técnicos concretos." },
