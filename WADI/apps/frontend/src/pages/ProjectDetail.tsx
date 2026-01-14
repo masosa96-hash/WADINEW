@@ -51,9 +51,15 @@ export default function ProjectDetail() {
           
         {/* Output Area */}
         <div className="flex-1 overflow-y-auto scrollbar-none pb-10 mask-fade-top">
-          <RunHistoryList runs={runs} />
-          <div ref={bottomRef} className="h-10" />
-        </div>
+  {runs.length > 0 ? (
+    <RunHistoryList runs={runs} />
+  ) : (
+    <div className="text-wadi-muted text-center py-8">
+      No hay ejecuciones todavía. Usa el formulario abajo para crear una.
+    </div>
+  )}
+  <div ref={bottomRef} className="h-10" />
+</div>
 
         <div className="shrink-0 z-20 w-full pb-6 pt-2">
           <RunInputForm 

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import App from "./App";
 import Login from "./pages/Login";
@@ -8,12 +8,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
 
-// Auth Guard
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const { session } = useAuthStore();
-  if (!session) return <Navigate to="/login" replace />;
-  return children;
-};
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {

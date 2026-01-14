@@ -17,6 +17,11 @@ export default function ChatRedirect() {
   useEffect(() => {
     // If loading or error, do nothing yet
     if (loading) return;
+    if (error) {
+      // If there's an error, we stop further execution of this useEffect.
+      // The error message will be displayed by the component's main return block.
+      return;
+    }
 
     // Check if projects are loaded
     if (projects.length > 0) {
@@ -43,14 +48,21 @@ export default function ChatRedirect() {
     }
   }, [projects, loading, error, navigate, createProject]);
 
+  if (error) {
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-wadi-base text-wadi-muted font-mono animate-pulse">
-        <div className="flex flex-col items-center gap-4">
-             <div className="w-12 h-12 border-2 border-t-wadi-accent border-r-wadi-accent/50 border-b-wadi-muted/20 border-l-wadi-muted/20 rounded-full animate-spin"></div>
-             <div className="text-xs tracking-widest uppercase">
-                {projects.length === 0 && !loading ? "INITIALIZING_DEFAULT_CONTEXT..." : "LOCATING_CONTEXT..."}
-             </div>
-        </div>
+    <div className="flex items-center justify-center h-full text-wadi-error">
+      Error al cargar los proyectos. Reintenta más tarde.
     </div>
   );
+}
+return (
+  <div className="flex flex-col items-center justify-center h-full bg-wadi-base text-white font-mono animate-pulse">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-2 border-t-wadi-accent border-r-wadi-accent/50 border-b-wadi-muted/20 border-l-wadi-muted/20 rounded-full animate-spin"></div>
+      <div className="text-xs tracking-widest uppercase">
+        {projects.length === 0 && !loading ? "INITIALIZING_DEFAULT_CONTEXT..." : "LOCATING_CONTEXT..."}
+      </div>
+    </div>
+  </div>
+);
 }

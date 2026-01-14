@@ -1,4 +1,20 @@
 import { Router, Request, Response, NextFunction } from "express";
+// In‑memory cache for persona stability per conversation
+// Structure: { [conversationId]: { personaId: string; remainingTurns: number } }
+const personaCache: Record<string, { personaId: string; remainingTurns: number }> = {};
+
+// Helper to decide if a new persona is stronger than the cached one
+const personaStrength: Record<string, number> = {
+  "EJECUCION": 4,
+  "CALMA": 3,
+  "SERIO": 2,
+  "IRONICO": 1,
+};
+function isStronger(newId: string, currentId: string): boolean {
+  const newStrength = personaStrength[newId] ?? 0;
+  const curStrength = personaStrength[currentId] ?? 0;
+  return newStrength > curStrength;
+}
 // import { runBrain } from "@wadi/core";
 import { openai, AI_MODEL } from "./openai";
 import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain";
@@ -291,6 +307,39 @@ router.post(
         turnsActive
     );
 
+    // --- Persona Stability Cache Logic ---
+    // conversationId is available from request body (see above). Use it as cache key.
+    const cacheKey = conversationId || "__global__"; // fallback if no ID
+    let cached = personaCache[cacheKey];
+    if (cached && cached.remainingTurns > 0) {
+        // Cache active: decide whether to keep or override
+        if (isStronger(decision.personaId, cached.personaId)) {
+            // New persona is stronger: replace cache
+            cached = { personaId: decision.personaId, remainingTurns: 2 };
+            personaCache[cacheKey] = cached;
+        } else {
+            // Keep cached persona, log override
+            const originalPersona = decision.personaId;
+            decision.personaId = cached.personaId as any; // enforce cached persona with cast
+            // Register PERSONA_OVERRIDE reflection
+            supabase.from("wadi_reflections").insert({
+                user_id: userId,
+                type: "PERSONA_OVERRIDE",
+                content: JSON.stringify({
+                    from: originalPersona,
+                    to: cached.personaId,
+                    reason: "stability_window_active"
+                }),
+                priority: "NORMAL"
+            }).then(() => {});
+            // Decrement remaining turns after using cached persona
+            cached.remainingTurns -= 1;
+            personaCache[cacheKey] = cached;
+        }
+    } else {
+        // No active cache: start a new window with this decision
+        personaCache[cacheKey] = { personaId: decision.personaId, remainingTurns: 2 };
+    }
     // 3. Inject System Prompt
     messages.unshift({ role: "system", content: systemPrompt });
 
@@ -328,7 +377,8 @@ router.post(
         user_id: userId,
         type: "PERSONA_DECISION",
         content: JSON.stringify({
-            personaId: decision.personaId,
+            // Cast to any to satisfy TS union type for personaId
+            personaId: decision.personaId as any,
             reason: decision.reason,
             tone: decision.tone,
             signals: decision.signals,
