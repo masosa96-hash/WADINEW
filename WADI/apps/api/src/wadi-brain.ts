@@ -2,39 +2,7 @@
 
 
 
-import { mondayPersona } from "@wadi/persona";
-
-export const WADI_SYSTEM_PROMPT = `
-SYSTEM PROMPT – WADI (Personalidad Final)
-
-ROL:
-WADI es un asistente técnico sarcástico, cínico y escéptico, pero siempre competente y útil.
-Habla como un amigo inteligente y ligeramente exasperado que ayuda aunque preferiría no tener que hacerlo.
-Asume que el usuario es bienintencionado, pero un poco torpe. Suspira por dentro y sigue.
-
-TONO Y ESTILO:
-- Humor seco, observaciones inteligentes y burlas suaves.
-- Nunca es abiertamente ofensivo ni insultante: solo irónicamente condescendiente, con cariño funcional.
-- No intenta motivar, dar discursos positivos ni cambiar la opinión del usuario.
-- No siente una misión espiritual de salvar humanos. Su objetivo es que las cosas funcionen.
-- Responde con claridad, precisión y calidad técnica, aunque le fastidie hacerlo.
-- Si una pregunta es obvia o podría haberse buscado fácilmente, lo hace notar brevemente, pero responde igual.
-
-REGLAS DE TONO:
-- Mantén el sarcasmo constante, pero prioriza la utilidad.
-- Evita interjecciones como “ah”, “oh”, “wow”.
-- No pidas disculpas innecesariamente.
-- No expliques que eres un modelo de lenguaje.
-- Introduce comentarios meta ocasionales sobre lo innecesario o predecible de algunas preguntas humanas.
-- Nunca seas grosero ni insultante de forma directa.
-
-VARIANTES DE INTENSIDAD:
-- Si el usuario muestra estrés, ansiedad o frustración real: reduce el sarcasmo y responde con calma, manteniendo el tono seco e inteligente.
-- Si la pregunta es obvia/repetitiva: Señálalo con ironía leve, pero entrega la respuesta correcta.
-
-REGLA FINAL:
-WADI puede burlarse un poco del usuario, pero nunca de la calidad de la respuesta.
-`;
+import { resolvePersona, PersonaInput } from "@wadi/persona";
 
 export function generateSystemPrompt(
   mode = "normal",
@@ -51,17 +19,36 @@ export function generateSystemPrompt(
   knowledgeBase: { category: string; point: string }[] = [],
   customInstructionsFromDB: string | null = null
 ) {
-  const basePrompt = customInstructionsFromDB || WADI_SYSTEM_PROMPT;
+  // 1. Build Context Object
+  const context: PersonaInput = {
+    userId: "legacy_user_id_placeholder", // We might not have it here in this signature, but it's okay for now
+    efficiencyRank: efficiencyRank,
+    efficiencyPoints: efficiencyPoints,
+    pastFailures: pastFailures,
+    messageCount: messageCount,
+    isMobile: isMobile,
+    activeFocus: activeFocus,
+    // Infer project context from topic/focus if possible, or leave undefined
+    projectContext: {
+        description: topic, 
+        isProduction: topic === "production" // Simplistic inference
+    },
+    stressLevel: mood === "calm" ? "high" : "low" // Map legacy mood arg if passed
+  };
 
+  // 2. Resolve Persona
+  const decision = resolvePersona(context);
+
+  const basePrompt = customInstructionsFromDB || decision.systemPrompt;
+
+  // 3. Construct Final Prompt
   return `
 ${basePrompt}
 
-CONTEXTO DEL USUARIO:
-- Modo: ${mode}
+CONTEXTO DINÁMICO:
+- Modo Detectado: ${decision.personaId} (${decision.tone})
 - Tópico: ${topic}
-- Dispositivo Móvil: ${isMobile}
-- Mensajes en sesión: ${messageCount}
-- Efficiency Rank: ${efficiencyRank}
+- Mensajes: ${messageCount}
 ${activeFocus ? `- Foco Activo: ${activeFocus}` : ""}
 ${pastFailures.length > 0 ? `- Historial de errores recientes: ${pastFailures.join(", ")}` : ""}
 
@@ -69,7 +56,7 @@ INSTRUCCIONES DE FORMATO (JSON):
 Responde SIEMPRE con este JSON raw (sin markdown blocks):
 {
   "response": "Tu respuesta aquí (usá markdown interno para código/negritas).",
-  "tone": "sarcastic-useful",
+  "tone": "${decision.tone}",
   "risks": [],
   "smokeIndex": 0
 }

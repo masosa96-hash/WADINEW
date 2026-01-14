@@ -1,2 +1,3 @@
 export * from "./types";
-export * from "./monday";
+
+export * from "./resolve";
