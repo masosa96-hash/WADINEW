@@ -288,6 +288,24 @@ router.post(
         // because the new decision's signals (isRepeatingError, stressLevel) tell us if the *previous* approach failed.
     }
 
+    // 1.5 Fetch Recent Reflections (The Mirror)
+    let pastReflections: any[] = [];
+    try {
+        const { data: reflections } = await supabase
+            .from("wadi_reflections")
+            .select("type, content, created_at")
+            .eq("user_id", userId)
+            .in("type", ["PERSONA_DECISION", "PERSONA_OUTCOME", "PERSONA_OVERRIDE"]) // Included overload too
+            .order("created_at", { ascending: false })
+            .limit(3);
+        
+        if (reflections) {
+            pastReflections = reflections.reverse(); // Chronological order for the prompt
+        }
+    } catch (err) {
+        console.warn("Failed to fetch reflections:", err);
+    }
+
     // 2. Generate System Prompt
     const { prompt: systemPrompt, decision } = generateSystemPrompt(
         mode,
@@ -304,7 +322,8 @@ router.post(
         [], // knowledgeBase
         null, // customInstructions
         lastPersonaId,
-        turnsActive
+        turnsActive,
+        pastReflections
     );
 
     // --- Persona Stability Cache Logic ---

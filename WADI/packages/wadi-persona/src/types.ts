@@ -46,4 +46,5 @@ export interface PersonaOutput {
     isRepeatingError?: boolean;
     isFocusMode?: boolean;
   };
+  justification: string;
 }

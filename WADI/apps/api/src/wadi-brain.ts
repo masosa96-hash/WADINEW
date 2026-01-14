@@ -20,7 +20,8 @@ export function generateSystemPrompt(
   customInstructionsFromDB: string | null = null,
   // New Params for Anti-Flapping
   lastPersonaId?: string,
-  turnsActive?: number
+  turnsActive?: number,
+  pastReflections: any[] = []
 ) {
   // 1. Build Context Object
   const context: PersonaInput = {
@@ -46,9 +47,30 @@ export function generateSystemPrompt(
 
   const basePrompt = customInstructionsFromDB || decision.systemPrompt;
 
+  // Format Reflections for Prompt
+  const historyBlock = pastReflections.length > 0
+    ? pastReflections.map(r => {
+        let details = "";
+        try {
+            const c = typeof r.content === "string" ? JSON.parse(r.content) : r.content;
+            if (r.type === "PERSONA_DECISION") {
+                details = `${c.personaId} (Razón: ${c.reason})`;
+            } else if (r.type === "PERSONA_OUTCOME") {
+                details = `Resultado: ${c.outcome}`;
+            } else if (r.type === "PERSONA_OVERRIDE") {
+                 details = `Override: ${c.from} -> ${c.to} (Razón: ${c.reason})`;
+            }
+        } catch (e) { details = "Datos corruptos"; }
+        return `- [${new Date(r.created_at).toLocaleTimeString()}] ${details}`;
+    }).join("\n")
+    : "Sin historial reciente.";
+
   // 3. Construct Final Prompt
   const prompt = `
 ${basePrompt}
+
+[HISTORIAL_DE_COMPORTAMIENTO]
+${historyBlock}
 
 CONTEXTO DINÁMICO:
 - Modo Detectado: ${decision.personaId} (${decision.tone})
@@ -57,6 +79,9 @@ CONTEXTO DINÁMICO:
 - Mensajes: ${messageCount}
 ${activeFocus ? `- Foco Activo: ${activeFocus}` : ""}
 ${pastFailures.length > 0 ? `- Historial de errores recientes: ${pastFailures.join(", ")}` : ""}
+
+INSTRUCCIONES DE META-CONSCIENCIA:
+Si el usuario pregunta por tu tono, humor o estado actual, tienes permiso de consultar tu [HISTORIAL_DE_COMPORTAMIENTO] y explicar tu decisión técnica de personalidad con honestidad brutal.
 
 INSTRUCCIONES DE FORMATO (JSON):
 Responde SIEMPRE con este JSON raw (sin markdown blocks):

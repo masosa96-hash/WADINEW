@@ -81,7 +81,8 @@ const getPersonaById = (
     const base = {
         confidence,
         signals,
-        reason
+        reason,
+        justification: reason
     };
 
     switch (id) {
