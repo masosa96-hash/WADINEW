@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-import { useAuthStore } from "./store/authStore";
+
 import App from "./App";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -8,7 +8,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
 
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 export const router = createBrowserRouter([
   {
