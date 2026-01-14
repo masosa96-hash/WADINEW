@@ -10,6 +10,11 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // State for streaming
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (id) fetchRuns(id);
   }, [id, fetchRuns]);
@@ -20,14 +25,17 @@ export default function Chat() {
 
   const handleSend = async () => {
     if (!input.trim() || !id || loading) return;
-    
-    // 1. Optimistic UI is handled by state below
+
     const currentInput = input;
     setInput('');
     
-    setIsStreaming(true); // New state needed
-    setStreamingContent('');
+    // UI OPTIMISTA: El mensaje del usuario aparece YA
     setOptimisticUserMessage(currentInput);
+    setIsStreaming(true);
+    setStreamingContent('');
+
+    // Creamos un mensaje vacío para WADI que se irá llenando visualmente
+    // En nuestra implementación, usamos hasStreamingContent + displayMessages para esto.
 
     try {
         const response = await fetch(`http://localhost:3000/projects/${id}/runs`, {
@@ -46,7 +54,21 @@ export default function Chat() {
             const { value, done: doneReading } = await reader.read();
             done = doneReading;
             const chunkValue = decoder.decode(value, { stream: !done });
-            setStreamingContent(prev => prev + chunkValue);
+            
+            // Parse SSE data lines (data: {...})
+            const lines = chunkValue.split('\n');
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.content) {
+                            setStreamingContent(prev => prev + data.content);
+                        }
+                    } catch {
+                        // ignore broken chunks or non-json
+                    }
+                }
+            }
         }
         
     } catch (err) {
@@ -59,10 +81,6 @@ export default function Chat() {
     }
   };
 
-  // State for streaming
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
 
   // Merge Store Messages + Optimistic/Streaming Message
   // ... existing transformation logic ...

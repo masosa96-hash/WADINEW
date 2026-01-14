@@ -17,7 +17,7 @@ function isStronger(newId: string, currentId: string): boolean {
 }
 // import { runBrain } from "@wadi/core";
 import { openai, AI_MODEL } from "./openai";
-import { generateSystemPrompt, generateAuditPrompt } from "./wadi-brain";
+import { generateSystemPrompt, generateAuditPrompt, runBrainStream } from "./wadi-brain";
 import { supabase as supabaseClient } from "./supabase";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase = supabaseClient as any;
@@ -405,7 +405,6 @@ router.post(
         user_id: userId,
         type: "PERSONA_DECISION",
         content: JSON.stringify({
-            // Cast to any to satisfy TS union type for personaId
             personaId: decision.personaId as any,
             reason: decision.reason,
             tone: decision.tone,
@@ -414,19 +413,13 @@ router.post(
         }),
         priority: "NORMAL"
     }).then(() => {}); // Fire and forget
-
-
-    // 2. OPENAI STREAMING IMPLEMENTATION
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
     try {
-        const stream = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: messages as any,
-            stream: true,
-        });
+        // We use runBrainStream which handles memory and standard prompt
+        const stream = await runBrainStream(userId, message, decision);
 
         let fullResponse = "";
 
@@ -434,28 +427,29 @@ router.post(
             const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
                 fullResponse += content;
-                res.write(content);
+                // Standard SSE format: data: JSON\n\n
+                res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
         }
 
-        // 3. Save Response (Async Persistence)
+        // 3. Save Response & Knowledge (Async)
         if (conversationId && fullResponse) {
              await supabase.from("messages").insert({
                  conversation_id: conversationId,
                  role: "assistant",
                  content: fullResponse,
                  user_id: userId.startsWith("anonymous_") ? null : userId,
-                 meta: { tone: decision.tone } // Minimal metadata since we don't have full JSON analysis
+                 meta: { tone: decision.tone }
              });
 
-             // --- ASYNC KNOWLEDGE EXTRACTION (Re-added) ---
+             // Extract Knowledge in background
              import("./services/knowledge-service").then(({ extractAndSaveKnowledge }) => {
                 extractAndSaveKnowledge(userId, message).catch(err => console.error("[Knowledge] Error:", err));
              });
         }
     } catch (error) {
         console.error("Streaming Error:", error);
-        res.write("[Error generating response]");
+        res.write(`data: ${JSON.stringify({ content: "[Error generating response]" })}\n\n`);
     } finally {
         res.end();
     }

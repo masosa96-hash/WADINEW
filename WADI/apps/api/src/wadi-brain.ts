@@ -97,7 +97,43 @@ Sé conciso y sigue tu personalidad.
   `;
   
   return { prompt, decision };
+  return { prompt, decision };
 }
+
+import { openai } from "./openai";
+import { getRelevantKnowledge } from "./services/knowledge-service";
+
+export const runBrainStream = async (userId: string, userMessage: string, context: any) => {
+  // Recuperamos memoria previa (RAG)
+  let memory = "";
+  try {
+      memory = await getRelevantKnowledge(userId);
+  } catch (e) {
+      console.warn("Memory fetch failed", e);
+  }
+
+  // Construct System Message based on context/decision
+  // context here is 'decision' from generateSystemPrompt
+  const personaId = context.personaId || "NORMAL";
+  const tone = context.tone || "neutral";
+  
+  const systemContent = `Sos WADI. Personalidad: ${personaId} (${tone}). 
+        IMPORTANTE: Respondé ÚNICAMENTE con el texto del mensaje. 
+        No uses JSON, no envíes metadatos. 
+        Memoria del usuario: ${memory}`;
+
+  return await openai.chat.completions.create({
+    model: "gpt-4o",
+    stream: true, // Activamos el flujo de tokens
+    messages: [
+      { 
+        role: "system", 
+        content: systemContent 
+      },
+      { role: "user", content: userMessage }
+    ],
+  });
+};
 
 export function generateAuditPrompt() {
   return `
