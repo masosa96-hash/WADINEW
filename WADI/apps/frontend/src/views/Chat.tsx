@@ -5,7 +5,7 @@ import { useRunsStore } from '../store/runsStore';
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
-  const { runs, fetchRuns, createRun, loading } = useRunsStore();
+  const { runs, fetchRuns, loading } = useRunsStore();
   
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -16,57 +16,94 @@ export default function Chat() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [runs, loading]); // Scroll on new runs or loading state change
+  }, [runs, loading, isStreaming, streamingContent]); // Scroll on updates
 
   const handleSend = async () => {
     if (!input.trim() || !id || loading) return;
     
-    // Optimistic update could happen here alongside store call, 
-    // but store handles it well enough.
+    // 1. Optimistic UI is handled by state below
     const currentInput = input;
-    setInput(''); // Clear immediately
+    setInput('');
     
-    await createRun(id, currentInput);
-    // Fetch runs is called inside createRun usually or we can rely on local optimistic update if store supports it
-    // useRunsStore.createRun updates state locally.
+    setIsStreaming(true); // New state needed
+    setStreamingContent('');
+    setOptimisticUserMessage(currentInput);
+
+    try {
+        const response = await fetch(`http://localhost:3000/projects/${id}/runs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: currentInput })
+        });
+
+        if (!response.body) return;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+
+        while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            const chunkValue = decoder.decode(value, { stream: !done });
+            setStreamingContent(prev => prev + chunkValue);
+        }
+        
+    } catch (err) {
+        console.error("Stream failed", err);
+    } finally {
+        setIsStreaming(false);
+        setOptimisticUserMessage(null);
+        setStreamingContent('');
+        fetchRuns(id); // Re-sync with authoritative DB
+    }
   };
 
-  // Transform Runs to Messages for the UI
-  // Runs are Newest First. We want Oldest First for Chat.
-  // We internalize the logic: Run = User Msg + Assistant Msg
-  const messages = runs
-    .slice() // copy
-    .reverse() // Oldest first
-    .flatMap((run) => {
+  // State for streaming
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
+
+  // Merge Store Messages + Optimistic/Streaming Message
+  // ... existing transformation logic ...
+  const storeMessages = runs.slice().reverse().flatMap((run) => {
         const msgs = [];
-        // User Message
         msgs.push({
             id: `${run.id}-user`,
             role: 'user',
             content: run.input,
             created_at: run.created_at
         });
-        
-        // Assistant Message (if output exists)
         if (run.output) {
-            // Parse output if it is JSON
-            let content = run.output;
-            try {
-                const json = JSON.parse(run.output);
-                if (json.response) content = json.response;
-            } catch {
-                // ignore
-            }
-
             msgs.push({
                 id: `${run.id}-assistant`,
                 role: 'assistant',
-                content: content,
-                created_at: run.created_at // strictly it's later but for UI grouping it's fine
+                content: run.output, // Now plain text from DB
+                created_at: run.created_at
             });
         }
         return msgs;
-    });
+  });
+
+  const displayMessages = [...storeMessages];
+  
+  if (optimisticUserMessage) {
+      displayMessages.push({
+          id: 'optimistic-user',
+          role: 'user',
+          content: optimisticUserMessage,
+          created_at: new Date().toISOString()
+      });
+  }
+  
+  if (isStreaming || (streamingContent && optimisticUserMessage)) { // Show assistant bubble if streaming
+      displayMessages.push({
+          id: 'streaming-assistant',
+          role: 'assistant',
+          content: streamingContent, // This updates in real-time
+          created_at: new Date().toISOString()
+      });
+  }
 
   return (
     <div className="flex flex-col h-full bg-white text-gray-800 font-sans">
@@ -84,13 +121,13 @@ export default function Chat() {
       {/* Area de Mensajes estilo Gemini */}
       <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 scrollbar-thin scrollbar-thumb-gray-200">
         <div className="max-w-3xl mx-auto space-y-12 pb-10">
-          {messages.length === 0 && (
+          {displayMessages.length === 0 && (
              <div className="text-center py-20 text-gray-400">
                 <p>Inicia la conversación...</p>
              </div>
           )}
 
-          {messages.map((msg) => (
+          {displayMessages.map((msg) => (
             <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex gap-4 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${

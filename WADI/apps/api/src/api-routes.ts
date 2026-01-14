@@ -33,8 +33,8 @@ const pdf = require("pdf-parse");
 // import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
-// import { chatQueue } from "./queue/chatQueue";
-// import { chatQueue } from "./queue/chatQueue";
+import { chatQueue } from "./queue/chatQueue";
+import { getRelevantKnowledge } from "./services/knowledge-service";
 
 const router = Router();
 
@@ -306,6 +306,14 @@ router.post(
         console.warn("Failed to fetch reflections:", err);
     }
 
+    // 1.9 Fetch Long Term Memory
+    let longTermMemory = "";
+    try {
+        longTermMemory = await getRelevantKnowledge(userId);
+    } catch (e) {
+        console.warn("Failed to fetch long term memory", e);
+    }
+
     // 2. Generate System Prompt
     const { prompt: systemPrompt, decision } = generateSystemPrompt(
         mode,
@@ -323,7 +331,8 @@ router.post(
         null, // customInstructions
         lastPersonaId,
         turnsActive,
-        pastReflections
+        pastReflections,
+        longTermMemory
     );
 
     // --- Persona Stability Cache Logic ---
@@ -407,53 +416,52 @@ router.post(
     }).then(() => {}); // Fire and forget
 
 
-    // 2. Run Brain
-    const result = await runBrain(messages);
+    // 2. OPENAI STREAMING IMPLEMENTATION
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    // --- ASYNC KNOWLEDGE EXTRACTION ---
-    // Fire and forget: Extract insights from the user's message
-    // We do this after brain execution to prioritize latency, but before response 
-    // or just let it float.
-    import("./services/knowledge-service").then(({ extractAndSaveKnowledge }) => {
-        extractAndSaveKnowledge(userId, message).catch(err => console.error("[Knowledge] Error:", err));
-    });
+    try {
+        const stream = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: messages as any,
+            stream: true,
+        });
 
-    // 3. Save Response (Synchronous Save)
-    if (conversationId && result.response) {
-         // User msg already saved? Usually frontend saves User Msg, or API should.
-         // Frontend usually saves User msg optimization. We just save Assistant.
-         await supabase.from("messages").insert({
-             conversation_id: conversationId,
-             role: "assistant",
-             content: result.response,
-             user_id: userId.startsWith("anonymous_") ? null : userId,
-             meta: result.meta || {}
-         });
+        let fullResponse = "";
+
+        for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+                fullResponse += content;
+                res.write(content);
+            }
+        }
+
+        // 3. Save Response (Async Persistence)
+        if (conversationId && fullResponse) {
+             await supabase.from("messages").insert({
+                 conversation_id: conversationId,
+                 role: "assistant",
+                 content: fullResponse,
+                 user_id: userId.startsWith("anonymous_") ? null : userId,
+                 meta: { tone: decision.tone } // Minimal metadata since we don't have full JSON analysis
+             });
+
+             // --- ASYNC KNOWLEDGE EXTRACTION (Re-added) ---
+             import("./services/knowledge-service").then(({ extractAndSaveKnowledge }) => {
+                extractAndSaveKnowledge(userId, message).catch(err => console.error("[Knowledge] Error:", err));
+             });
+        }
+    } catch (error) {
+        console.error("Streaming Error:", error);
+        res.write("[Error generating response]");
+    } finally {
+        res.end();
     }
-
-    // Return in a format that Frontend understands.
-    // Frontend expects { jobId } OR direct response?
-    // If I return a "jobId" that doesn't exist, polling fails.
-    // If I return direct result, I need to check if Frontend supports it.
-    // Looking at `ChatInterface.tsx` (not visible but assumed standard), 
-    // usually: if (data.jobId) poll; else use data.
-    
-    // Let's return a FAKE Completed Job structure to trick the frontend if it strictly polls,
-    // OR just return the data if it handles it.
-    // WADI Frontend V5 usually handles both.
-    
-    res.json({
-        status: "completed", // Signal it's done
-        result: {
-            response: result, // Nest it so access logic works (job.returnvalue)
-            metrics: { duration: 0 }
-        },
-        // Also provide direct access
-        response: result.response, 
-        meta: result.meta
-    });
   })
 );
+
 
 // --- JOB STATUS ENDPOINT (POLLING) ---
 router.get(

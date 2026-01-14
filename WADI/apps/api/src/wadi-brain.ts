@@ -21,7 +21,8 @@ export function generateSystemPrompt(
   // New Params for Anti-Flapping
   lastPersonaId?: string,
   turnsActive?: number,
-  pastReflections: any[] = []
+  pastReflections: any[] = [],
+  longTermMemory: string = ""
 ) {
   // 1. Build Context Object
   const context: PersonaInput = {
@@ -65,9 +66,18 @@ export function generateSystemPrompt(
     }).join("\n")
     : "Sin historial reciente.";
 
+  const memoryBlock = longTermMemory 
+    ? `\nMEMORIA DE LARGO PLAZO (Hechos que recordás del usuario):\n${longTermMemory}\n`
+    : "";
+
   // 3. Construct Final Prompt
   const prompt = `
 ${basePrompt}
+
+${memoryBlock}
+INSTRUCCIÓN DE MEMORIA: Si en la memoria hay información relevante para la charla actual, 
+usalos de forma natural para demostrar que recordás al usuario. 
+No digas "según mi base de datos", decilo como un socio: "Como me habías contado que...".
 
 [HISTORIAL_DE_COMPORTAMIENTO]
 ${historyBlock}
@@ -80,17 +90,10 @@ CONTEXTO DINÁMICO:
 ${activeFocus ? `- Foco Activo: ${activeFocus}` : ""}
 ${pastFailures.length > 0 ? `- Historial de errores recientes: ${pastFailures.join(", ")}` : ""}
 
-INSTRUCCIONES DE META-CONSCIENCIA:
-Si el usuario pregunta por tu tono, humor o estado actual, tienes permiso de consultar tu [HISTORIAL_DE_COMPORTAMIENTO] y explicar tu decisión técnica de personalidad con honestidad brutal.
-
-INSTRUCCIONES DE FORMATO (JSON):
-Responde SIEMPRE con este JSON raw (sin markdown blocks):
-{
-  "response": "Tu respuesta aquí (usá markdown interno para código/negritas).",
-  "tone": "${decision.tone}",
-  "risks": [],
-  "smokeIndex": 0
-}
+INSTRUCCIONES DE FORMATO:
+Responde en texto plano, directamente al usuario. 
+No uses JSON. No incluyas metadata visible.
+Sé conciso y sigue tu personalidad.
   `;
   
   return { prompt, decision };

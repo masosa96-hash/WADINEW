@@ -39,3 +39,19 @@ export const extractAndSaveKnowledge = async (userId: string, userMessage: strin
   }
   return null;
 };
+
+export const getRelevantKnowledge = async (userId: string) => {
+  // Por ahora traemos los últimos 10 hechos aprendidos. 
+  // (En el futuro podemos filtrar por relevancia usando embeddings).
+  const { data, error } = await supabase
+    .from('wadi_knowledge_base')
+    .select('content, category')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error || !data) return "";
+
+  // Cast content to string if it's not (though DB says text)
+  return data.map((f: any) => `[${f.category}]: ${f.content}`).join('\n');
+};
