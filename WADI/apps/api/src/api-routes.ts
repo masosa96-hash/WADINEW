@@ -410,6 +410,14 @@ router.post(
     // 2. Run Brain
     const result = await runBrain(messages);
 
+    // --- ASYNC KNOWLEDGE EXTRACTION ---
+    // Fire and forget: Extract insights from the user's message
+    // We do this after brain execution to prioritize latency, but before response 
+    // or just let it float.
+    import("./services/knowledge-service").then(({ extractAndSaveKnowledge }) => {
+        extractAndSaveKnowledge(userId, message).catch(err => console.error("[Knowledge] Error:", err));
+    });
+
     // 3. Save Response (Synchronous Save)
     if (conversationId && result.response) {
          // User msg already saved? Usually frontend saves User Msg, or API should.
