@@ -1,66 +1,168 @@
-import { useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useRunsStore } from "../store/runsStore";
-import RunHistoryList from "../components/RunHistoryList";
-import RunInputForm from "../components/RunInputForm";
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { Send, User, Bot, Info } from 'lucide-react';
+import { useRunsStore } from '../store/runsStore';
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
-  const { runs, loading, error, fetchRuns, createRun, clearRuns } = useRunsStore();
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const { runs, fetchRuns, createRun, loading } = useRunsStore();
+  
+  const [input, setInput] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) fetchRuns(id);
-    return () => clearRuns();
-  }, [id, fetchRuns, clearRuns]);
+  }, [id, fetchRuns]);
 
-  const handleRun = async (input: string) => {
-    if (id) {
-        await createRun(id, input);
-        fetchRuns(id);
-        setTimeout(scrollToBottom, 100);
-    }
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [runs, loading]); // Scroll on new runs or loading state change
+
+  const handleSend = async () => {
+    if (!input.trim() || !id || loading) return;
+    
+    // Optimistic update could happen here alongside store call, 
+    // but store handles it well enough.
+    const currentInput = input;
+    setInput(''); // Clear immediately
+    
+    await createRun(id, currentInput);
+    // Fetch runs is called inside createRun usually or we can rely on local optimistic update if store supports it
+    // useRunsStore.createRun updates state locally.
   };
 
+  // Transform Runs to Messages for the UI
+  // Runs are Newest First. We want Oldest First for Chat.
+  // We internalize the logic: Run = User Msg + Assistant Msg
+  const messages = runs
+    .slice() // copy
+    .reverse() // Oldest first
+    .flatMap((run) => {
+        const msgs = [];
+        // User Message
+        msgs.push({
+            id: `${run.id}-user`,
+            role: 'user',
+            content: run.input,
+            created_at: run.created_at
+        });
+        
+        // Assistant Message (if output exists)
+        if (run.output) {
+            // Parse output if it is JSON
+            let content = run.output;
+            try {
+                const json = JSON.parse(run.output);
+                if (json.response) content = json.response;
+            } catch {
+                // ignore
+            }
+
+            msgs.push({
+                id: `${run.id}-assistant`,
+                role: 'assistant',
+                content: content,
+                created_at: run.created_at // strictly it's later but for UI grouping it's fine
+            });
+        }
+        return msgs;
+    });
+
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="flex-1 overflow-y-auto pb-32 pt-6">
-        {error && (
-            <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm">
-            Error: {error}
-            </div>
-        )}
+    <div className="flex flex-col h-full bg-white text-gray-800 font-sans">
+      {/* Header sutil con info de Persona */}
+      <header className="px-6 py-3 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">WADI Online</span>
+        </div>
+        <div className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-bold text-gray-400">
+          PERSONA: DINÁMICA
+        </div>
+      </header>
 
-        <div className="max-w-3xl mx-auto px-4">
-            {runs.length > 0 ? (
-                <RunHistoryList runs={runs} />
-            ) : (
-                <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-gray-200 to-gray-100 rounded-2xl flex items-center justify-center">
-                        <span className="text-2xl">✨</span>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-medium text-wadi-text">¿En qué trabajamos hoy?</h3>
-                        <p className="text-sm text-wadi-muted mt-1">WADI está listo para colaborar.</p>
-                    </div>
+      {/* Area de Mensajes estilo Gemini */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 scrollbar-thin scrollbar-thumb-gray-200">
+        <div className="max-w-3xl mx-auto space-y-12 pb-10">
+          {messages.length === 0 && (
+             <div className="text-center py-20 text-gray-400">
+                <p>Inicia la conversación...</p>
+             </div>
+          )}
+
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex gap-4 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  msg.role === 'user' ? 'bg-gray-100' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                 </div>
-            )}
-            <div ref={bottomRef} />
+                
+                <div className="space-y-2">
+                  <div className={`text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gray-50 p-4 rounded-2xl border border-gray-100' : 'text-gray-800 pt-1'}`}>
+                     <div className="whitespace-pre-wrap">{msg.content}</div>
+                  </div>
+                  {/* Metadata de reflexión */}
+                  {msg.role === 'assistant' && (
+                    <div className="flex gap-2 items-center opacity-0 hover:opacity-100 transition-opacity">
+                      <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                        <Info size={10} /> Análisis
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {loading && (
+             <div className="flex gap-4 max-w-[90%] justify-start animate-pulse">
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                   <Bot size={16} className="text-blue-600" />
+                </div>
+                <div className="space-y-2 pt-2">
+                   <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                   <div className="h-4 w-48 bg-gray-100 rounded"></div>
+                </div>
+             </div>
+          )}
+
+          <div ref={scrollRef} />
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-0 right-0 px-4">
-        <div className="max-w-3xl mx-auto">
-            <RunInputForm 
-                onSubmit={handleRun}
-                loading={loading}
-            />
+      {/* Input Flotante estilo ChatGPT/Gemini */}
+      <footer className="p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent">
+        <div className="max-w-3xl mx-auto relative">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            }}
+            placeholder="Preguntale algo a WADI..."
+            className="w-full p-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-gray-400 font-light"
+            rows={1}
+            style={{ minHeight: '60px' }}
+            disabled={loading}
+            autoFocus
+          />
+          <button 
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            className="absolute right-3 bottom-3 p-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send size={18} />
+          </button>
         </div>
-      </div>
+        <p className="text-center text-[10px] text-gray-400 mt-4">
+          WADI v0.1 | Basado en el sistema de Personas Dinámicas
+        </p>
+      </footer>
     </div>
   );
-}
+};
