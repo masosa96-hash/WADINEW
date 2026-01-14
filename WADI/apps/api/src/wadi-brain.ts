@@ -17,23 +17,28 @@ export function generateSystemPrompt(
   activeFocus: string | null = null,
   memory: Record<string, unknown> = {},
   knowledgeBase: { category: string; point: string }[] = [],
-  customInstructionsFromDB: string | null = null
+  customInstructionsFromDB: string | null = null,
+  // New Params for Anti-Flapping
+  lastPersonaId?: string,
+  turnsActive?: number
 ) {
   // 1. Build Context Object
   const context: PersonaInput = {
-    userId: "legacy_user_id_placeholder", // We might not have it here in this signature, but it's okay for now
+    userId: "legacy_user_id_placeholder",
     efficiencyRank: efficiencyRank,
     efficiencyPoints: efficiencyPoints,
     pastFailures: pastFailures,
     messageCount: messageCount,
     isMobile: isMobile,
     activeFocus: activeFocus,
-    // Infer project context from topic/focus if possible, or leave undefined
     projectContext: {
         description: topic, 
-        isProduction: topic === "production" // Simplistic inference
+        isProduction: topic === "production"
     },
-    stressLevel: mood === "calm" ? "high" : "low" // Map legacy mood arg if passed
+    stressLevel: mood === "calm" ? "high" : "low",
+    // Pass history
+    lastPersona: lastPersonaId as any,
+    turnsActive: turnsActive
   };
 
   // 2. Resolve Persona
@@ -42,11 +47,12 @@ export function generateSystemPrompt(
   const basePrompt = customInstructionsFromDB || decision.systemPrompt;
 
   // 3. Construct Final Prompt
-  return `
+  const prompt = `
 ${basePrompt}
 
 CONTEXTO DINÁMICO:
 - Modo Detectado: ${decision.personaId} (${decision.tone})
+- Razón: ${decision.reason}
 - Tópico: ${topic}
 - Mensajes: ${messageCount}
 ${activeFocus ? `- Foco Activo: ${activeFocus}` : ""}
@@ -61,6 +67,8 @@ Responde SIEMPRE con este JSON raw (sin markdown blocks):
   "smokeIndex": 0
 }
   `;
+  
+  return { prompt, decision };
 }
 
 export function generateAuditPrompt() {

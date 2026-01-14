@@ -222,6 +222,77 @@ router.post(
          messages.push({ role: "user", content: message });
     }
 
+    // --- NEW: PERSONA & SYSTEM PROMPT INJECTION ---
+    
+    // 1. Fetch History for Anti-Flapping
+    let lastPersonaId: string | undefined = undefined;
+    let turnsActive = 0;
+
+    try {
+        const { data: lastDecisions } = await supabase
+            .from("wadi_reflections")
+            .select("content")
+            .eq("user_id", userId)
+            .eq("type", "PERSONA_DECISION")
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+        if (lastDecisions && lastDecisions.length > 0) {
+             const lastParsed = JSON.parse(lastDecisions[0].content);
+             lastPersonaId = lastParsed.personaId;
+             turnsActive = 1;
+             
+             for (let i = 1; i < lastDecisions.length; i++) {
+                 try {
+                     const prevParsed = JSON.parse(lastDecisions[i].content);
+                     if (prevParsed.personaId === lastPersonaId) {
+                         turnsActive++;
+                     } else {
+                         break;
+                     }
+                 } catch(e) { break; }
+             }
+        }
+    } catch (e) {
+        console.warn("Failed to fetch persona history", e);
+    }
+
+    // 2. Generate System Prompt
+    const { prompt: systemPrompt, decision } = generateSystemPrompt(
+        mode,
+        "general", // Topic inference could be better
+        {}, // sessionPrefs
+        tone, // mood param (legacy mapped)
+        false, // isMobile
+        messages.length, // approximate message count
+        [], // pastFailures (should fetch from DB ideally, but keeping lite)
+        "GENERADOR_DE_HUMO", // rank
+        0, // points
+        null, // activeFocus
+        {}, // memory
+        [], // knowledgeBase
+        null, // customInstructions
+        lastPersonaId,
+        turnsActive
+    );
+
+    // 3. Inject System Prompt
+    messages.unshift({ role: "system", content: systemPrompt });
+
+    // 4. Log Decision (Async - don't await blocks)
+    // We log: chosen persona, reason, and mapped tone.
+    supabase.from("wadi_reflections").insert({
+        user_id: userId,
+        type: "PERSONA_DECISION",
+        content: JSON.stringify({
+            personaId: decision.personaId,
+            reason: decision.reason,
+            tone: decision.tone
+        }),
+        priority: "NORMAL"
+    }).then(() => {}); // Fire and forget
+
+
     // 2. Run Brain
     const result = await runBrain(messages);
 
@@ -752,7 +823,7 @@ router.post(
     const { mode, topic, explainLevel, isMobile, messageCount } = req.body;
 
     // Generate prompt with mock or provided data
-    const prompt = generateSystemPrompt(
+    const { prompt } = generateSystemPrompt(
       mode || "normal",
       topic || "general",
       // explainLevel || "normal",

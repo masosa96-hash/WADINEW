@@ -26,6 +26,10 @@ export interface PersonaInput {
   
   // Legacy / Hardware
   isMobile?: boolean;
+
+  // Anti-Flapping / Stability
+  lastPersona?: "SOCIO_IRONICO" | "ARQUITECTO_SERIO" | "MODO_CALMA" | "MODO_EJECUCION";
+  turnsActive?: number; // How many turns has the lastPersona been active consecutive?
 }
 
 export interface PersonaOutput {
@@ -33,4 +37,5 @@ export interface PersonaOutput {
   tone: PersonaTone;
   // Metadata for debugging/UI
   personaId: "SOCIO_IRONICO" | "ARQUITECTO_SERIO" | "MODO_CALMA" | "MODO_EJECUCION";
+  reason: string;
 }

@@ -28,7 +28,7 @@ export const getChatCompletion = async (
       : model;
 
     // Generate Default Brain if not provided (Simplest integration for Beta 1)
-    const activeSystem = systemPrompt || generateSystemPrompt();
+    const activeSystem = systemPrompt || generateSystemPrompt().prompt;
 
     const response = await openai.chat.completions.create({
       model: aiModel,
