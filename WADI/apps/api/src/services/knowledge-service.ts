@@ -4,30 +4,43 @@ import { openai } from '../openai'; // Corrected import path based on file proxi
 export const extractAndSaveKnowledge = async (userId: string, userMessage: string) => {
   try {
     // 1. Preguntarle a la IA si hay algo relevante para recordar
+    // 1. Preguntarle a la IA si hay algo relevante y si hay INTENCIÓN DE PROYECTO
     const prompt = `
-      Analiza el siguiente mensaje de un usuario y extrae "hechos" importantes sobre él, sus proyectos o preferencias.
+      Analiza el siguiente mensaje de un usuario.
+      1. Extrae "hechos" importantes (Personal, Proyecto, Preferencia).
+      2. Detecta si hay una INTENCIÓN CLARA de iniciar un nuevo proyecto o sistema (ej: "Quiero hacer una app", "Tengo idea de un SaaS").
+      
       Si no hay nada relevante, responde "NONE".
-      Si hay algo, responde en formato JSON: {"content": "el hecho", "category": "Personal|Proyecto|Preferencia", "confidence": 0-1}
+      Si hay algo, responde en formato JSON: 
+      {
+        "content": "el hecho o resumen de la idea", 
+        "category": "Personal|Proyecto|Preferencia", 
+        "is_new_project_intention": boolean,
+        "confidence": 0.0-1.0
+      }
       
       Mensaje: "${userMessage}"
     `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Usamos el modelo mini para que sea rápido y barato
-      messages: [{ role: "system", content: "Sos un extractor de información preciso." }, { role: "user", content: prompt }],
+      model: "gpt-4o-mini",
+      messages: [{ role: "system", content: "Sos un extractor de información y detector de intenciones." }, { role: "user", content: prompt }],
       response_format: { type: "json_object" }
     });
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
 
     if (result.content && result.content !== "NONE") {
+      // Si detecta intención de proyecto, forzamos la categoría especial
+      const finalCategory = result.is_new_project_intention ? 'PROJECT_SUGGESTION' : (result.category || 'General');
+
       // 2. Guardar en Supabase
       const { error } = await supabase
         .from('wadi_knowledge_base')
         .insert({
           user_id: userId,
           content: result.content,
-          category: result.category || 'General',
+          category: finalCategory,
           confidence: result.confidence || 1.0
         } as any);
 

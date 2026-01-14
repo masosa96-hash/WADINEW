@@ -123,9 +123,65 @@ export default function Chat() {
       });
   }
 
+  // --- PROJECT CRYSTALLIZATION LOGIC ---
+  const [suggestion, setSuggestion] = useState<{ id: string, content: string } | null>(null);
+  const [isCrystallizing, setIsCrystallizing] = useState(false);
+
+  useEffect(() => {
+    const checkSuggestions = async () => {
+        try {
+            // Standard approach: Get token if needed, but for now we try/catch quietly
+            // const token = localStorage.getItem('sb-access-token'); 
+            
+            const response = await fetch(`http://localhost:3000/projects/suggestions/pending`, {
+                 headers: { 
+                     'Content-Type': 'application/json'
+                 }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                     // Check if we haven't dismissed it
+                     const sugg = data[0];
+                     if (sugg.id !== localStorage.getItem('last_dismissed_suggestion')) {
+                         setSuggestion(sugg);
+                     }
+                }
+            }
+        } catch {
+             // Ignore network errors during polling
+        }
+    };
+    
+    const interval = setInterval(checkSuggestions, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCrystallize = async () => {
+      if (!suggestion) return;
+      setIsCrystallizing(true);
+      try {
+          const res = await fetch(`http://localhost:3000/projects/crystallize`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ suggestionContent: suggestion.content })
+          });
+          if (res.ok) {
+              const data = await res.json();
+              console.log(`Proyecto "${data.project.name}" creado!`); // Replaced alert
+              setSuggestion(null);
+              localStorage.setItem('last_dismissed_suggestion', suggestion.id);
+          }
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setIsCrystallizing(false);
+      }
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white text-gray-800 font-sans">
-      {/* Header sutil con info de Persona */}
+    <div className="flex flex-col h-full bg-white text-gray-800 font-sans relative">
+      {/* ... header ... */}
       <header className="px-6 py-3 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -136,9 +192,10 @@ export default function Chat() {
         </div>
       </header>
 
-      {/* Area de Mensajes estilo Gemini */}
+      {/* Area de Mensajes */}
       <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 scrollbar-thin scrollbar-thumb-gray-200">
         <div className="max-w-3xl mx-auto space-y-12 pb-10">
+           {/* ... messages ... */}
           {displayMessages.length === 0 && (
              <div className="text-center py-20 text-gray-400">
                 <p>Inicia la conversación...</p>
@@ -158,7 +215,6 @@ export default function Chat() {
                   <div className={`text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gray-50 p-4 rounded-2xl border border-gray-100' : 'text-gray-800 pt-1'}`}>
                      <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
-                  {/* Metadata de reflexión */}
                   {msg.role === 'assistant' && (
                     <div className="flex gap-2 items-center opacity-0 hover:opacity-100 transition-opacity">
                       <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-1">
@@ -187,7 +243,40 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Input Flotante estilo ChatGPT/Gemini */}
+      {/* Suggestion Card */}
+      {suggestion && (
+          <div className="absolute bottom-24 left-0 right-0 z-20 flex justify-center px-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
+              <div className="bg-white border border-blue-100 shadow-xl rounded-xl p-4 max-w-lg w-full flex items-center gap-4 ring-1 ring-blue-50">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <span className="text-lg">💡</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-gray-900">Proyecto Detectado</h4>
+                      <p className="text-xs text-gray-500 truncate">{JSON.parse(suggestion.content).content || "Nueva idea de negocio"}</p>
+                  </div>
+                  <div className="flex gap-2">
+                      <button 
+                         onClick={() => {
+                             setSuggestion(null);
+                             localStorage.setItem('last_dismissed_suggestion', suggestion.id);
+                         }}
+                         className="px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 rounded-lg transition-colors"
+                      >
+                          Ignorar
+                      </button>
+                      <button 
+                         onClick={handleCrystallize}
+                         disabled={isCrystallizing}
+                         className="px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-1"
+                      >
+                          {isCrystallizing ? 'Cristalizando...' : 'Crear Proyecto'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Input Flotante */}
       <footer className="p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent">
         <div className="max-w-3xl mx-auto relative">
           <textarea

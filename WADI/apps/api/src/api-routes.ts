@@ -924,6 +924,82 @@ router.post(
   })
 );
 
+// --- CRYSTALLIZE ENDPOINT ---
+router.post(
+  "/projects/crystallize",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { message, suggestionContent } = req.body;
+    
+    // 1. Generate Project Details using LLM
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: "system", content: "Sos un arquitecto de software experto. Tu trabajo es 'cristalizar' ideas vagas en proyectos técnicos concretos." },
+            { role: "user", content: `Transforma esto en un proyecto técnico (Nombre corto, Descripción profesional, 3 tareas iniciales): "${suggestionContent || message}"` }
+        ],
+        response_format: { type: "json_object" },
+        functions: [
+            {
+                name: "create_project_structure",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string" },
+                        description: { type: "string" },
+                        tasks: { type: "array", items: { type: "string" } }
+                    },
+                    required: ["name", "description", "tasks"]
+                }
+            }
+        ],
+        function_call: { name: "create_project_structure" }
+    });
+
+    const args = JSON.parse(completion.choices[0].message.function_call?.arguments || "{}");
+    
+    // 2. Insert Project (Assuming 'projects' table matched expected schema)
+    const { data: project, error: projError } = await supabase
+        .from("projects")
+        .insert({
+            user_id: user!.id,
+            name: args.name,
+            description: args.description,
+            status: 'PLANNING'
+        })
+        .select()
+        .single();
+
+    if (projError) throw new Error("Error creating project: " + projError.message);
+
+    res.json({
+        project,
+        initialTasks: args.tasks
+    });
+  })
+);
+
+router.get(
+    "/projects/suggestions/pending",
+    authenticate(),
+    asyncHandler(async (req, res) => {
+        const user = req.user;
+        // Fetch recent suggestions from knowledge base
+        const { data } = await supabase
+            .from('wadi_knowledge_base')
+            .select('*')
+            .eq('user_id', user!.id)
+            .eq('category', 'PROJECT_SUGGESTION')
+            .order('created_at', { ascending: false })
+            .limit(1);
+        
+        // Helper logic: Return only if created in last 2 minutes to act as a "trigger"
+        // Or just return the latest and let frontend decide if it showed it already.
+        res.json(data || []);
+    })
+);
+
 // --- JOURNAL (CLOUD LOGS) ---
 router.get(
   "/journal/files",
