@@ -46,20 +46,23 @@ export default function RunHistoryList({ runs }: { runs: Run[] }) {
   const sortedRuns = [...runs].reverse();
 
   return (
-    <div className="space-y-12 pb-12 pt-6">
+    <div className="space-y-6 pb-20 pt-6">
       {sortedRuns.map((run) => (
-        <div key={run.id} className="flex flex-col gap-3 group">
+        <div key={run.id} className="flex flex-col gap-4 group">
           
-          {/* USER COMMAND - Minimal & Airy */}
-          <div className="flex gap-4 text-wadi-text px-2 opacity-80">
-             <span className="shrink-0 font-medium opacity-30 select-none text-sm pt-0.5 max-w-[20px] text-right">You</span>
-             <p className="whitespace-pre-wrap font-sans text-base leading-relaxed">{run.input}</p>
+          {/* USER COMMAND - Bubble */}
+          <div className="flex justify-end pl-12">
+             <div className="chat-bubble-user max-w-[85%] text-base leading-relaxed whitespace-pre-wrap">
+                {run.input}
+             </div>
           </div>
 
-          {/* WADI RESPONSE - Clean Text Block */}
-          <div className="flex gap-4 px-2">
-             <span className="shrink-0 font-medium text-wadi-accent opacity-80 select-none text-sm pt-0.5 max-w-[20px] text-right">AI</span>
-             <div className="text-wadi-text font-sans text-base leading-relaxed max-w-none prose prose-p:my-2 prose-headings:font-medium prose-code:text-sm prose-code:bg-0 prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-100 prose-pre:shadow-none prose-pre:rounded-sm">
+          {/* WADI RESPONSE - Plain Text */}
+          <div className="flex gap-4 pr-4">
+             <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-tr from-gray-900 to-gray-700 flex items-center justify-center text-white text-xs font-bold shadow-sm mt-6">
+                W
+             </div>
+             <div className="chat-response-wadi flex-1 min-w-0 prose prose-slate prose-p:leading-7 prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200">
                 {parseOutput(run.output)}
              </div>
           </div>

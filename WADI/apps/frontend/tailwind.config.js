@@ -7,15 +7,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep Bunker Theme
+        // Hybrid Light Theme
         wadi: {
-          base: "#0B0F14",    // Background base
-          surface: "#121821", // Surface
-          border: "#1E2633",  // Sutil border
-          text: "#E6EDF3",    // Primary text
-          muted: "#9AA4B2",   // Secondary text
-          accent: "#2ECC71",  // Technical Green (or #3B82F6 Blue)
-          error: "#991B1B",   // Muted Red
+          base: "#FFFFFF",    // Pure White
+          surface: "#F9FAFB", // Gray-50 (Sidebar/Panels)
+          border: "#E5E7EB",  // Gray-200
+          text: "#111827",    // Gray-900
+          muted: "#6B7280",   // Gray-500
+          accent: "#000000",  // Black (Technical/Premium)
+          error: "#EF4444",   // Red-500
         }
       },
       fontFamily: {

@@ -49,7 +49,16 @@
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-wadi-muted/20 rounded-full hover:bg-wadi-muted/40 transition-colors;
+    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+  }
+
+  /* Chat Styles */
+  .chat-bubble-user {
+    @apply bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-gray-800;
+  }
+
+  .chat-response-wadi {
+    @apply bg-transparent text-gray-800 leading-relaxed py-6;
   }
 }
 
@@ -63,7 +72,7 @@
   .wadi-container {
     @apply max-w-4xl mx-auto px-4;
   }
-  
+
   .btn-ghost {
     @apply px-3 py-1.5 rounded text-sm text-wadi-muted hover:text-wadi-text hover:bg-wadi-border/30 transition-colors;
   }
