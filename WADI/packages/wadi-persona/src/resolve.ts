@@ -72,14 +72,25 @@ const getPersonaStrength = (id?: string) => {
   }
 };
 
-const getPersonaById = (id: string, reason: string): PersonaOutput => {
-  switch (id) {
-    case "MODO_CALMA": return { personaId: "MODO_CALMA", tone: "calm", systemPrompt: MODO_CALMA_PROMPT, reason };
-    case "ARQUITECTO_SERIO": return { personaId: "ARQUITECTO_SERIO", tone: "serious", systemPrompt: ARQUITECTO_SERIO_PROMPT, reason };
-    case "MODO_EJECUCION": return { personaId: "MODO_EJECUCION", tone: "boss", systemPrompt: MODO_EJECUCION_PROMPT, reason };
-    case "SOCIO_IRONICO":
-    default:
-      return { personaId: "SOCIO_IRONICO", tone: "hostile", systemPrompt: SOCIO_IRONICO_PROMPT, reason };
+const getPersonaById = (
+    id: string, 
+    reason: string, 
+    confidence: "low" | "medium" | "high",
+    signals: PersonaOutput['signals']
+): PersonaOutput => {
+    const base = {
+        confidence,
+        signals,
+        reason
+    };
+
+    switch (id) {
+        case "MODO_CALMA": return { ...base, personaId: "MODO_CALMA", tone: "calm", systemPrompt: MODO_CALMA_PROMPT };
+        case "ARQUITECTO_SERIO": return { ...base, personaId: "ARQUITECTO_SERIO", tone: "serious", systemPrompt: ARQUITECTO_SERIO_PROMPT };
+        case "MODO_EJECUCION": return { ...base, personaId: "MODO_EJECUCION", tone: "boss", systemPrompt: MODO_EJECUCION_PROMPT };
+        case "SOCIO_IRONICO":
+        default:
+        return { ...base, personaId: "SOCIO_IRONICO", tone: "hostile", systemPrompt: SOCIO_IRONICO_PROMPT };
   }
 };
 
@@ -87,10 +98,13 @@ const getPersonaById = (id: string, reason: string): PersonaOutput => {
 
 export function resolvePersona(context: PersonaInput): PersonaOutput {
   // --- A. HEURISTICS EXTRACTION ---
+  // Count robust signals
+  const failuresCount = (context.pastFailures || []).length;
+  
   const isStressed =
     context.stressLevel === "high" ||
     (context.isRepeatingError && context.messageCount > 5) ||
-    (context.pastFailures || []).length > 3;
+    failuresCount > 3;
 
   const isProduction =
     context.projectContext?.isProduction ||
@@ -101,19 +115,34 @@ export function resolvePersona(context: PersonaInput): PersonaOutput {
   const isFocusMode =
     !!context.activeFocus && context.activeFocus.length > 0;
 
+  const signals = {
+      stressScore: context.stressLevel,
+      failures: failuresCount,
+      projectType: isProduction ? "production" : "standard" as "production" | "standard",
+      isRepeatingError: context.isRepeatingError,
+      isFocusMode: isFocusMode
+  };
+
   // --- B. CANDIDATE SELECTION ---
   let candidateId = "SOCIO_IRONICO";
   let candidateReason = "Default state";
+  let confidence: "low" | "medium" | "high" = "low";
 
   if (isStressed) {
     candidateId = "MODO_CALMA";
     candidateReason = "User shows signs of stress/frustration";
+    confidence = "high"; // Stress override is high confidence
   } else if (isProduction) {
     candidateId = "ARQUITECTO_SERIO";
     candidateReason = "Production/High-stakes context detected";
+    confidence = "medium";
   } else if (isFocusMode) {
     candidateId = "MODO_EJECUCION";
     candidateReason = "Deep focus mode active";
+    confidence = "high"; // Explicit user intent
+  } else {
+      // Default
+      confidence = "low";
   }
 
   // --- C. ANTI-FLAPPING / STABILITY CHECK ---
@@ -129,11 +158,17 @@ export function resolvePersona(context: PersonaInput): PersonaOutput {
       // Going from Calm -> Irony is blocked if < N turns.
       if (candidateStrength <= currentStrength && candidateId !== context.lastPersona) {
         // OVERRIDE: Keep old persona
-        return getPersonaById(context.lastPersona, `Anti-flapping: Stuck to ${context.lastPersona} (Strength ${currentStrength} >= ${candidateStrength})`);
+        // But we report the signals of the *new* reality, just the decision is stuck.
+        return getPersonaById(
+            context.lastPersona, 
+            `Anti-flapping: Stuck to ${context.lastPersona} (Strength ${currentStrength} >= ${candidateStrength})`,
+            "high", // Artificial high confidence because we are forcing it
+            signals
+        );
       }
     }
   }
 
   // Return the selected candidate
-  return getPersonaById(candidateId, candidateReason);
+  return getPersonaById(candidateId, candidateReason, confidence, signals);
 }

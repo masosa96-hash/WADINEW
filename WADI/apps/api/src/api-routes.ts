@@ -257,6 +257,21 @@ router.post(
         console.warn("Failed to fetch persona history", e);
     }
 
+    // --- NEW: PERSONA OBSERVAILITY (Outcome & Outcome Logging) ---
+    // Minimal heuristics: 
+    // - If we had a previous persona, how did it go?
+    if (lastPersonaId) {
+        let outcome: "stabilized" | "still_stuck" | "progressed" = "progressed";
+        
+        // Simple heuristic: If message count > X and we are still repeating errors?
+        // Note: decision.signals isn't available yet. We need to peek at decision context or use raw inputs.
+        // Actually, let's log the outcome AFTER we calculate the *new* signals which contain the repeating error flag.
+        // But we need to separate the "Outcome of PREVIOUS" vs "Decision of CURRENT".
+        
+        // Let's defer outcome logging until after we have the new decision, 
+        // because the new decision's signals (isRepeatingError, stressLevel) tell us if the *previous* approach failed.
+    }
+
     // 2. Generate System Prompt
     const { prompt: systemPrompt, decision } = generateSystemPrompt(
         mode,
@@ -279,15 +294,45 @@ router.post(
     // 3. Inject System Prompt
     messages.unshift({ role: "system", content: systemPrompt });
 
-    // 4. Log Decision (Async - don't await blocks)
-    // We log: chosen persona, reason, and mapped tone.
+    // 4. Log Observability (Async)
+    // A. Outcome of previous turn
+    if (lastPersonaId) {
+        const signals = decision.signals || {};
+        let outcome: "stabilized" | "still_stuck" | "progressed" = "progressed";
+
+        if (signals.isRepeatingError) {
+             outcome = "still_stuck";
+        } else if (signals.stressScore === "high") {
+             // If we are high stress, we arguably haven't stabilized yet? 
+             // Or if we *were* high and now are low? We don't have diff here easily without more queries.
+             // Let's assume high stress = stuck/struggling.
+             outcome = "still_stuck";
+        } else {
+             outcome = "progressed";
+             // Ideally we check if message length dropped significantly implying clarity, but "progressed" is a safe default for "no error/stress".
+        }
+
+        supabase.from("wadi_reflections").insert({
+            user_id: userId,
+            type: "PERSONA_OUTCOME",
+            content: JSON.stringify({
+                previousPersona: lastPersonaId,
+                outcome: outcome
+            }),
+            priority: "NORMAL"
+        }).then(() => {});
+    }
+
+    // B. Decision for current turn
     supabase.from("wadi_reflections").insert({
         user_id: userId,
         type: "PERSONA_DECISION",
         content: JSON.stringify({
             personaId: decision.personaId,
             reason: decision.reason,
-            tone: decision.tone
+            tone: decision.tone,
+            signals: decision.signals,
+            confidence: decision.confidence
         }),
         priority: "NORMAL"
     }).then(() => {}); // Fire and forget

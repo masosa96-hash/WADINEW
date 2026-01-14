@@ -38,4 +38,12 @@ export interface PersonaOutput {
   // Metadata for debugging/UI
   personaId: "SOCIO_IRONICO" | "ARQUITECTO_SERIO" | "MODO_CALMA" | "MODO_EJECUCION";
   reason: string;
+  confidence: "low" | "medium" | "high";
+  signals: {
+    stressScore?: string; // "high" | "low"
+    failures: number;
+    projectType?: "production" | "standard";
+    isRepeatingError?: boolean;
+    isFocusMode?: boolean;
+  };
 }
