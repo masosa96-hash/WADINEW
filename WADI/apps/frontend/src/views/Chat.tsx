@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { API_URL } from "../config/api";
 import { useParams } from 'react-router-dom';
 import { Send, User, Bot, Info } from 'lucide-react';
 import { useRunsStore } from '../store/runsStore';
@@ -38,7 +39,7 @@ export default function Chat() {
     // En nuestra implementación, usamos hasStreamingContent + displayMessages para esto.
 
     try {
-        const response = await fetch(`http://localhost:3000/projects/${id}/runs`, {
+        const response = await fetch(`${API_URL}/projects/${id}/runs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: currentInput })
@@ -133,7 +134,7 @@ export default function Chat() {
             // Standard approach: Get token if needed, but for now we try/catch quietly
             // const token = localStorage.getItem('sb-access-token'); 
             
-            const response = await fetch(`http://localhost:3000/projects/suggestions/pending`, {
+            const response = await fetch(`${API_URL}/projects/suggestions/pending`, {
                  headers: { 
                      'Content-Type': 'application/json'
                  }
@@ -161,7 +162,7 @@ export default function Chat() {
       if (!suggestion) return;
       setIsCrystallizing(true);
       try {
-          const res = await fetch(`http://localhost:3000/projects/crystallize`, {
+          const res = await fetch(`${API_URL}/projects/crystallize`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ suggestionContent: suggestion.content })
