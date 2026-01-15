@@ -34,6 +34,14 @@ import helmet from "helmet";
 const app = express();
 
 // --------------------------------------------------
+// PRIORITY 0: Health Check (Render) - Must be first
+// --------------------------------------------------
+app.get("/health", (req, res) => {
+  console.log('Health check ping received');
+  res.status(200).send("OK");
+});
+
+// --------------------------------------------------
 // SECURITY: CSP (Content Security Policy)
 // --------------------------------------------------
 app.use(
@@ -147,12 +155,7 @@ app.get("/system/debug-files", (req, res) => {
   }
 });
 
-// --------------------------------------------------
-// PRIORITY 2: Health Check (Render)
-// --------------------------------------------------
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
+
 
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
