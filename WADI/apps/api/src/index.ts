@@ -165,16 +165,11 @@ import runsRouter from "./routes/runs";
 // V2 Domain Routes
 import projectsV2Router from "./domain/projects/project.routes";
 
-// app.use("/api", rateLimiter as any);
-app.use("/api/projects", projectsRouter); // Keep V1 for safety? Or replace? User said "Backend CRUD". I'll add V2.
+// Standardized API Routes
+app.use("/api/projects", projectsRouter);
 app.use("/api/v2/projects", projectsV2Router);
-
 app.use("/api", runsRouter);
-app.use("/api", routes); // Main API (Legacy/Raw)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// app.use("/api/kivo", kivoRoutes as any); // Legacy/Module
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// app.use("/system", monitoringRoutes as any);
+app.use("/api", routes);
 
 // Explicit 404 for API to prevent falling through to SPA
 app.all(/\/api\/.*/, (req, res) => {
@@ -196,6 +191,26 @@ app.use(errorHandler as any);
 const PORT = process.env.PORT || 10000;
 app.listen(Number(PORT), '0.0.0.0', () => {
   console.log('Servidor escuchando en el puerto: ' + PORT);
+  
+  // Log Active Routes
+  if (app._router && app._router.stack) {
+      console.log('Rutas activas:');
+      app._router.stack.forEach((r: any) => {
+          if (r.route && r.route.path) {
+              console.log(r.route.path);
+          } else if (r.name === 'router') {
+              // Express routers don't expose paths easily in the regex, 
+              // but we can imply them from the mount points we just set.
+              // Just logging the top level is often enough, or specifically known routes.
+              // Logic requested by user:
+              // app._router.stack.filter(r => r.route).map(r => r.route.path)
+          }
+      });
+      const activeRoutes = app._router.stack
+        .filter((r: any) => r.route)
+        .map((r: any) => r.route.path);
+      console.log('Rutas Directas:', activeRoutes);
+  }
 });
 
 // Helper for strict listen types if needed, though usually string port is fine in express types

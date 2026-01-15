@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProjectsStore } from "../store/projectsStore";
+import { API_URL } from "../config/api";
 
 export default function ChatRedirect() {
   const navigate = useNavigate();
@@ -33,13 +34,15 @@ export default function ChatRedirect() {
         // NO PROJECTS FOUND -> Auto-create GENERAL
         const initGeneral = async () => {
              try {
-                // We don't await the navigate here because createProject updates store,
-                // triggering this useEffect again? 
-                // No, better to handle it explicitly to avoid loops.
+                // Connectivity Check to avoid loops
+                // We ping the root /health endpoint (API_URL usually ends in /api)
+                const rootUrl = API_URL.replace(/\/api$/, "");
+                const health = await fetch(`${rootUrl}/health`);
+                if (!health.ok) {
+                    throw new Error("Backend not healthy, skipping auto-creation");
+                }
+
                 await createProject("GENERAL", "Default Operational Context");
-                // Store update will trigger the `projects.length > 0` block above?
-                // `createProject` updates the state, so `projects` dependency changes.
-                // The next render will hit the `if (projects.length > 0)` block.
              } catch (e) {
                  console.error("Failed to auto-create GENERAL project", e);
              }

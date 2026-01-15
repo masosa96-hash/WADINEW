@@ -47,7 +47,11 @@ export const createProject = async (req: AuthenticatedRequest, res: Response) =>
     res.status(201).json(data);
   } catch (error: any) {
     console.error("Error creating project:", error);
-    res.status(500).json({ error: "Failed to create project" });
+    // Log detailed Supabase error if available
+    if (error.details || error.hint || error.message) {
+        console.error("Supabase Details:", { details: error.details, hint: error.hint, message: error.message });
+    }
+    res.status(500).json({ error: "Failed to create project",  details: error.message });
   }
 };
 
@@ -86,7 +90,10 @@ export const crystallize = async (req: AuthenticatedRequest, res: Response) => {
 
   } catch (error: any) {
     console.error("Error crystallizing project:", error);
-    res.status(500).json({ error: "Failed to crystallize" });
+    if (error.details || error.hint || error.message) {
+        console.error("Supabase Details:", { details: error.details, hint: error.hint, message: error.message });
+    }
+    res.status(500).json({ error: "Failed to crystallize", details: error.message });
   }
 };
 
