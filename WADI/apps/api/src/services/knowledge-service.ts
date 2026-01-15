@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { openai } from '../openai'; // Corrected import path based on file proximity
+import { smartLLM } from './ai-service';
 
 export const extractAndSaveKnowledge = async (userId: string, userMessage: string) => {
   try {
@@ -22,8 +22,8 @@ export const extractAndSaveKnowledge = async (userId: string, userMessage: strin
       Mensaje: "${userMessage}"
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await smartLLM.chat.completions.create({
+      model: "gpt-4o-mini", // Or AI_MODELS.smart if we want to be generic
       messages: [{ role: "system", content: "Sos un extractor de información y detector de intenciones." }, { role: "user", content: prompt }],
       response_format: { type: "json_object" }
     });
