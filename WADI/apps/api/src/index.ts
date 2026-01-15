@@ -36,9 +36,8 @@ const app = express();
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
 // --------------------------------------------------
-app.get("/health", (req, res) => {
-  console.log('Health check ping received');
-  res.status(200).send("OK");
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
 // --------------------------------------------------
@@ -194,9 +193,9 @@ app.use((req, res) => {
 app.use(errorHandler as any);
 
 // START SERVER
-const PORT = process.env.PORT || 3000;
-app.listen(asAny(PORT), asAny("0.0.0.0"), () => {
-  console.log(`WADI API running on port ${PORT}`);
+const PORT = process.env.PORT || 10000;
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log('Servidor escuchando en el puerto: ' + PORT);
 });
 
 // Helper for strict listen types if needed, though usually string port is fine in express types
