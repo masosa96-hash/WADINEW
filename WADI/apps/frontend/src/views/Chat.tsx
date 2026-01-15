@@ -63,7 +63,12 @@ export default function Chat() {
                     try {
                         const data = JSON.parse(line.slice(6));
                         if (data.content) {
-                            setStreamingContent(prev => prev + data.content);
+                            // Check for marker in the accumulated content + new chunk
+                            const newContent = data.content;
+                            // We construct the full content to check, but setting state is additive
+                            // logic is complex inside a loop. 
+                            // Easier: Just append to streamingContent, and let a useEffect handle parsing.
+                            setStreamingContent(prev => prev + newContent);
                         }
                     } catch {
                         // ignore broken chunks or non-json
@@ -104,7 +109,36 @@ export default function Chat() {
         return msgs;
   });
 
-  const displayMessages = [...storeMessages];
+  // --- MARKET DETECTION EFFECT ---
+  useEffect(() => {
+    if (!streamingContent) return;
+
+    // Regex to find [CRYSTAL_CANDIDATE: {...}]
+    const match = streamingContent.match(/\[CRYSTAL_CANDIDATE:\s*({.*?})\]/);
+    if (match && match[1]) {
+        try {
+            const candidateData = JSON.parse(match[1]);
+            // Only set if not already set to avoid loops, though strict mode might trigger twice
+            setSuggestion({
+                id: 'temp-' + Date.now(), // Client-side ID until saved
+                content: JSON.stringify({ 
+                    content: candidateData.description, 
+                    name: candidateData.name, 
+                    tags: candidateData.tags 
+                }) // Matching the expected format for the existing UI
+            });
+        } catch (e) {
+            console.error("Failed to parse crystal candidate", e);
+        }
+    }
+  }, [streamingContent]);
+
+  // Clean displayed messages from the marker
+  const cleanContent = (text: string) => {
+      return text.replace(/\[CRYSTAL_CANDIDATE:.*?\]/g, '').trim();
+  };
+
+  const displayMessages = [...storeMessages.map(m => ({...m, content: cleanContent(m.content)}))];
   
   if (optimisticUserMessage) {
       displayMessages.push({
@@ -119,7 +153,7 @@ export default function Chat() {
       displayMessages.push({
           id: 'streaming-assistant',
           role: 'assistant',
-          content: streamingContent, // This updates in real-time
+          content: cleanContent(streamingContent), // Cleaned visual content
           created_at: new Date().toISOString()
       });
   }

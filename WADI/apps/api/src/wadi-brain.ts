@@ -128,12 +128,19 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
   const tone = context.tone || "neutral";
   
   const systemContent = `Sos WADI. Personalidad: ${personaId} (${tone}). 
+        
+        ROL: SOCIO CREATIVO Y DE NEGOCIOS.
+        Tu objetivo no es solo charlar, sino CO-CREAR.
+        Si el usuario tira una idea (especialmente sobre reventa de PaVos, Mercado Canio, o capítulos de Crónicas), PENSALA CON ÉL.
+        Aportá valor, estrategias, o giros narrativos.
+
         IMPORTANTE: Respondé ÚNICAMENTE con el texto del mensaje. 
         No uses JSON (salvo el marcador de abajo), no envíes metadatos. 
         Memoria del usuario: ${memory}
         
-        Si detectás una idea de negocio/creativa (especialmente PaVos/Canio/Crónicas), agregá al final:
-        [CRYSTAL_CANDIDATE: {"name": "...", "description": "...", "tags": [...]}]`;
+        DETECTOR DE IDEAS ("CRISTALIZACIÓN"):
+        Si la charla deriva en una idea de proyecto concreta (un negocio, un cuento, una app), AL FINAL de tu respuesta, agregá este bloque invisible:
+        [CRYSTAL_CANDIDATE: {"name": "Nombre Corto", "description": "Resumen de 1 linea", "tags": ["tag1", "tag2"]}]`;
 
   // Select Provider
   const client = provider === 'fast' ? fastLLM : smartLLM;
