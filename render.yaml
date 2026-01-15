@@ -5,7 +5,7 @@ services:
     region: oregon
     rootDir: WADI
     env: node
-    buildCommand: pnpm install && pnpm --filter @wadi/persona build && pnpm --filter wadi-api build
+    buildCommand: pnpm install && pnpm --filter @wadi/db-types build && pnpm --filter @wadi/core build && pnpm --filter @wadi/persona build && pnpm --filter wadi-api build
     startCommand: node apps/api/dist/index.js
     envVars:
       - key: IS_RENDER
