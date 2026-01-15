@@ -50,3 +50,43 @@ export const createProject = async (req: AuthenticatedRequest, res: Response) =>
     res.status(500).json({ error: "Failed to create project" });
   }
 };
+
+export const crystallize = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { suggestionContent } = req.body;
+
+    if (!suggestionContent) {
+        return res.status(400).json({ error: "No content provided" });
+    }
+
+    let parsed;
+    try {
+        parsed = typeof suggestionContent === 'string' ? JSON.parse(suggestionContent) : suggestionContent;
+    } catch {
+        parsed = { name: "Idea Sin Nombre", content: suggestionContent, tags: [] };
+    }
+    
+    const { data, error } = await supabase
+      .from("projects")
+      .insert([
+        {
+          user_id: userId,
+          name: parsed.name || "Proyecto Nuevo",
+          description: parsed.content || parsed.description || "Generado por WADI",
+          status: "PLANNING",
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ project: data });
+
+  } catch (error: any) {
+    console.error("Error crystallizing project:", error);
+    res.status(500).json({ error: "Failed to crystallize" });
+  }
+};
+
