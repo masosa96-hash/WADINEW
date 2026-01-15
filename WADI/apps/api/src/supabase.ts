@@ -14,5 +14,5 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient<Database>(
   supabaseUrl || "https://placeholder.supabase.co",
-  supabaseKey || "placeholder"
+  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseKey || "placeholder"
 );

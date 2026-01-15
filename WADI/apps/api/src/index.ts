@@ -136,66 +136,23 @@ app.get("/system/debug-files", (req, res) => {
       : "ASSETS_DIR_NOT_FOUND";
 
     res.json({
-      frontendPath,
-      cwd: process.cwd(),
-      rootContents,
-      assetsContents,
-      timestamp: Date.now(),
-      version: "5.1.0", // Bump version to verify deploy
+      version: "5.1.0",
+      env: process.env.NODE_ENV
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     res.status(500).json({
-      error: err.message,
-      stack: err.stack,
-      frontendPath,
+      error: err.message
     });
   }
 });
 
 // --------------------------------------------------
-// PRIORITY 2: Static Assets (Correctly Ordered)
+// PRIORITY 2: Health Check (Render)
 // --------------------------------------------------
-
-// Serve specialized files first
-app.get("/sw.js", (req, res) => {
-  res.sendFile(path.join(frontendPath, "sw.js"), {
-    headers: { "Content-Type": "application/javascript" },
-  });
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
 });
-
-app.get("/manifest.json", (req, res) => {
-  res.sendFile(path.join(frontendPath, "manifest.json"), {
-    headers: { "Content-Type": "application/manifest+json" },
-  });
-});
-
-// Serve assets with strict MIME types and NO fallback to index.html
-// This ensures that if a CSS/JS file is missing, it 404s instead of returning HTML
-app.use(
-  "/assets",
-  express.static(path.join(frontendPath, "assets"), {
-    fallthrough: false, // CRITICAL: Do not pass to next middleware if file missing
-    etag: true, // Let browser cache logic work
-    lastModified: true,
-    setHeaders: (res, path) => {
-      // Versioned assets (Vite uses hashes) can be cached forever-ish
-      if (path.match(/\.[0-9a-f]{8,}\./)) {
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      } else {
-        res.setHeader("Cache-Control", "no-cache");
-      }
-    },
-  })
-);
-
-// Fallback for strict strict asset 404s (double safety)
-app.use(/\/assets\/.*/, (req, res) => {
-  res.status(404).send("Asset Not Found");
-});
-
-// Serve the rest of the static files (favicon, etc) from root
-app.use(express.static(frontendPath));
 
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
@@ -223,14 +180,10 @@ app.all(/\/api\/.*/, (req, res) => {
 });
 
 // --------------------------------------------------
-// PRIORITY 3: SPA Fallback
+// PRIORITY 3: Fallback (404)
 // --------------------------------------------------
-app.get(/.*/, (req, res) => {
-  // Don't serve index.html for API calls or obviously wrong paths that slipped through
-  if (req.path.startsWith("/api") || req.path.startsWith("/assets")) {
-    return res.status(404).send("Not Found");
-  }
-  res.sendFile(path.join(frontendPath, "index.html"));
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found", path: req.path });
 });
 
 // Error Handler
