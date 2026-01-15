@@ -93,22 +93,12 @@ export class ProjectsService {
     const project = await this.get(userId, projectId);
     if (!project) throw new Error("Project not found");
 
-    const { AIQueueService } = await import("../../services/aiQueueService");
-
-    // 2. Dispatch AI Job
-    // TODO: Fetch recent activity context if needed
-    const jobInfo = await AIQueueService.dispatch(
-      userId,
-      "SUGGEST_NEXT_ACTIONS",
-      {
-        projects: [project],
-        recentActivity: [], // Placeholder for now
-      }
-    );
+    // 2. Dispatch AI Job (MOCKED for No-Redis)
+    console.log("[ProjectService] Analysis requested (Redis disabled, skipping execution)");
 
     return {
-      message: "AI Analysis started",
-      jobId: jobInfo.jobId,
+      message: "AI Analysis started (MOCKED)",
+      jobId: "mock-job-" + Date.now(),
     };
   }
 

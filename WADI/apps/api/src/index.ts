@@ -11,7 +11,7 @@ import routes from "./api-routes"; // TS file
 import { requestLogger } from "./middleware/requestLogger";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { errorHandler } from "./middleware/error.middleware";
-import { startWorker } from "./queue/worker";
+// import { startWorker } from "./queue/worker";
 // import "./queue/aiWorker"; // Start AI Worker side-effect
 
 // Initialize Worker in the same process

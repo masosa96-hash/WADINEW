@@ -34,17 +34,22 @@ const pdf = require("pdf-parse");
 // import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
-// Queue imports removed
-// const job = await chatQueue.getJob(jobId);
+import { getRelevantKnowledge } from "./services/knowledge-service";
 
-    // Queue Disabled: Return completed dummy
-    return res.json({
-        jobId,
-        status: "completed",
-        result: { response: "Processing bypassed (Sync Mode)" },
-        error: null,
-        progress: 100
-    });
+const router = Router();
+
+// Helper: Async Wrapper
+const asyncHandler =
+  (
+    fn: (
+      req: AuthenticatedRequest,
+      res: Response,
+      next: NextFunction
+    ) => Promise<void | unknown>
+  ) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req as AuthenticatedRequest, res, next)).catch(next);
+  };
 
 // The frontend I wrote waits for `response.json()` and looks for `response` or `message`.
 // So direct response works. The job status endpoint is irrelevant for this new App.tsx.

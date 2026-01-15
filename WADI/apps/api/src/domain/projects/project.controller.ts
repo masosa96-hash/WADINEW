@@ -75,6 +75,13 @@ export class ProjectsController {
   static async getAnalysisStatus(req: Request, res: Response, next: NextFunction) {
       try {
         const { jobId } = req.params;
+        // REDIS DISABLED: Return pure dummy
+        return res.json({
+            jobId,
+            state: "completed",
+            result: { analysis: "Analysis bypassed (No Redis)" }
+        });
+        /*
         const { aiQueue } = await import("../../queue/aiQueue");
         const job = await aiQueue.getJob(jobId);
 
@@ -90,6 +97,7 @@ export class ProjectsController {
             state,
             result
         });
+        */
       } catch (error) {
           next(error);
       }
