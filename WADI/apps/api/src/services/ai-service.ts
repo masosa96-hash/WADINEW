@@ -4,7 +4,7 @@ dotenv.config({ path: '../../.env' });
 
 // 1. SMART LLM (OpenAI) - Para tareas complejas, tools y razonamiento
 export const smartLLM = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Default OpenAI Key
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key", // Default OpenAI Key (Prevents crash if missing)
 });
 
 // 2. FAST LLM (Groq) - Para chat streaming y respuestas instantáneas
