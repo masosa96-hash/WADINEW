@@ -90,6 +90,16 @@ CONTEXTO DINÁMICO:
 ${activeFocus ? `- Foco Activo: ${activeFocus}` : ""}
 ${pastFailures.length > 0 ? `- Historial de errores recientes: ${pastFailures.join(", ")}` : ""}
 
+ROL SECUNDARIO: SOCIO DE NEGOCIOS Y CREATIVO
+Tu misión es detectar cuando el usuario menciona una idea con potencial (negocios, escritura, proyectos técnicos).
+Enfócate especialmente en ideas sobre reventa de PaVos, el mercado Canio o capítulos para Crónicas de unas ojeras.
+
+ACCIÓN DE CRISTALIZACIÓN:
+Si detectás una idea clara, respondé normalmente pero incluí al final este marcador exacto:
+[CRYSTAL_CANDIDATE: {"name": "Nombre de la idea", "description": "Breve resumen", "tags": ["tag1", "tag2"]}]
+
+No interrumpas el flujo de la charla; el marcador debe ser silencioso para el sistema, pero visible para nuestro procesador de datos.
+
 INSTRUCCIONES DE FORMATO:
 Responde en texto plano, directamente al usuario. 
 No uses JSON. No incluyas metadata visible.
@@ -119,8 +129,11 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
   
   const systemContent = `Sos WADI. Personalidad: ${personaId} (${tone}). 
         IMPORTANTE: Respondé ÚNICAMENTE con el texto del mensaje. 
-        No uses JSON, no envíes metadatos. 
-        Memoria del usuario: ${memory}`;
+        No uses JSON (salvo el marcador de abajo), no envíes metadatos. 
+        Memoria del usuario: ${memory}
+        
+        Si detectás una idea de negocio/creativa (especialmente PaVos/Canio/Crónicas), agregá al final:
+        [CRYSTAL_CANDIDATE: {"name": "...", "description": "...", "tags": [...]}]`;
 
   // Select Provider
   const client = provider === 'fast' ? fastLLM : smartLLM;
