@@ -9,15 +9,18 @@ interface Run {
 export default function RunHistoryList({ runs }: { runs: Run[] }) {
   // Parsing helper
   const parseOutput = (text: string) => {
+    // 1. Clean streaming artifacts (trailing closing brackets from omitted JSON blocks)
+    let cleanText = text.replace(/}\s*$/, "").trim(); // Remove trailing }
+    
+    // 2. Hide [CRYSTAL_CANDIDATE: ...] block
+    cleanText = cleanText.replace(/\[CRYSTAL_CANDIDATE:.*?\]/s, "").trim();
+
     try {
-      // Try to parse as JSON first
-      const json = JSON.parse(text);
+      const json = JSON.parse(cleanText);
       if (json.response) return json.response;
-      return text;
+      return cleanText;
     } catch {
-      // If valid JSON, return response. If not (or simple text), return raw.
-      // Also handle potential cleaner plain text if model falls back.
-      return text;
+      return cleanText;
     }
   };
 

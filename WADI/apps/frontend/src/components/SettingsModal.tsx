@@ -84,7 +84,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
             <button 
-                onClick={onClose}
+                onClick={async () => {
+                   // Call PATCH API
+                   try {
+                       const { session } = useAuthStore.getState();
+                       if (!session?.access_token) return;
+
+                       // Assuming API_URL is imported or available from context/config
+                       // Just using relative path /api prefix handled by proxy? 
+                       // No, we need full URL from config or useSettingsStore actions.
+                       // Let's implement logic here for speed, or better, move to store action later.
+                       
+                       const response = await fetch(`${import.meta.env.VITE_API_URL || "https://wadi-wxg7.onrender.com"}/api/user/preferences`, {
+                           method: 'PATCH',
+                           headers: {
+                               'Content-Type': 'application/json',
+                               'Authorization': `Bearer ${session.access_token}`
+                           },
+                           body: JSON.stringify({
+                               naturalness_level: naturalnessLevel,
+                               custom_instructions: customInstructions,
+                               // Other prefs...
+                           })
+                       });
+
+                       if (response.ok) {
+                           onClose();
+                           // Optional: refresh profile in store
+                       } else {
+                           console.error("Failed to save settings");
+                       }
+                   } catch (e) {
+                       console.error(e);
+                   }
+                }}
                 className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"
             >
                 Confirmar Cambios

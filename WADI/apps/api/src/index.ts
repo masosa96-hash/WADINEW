@@ -36,81 +36,26 @@ const app = express();
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
 // --------------------------------------------------
-app.use(
-  cors({
-    origin: 'https://wadi-wxg7.onrender.com',
-    credentials: true
-  })
-);
-
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// --------------------------------------------------
-// SECURITY: CSP (Content Security Policy)
-// --------------------------------------------------
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'", "https://wadi-wxg7.onrender.com"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://js.hcaptcha.com",
-          "https://wadi-wxg7.onrender.com",
-        ],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://hcaptcha.com",
-          "https://fonts.googleapis.com",
-        ],
-        styleSrcElem: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fonts.googleapis.com",
-        ],
-        imgSrc: [
-          "'self'",
-          "data:",
-          "blob:",
-          "https://*.supabase.co",
-          "https://*.supabase.in",
-          "https://wadi-wxg7.onrender.com",
-        ],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-        connectSrc: [
-          "'self'",
-          "https://*.supabase.co",
-          "https://*.supabase.in",
-          "wss://*.supabase.co",
-          "https://api.openai.com",
-          "https://api.groq.com",
-          "https://*.hcaptcha.com",
-          "https://hcaptcha.com",
-          "https://fonts.googleapis.com",
-          "https://fonts.gstatic.com",
-          "https://wadi-wxg7.onrender.com",
-        ],
-        frameSrc: [
-          "'self'",
-          "https://*.hcaptcha.com",
-          "https://newassets.hcaptcha.com",
-        ],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-  })
-);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://wadi-wxg7.onrender.com",
-  "https://ideal-essence-production.up.railway.app", // Kivo/WADI prod
 ];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true
+  })
+);
 
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
