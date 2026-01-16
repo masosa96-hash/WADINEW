@@ -141,8 +141,11 @@ export default function Chat() {
   }, [streamingContent]);
 
   // Clean displayed messages from the marker
+  // Clean displayed messages from the marker
+  // IMPROVED REGEX: Matches from the tag start until the very end of the string to avoid nested bracket issues.
   const cleanContent = (text: string) => {
-      return text.replace(/\[CRYSTAL_CANDIDATE:.*?\]/g, '').trim();
+      // Option 1: Remove if it appears at the end
+      return text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*$/, '').trim();
   };
 
   const displayMessages = [...storeMessages.map(m => ({...m, content: cleanContent(m.content)}))];
