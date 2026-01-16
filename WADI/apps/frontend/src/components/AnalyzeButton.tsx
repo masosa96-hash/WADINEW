@@ -1,6 +1,6 @@
 import React from "react";
 import { useAIStore } from "../store/aiStore";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { API_URL, getHeaders } from "../config/api";
 
 interface AnalyzeButtonProps {
