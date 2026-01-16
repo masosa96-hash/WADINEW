@@ -49,7 +49,7 @@ export default function Chat() {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({ message: currentInput })
+            body: JSON.stringify({ input: currentInput })
         });
 
         if (!response.body) return;
