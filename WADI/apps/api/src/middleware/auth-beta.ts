@@ -27,7 +27,8 @@ export const authenticate = () => {
       const { data: { user }, error } = await supabase.auth.getUser(token);
 
       if (error || !user) {
-        return res.status(401).json({ error: "Invalid token" });
+        console.error("Auth Middleware Failed:", { error: error?.message, userFound: !!user });
+        return res.status(401).json({ error: "Invalid token", details: error?.message });
       }
 
       (req as AuthenticatedRequest).user = {

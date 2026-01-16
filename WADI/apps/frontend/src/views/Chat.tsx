@@ -3,6 +3,7 @@ import { API_URL } from "../config/api";
 import { useParams } from 'react-router-dom';
 import { Send, User, Bot, Info } from 'lucide-react';
 import { useRunsStore } from '../store/runsStore';
+import { supabase } from '../config/supabase';
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -165,12 +166,13 @@ export default function Chat() {
   useEffect(() => {
     const checkSuggestions = async () => {
         try {
-            // Standard approach: Get token if needed, but for now we try/catch quietly
-            // const token = localStorage.getItem('sb-access-token'); 
+            const { session } = await supabase.auth.getSession();
+            const token = session?.access_token;
             
             const response = await fetch(`${API_URL}/projects/suggestions/pending`, {
                  headers: { 
-                     'Content-Type': 'application/json'
+                     'Content-Type': 'application/json',
+                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                  }
             });
             if (response.ok) {
@@ -196,9 +198,15 @@ export default function Chat() {
       if (!suggestion) return;
       setIsCrystallizing(true);
       try {
+          const { session } = await supabase.auth.getSession();
+          const token = session?.access_token;
+
           const res = await fetch(`${API_URL}/projects/crystallize`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                  'Content-Type': 'application/json',
+                  ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+              },
               body: JSON.stringify({ suggestionContent: suggestion.content })
           });
           if (res.ok) {
