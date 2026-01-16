@@ -4,10 +4,12 @@ import { useParams } from 'react-router-dom';
 import { Send, User, Bot, Info } from 'lucide-react';
 import { useRunsStore } from '../store/runsStore';
 import { supabase } from '../config/supabase';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const { runs, fetchRuns, loading } = useRunsStore();
+  const { session } = useAuthStore();
   
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -18,8 +20,8 @@ export default function Chat() {
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) fetchRuns(id);
-  }, [id, fetchRuns]);
+    if (id && session?.access_token) fetchRuns(id);
+  }, [id, fetchRuns, session?.access_token]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
