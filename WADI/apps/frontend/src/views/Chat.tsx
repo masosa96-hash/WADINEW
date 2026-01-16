@@ -40,9 +40,15 @@ export default function Chat() {
     // En nuestra implementación, usamos hasStreamingContent + displayMessages para esto.
 
     try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        
         const response = await fetch(`${API_URL}/projects/${id}/runs`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({ message: currentInput })
         });
 

@@ -30,12 +30,20 @@ export const useRunsStore = create<RunsState>((set) => ({
   fetchRuns: async (projectId: string) => {
     set({ loading: true, error: null, currentProjectId: projectId });
     try {
-      const token = useAuthStore.getState().session?.access_token;
+      let token = useAuthStore.getState().session?.access_token;
+      
+      // Retry logic for auth race condition
+      if (!token) {
+           console.warn("Token missing in runsStore, checking supabase...");
+           // Optional: await delay(500); 
+           // We'll rely on App.tsx blocking, but if we are here and no token, 
+           // let's try to get it directly if possible or just fail gracefully.
+           const { data } = await import('../config/supabase').then(m => m.supabase.auth.getSession());
+           token = data.session?.access_token;
+      }
+      
       if (!token) throw new Error("Not authenticated");
 
-      // Uses the route: GET /api/projects/:id/runs
-      // Note: runsRouter uses /projects/:id/runs but mounted at /api
-      // So path is /api/projects/:id/runs
       const res = await fetch(`${API_URL}/projects/${projectId}/runs`, {
         headers: getHeaders(token),
       });
