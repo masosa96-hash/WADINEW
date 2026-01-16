@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 
+import { KeepAlive } from "./components/KeepAlive";
+
 function App() {
   const { initialize, loading } = useAuthStore();
 
@@ -15,6 +17,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-wadi-base text-wadi-text font-sans">
+       <KeepAlive />
        <Outlet />
     </div>
   );

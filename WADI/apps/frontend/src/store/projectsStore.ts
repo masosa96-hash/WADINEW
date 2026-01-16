@@ -26,14 +26,29 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
   fetchProjects: async () => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      if (!token) throw new Error("Not authenticated");
+      let token = useAuthStore.getState().session?.access_token;
+      
+      // Sincronización de Sesión (Retry simple)
+      if (!token) {
+          // Intentamos esperar un poco o refrescar desde la fuente de verdad
+          /* 
+             NOTE: useAuthStore initialize is async but getState is sync.
+             If App.tsx blocked, we should have it. If not, maybe session expired?
+          */
+           // console.warn("Token missing in store, checking supabase...");
+           // We can't await initialize here efficiently without circular deps or side effects.
+           // Better to throw a specific error that UI can handle or just rely on App blocking.
+           throw new Error("Not authenticated (No session)");
+      }
 
       const res = await fetch(`${API_URL}/projects`, {
         headers: getHeaders(token),
       });
 
-      if (!res.ok) throw new Error("Failed to fetch projects");
+      if (!res.ok) {
+          if (res.status === 401) throw new Error("Unauthorized (401)");
+          throw new Error("Failed to fetch projects");
+      }
 
       const data = await res.json();
       set({ projects: data });
