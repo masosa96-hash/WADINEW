@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function ProtectedRoute({ children }: { children: React.ReactElement }) {
   const { session } = useAuthStore();
