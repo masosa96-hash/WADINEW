@@ -26,7 +26,7 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
   fetchProjects: async () => {
     set({ loading: true, error: null });
     try {
-      let token = useAuthStore.getState().session?.access_token;
+      const token = useAuthStore.getState().session?.access_token;
       
       // Sincronización de Sesión (Retry simple)
       if (!token) {
