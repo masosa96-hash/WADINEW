@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { X, Shield, Activity, Fingerprint } from 'lucide-react';
@@ -9,7 +9,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-  const { customInstructions, setCustomInstructions } = useSettingsStore();
+  const { customInstructions } = useSettingsStore();
   const { session } = useAuthStore();
   const [naturalnessLevel, setNaturalnessLevel] = React.useState<number>(50);
 
