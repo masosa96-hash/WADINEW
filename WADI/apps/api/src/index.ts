@@ -36,6 +36,13 @@ const app = express();
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
 // --------------------------------------------------
+app.use(
+  cors({
+    origin: 'https://wadi-wxg7.onrender.com',
+    credentials: true
+  })
+);
+
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
@@ -76,11 +83,9 @@ app.use(
         fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
         connectSrc: [
           "'self'",
-          "https://smkbiguvgiscojwxgbae.supabase.co",
           "https://*.supabase.co",
           "https://*.supabase.in",
           "wss://*.supabase.co",
-          "wss://smkbiguvgiscojwxgbae.supabase.co",
           "https://api.openai.com",
           "https://api.groq.com",
           "https://*.hcaptcha.com",
@@ -107,12 +112,6 @@ const allowedOrigins = [
   "https://ideal-essence-production.up.railway.app", // Kivo/WADI prod
 ];
 
-app.use(
-  cors({
-    origin: 'https://wadi-wxg7.onrender.com',
-    credentials: true
-  })
-);
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 // app.use(requestLogger as any);
