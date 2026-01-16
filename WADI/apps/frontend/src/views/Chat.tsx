@@ -42,7 +42,6 @@ export default function Chat() {
     // En nuestra implementación, usamos hasStreamingContent + displayMessages para esto.
 
     try {
-    try {
         let { data: { session } } = await supabase.auth.getSession();
         let token = session?.access_token;
         
