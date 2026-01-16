@@ -22,3 +22,10 @@ export const supabase = createClient(
   supabaseUrl,
   supabaseServiceKey
 );
+
+try {
+  const url = new URL(supabaseUrl);
+  console.log("🔌 Supabase Context:", url.hostname);
+} catch (e) {
+  console.error("❌ Invalid SUPABASE_URL format");
+}
