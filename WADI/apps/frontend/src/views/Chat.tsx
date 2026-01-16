@@ -145,9 +145,24 @@ export default function Chat() {
   // Clean displayed messages from the marker
   // Clean displayed messages from the marker
   // IMPROVED REGEX: Matches from the tag start until the very end of the string to avoid nested bracket issues.
+  // Clean displayed messages from the marker and artifacts
   const cleanContent = (text: string) => {
-      // Option 1: Remove if it appears at the end
-      return text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*$/, '').trim();
+      // 1. Remove the Crystal Candidate block fully
+      let cleaned = text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*$/, '');
+      
+      // 2. Aggressive cleanup of trailing JSON artifacts (brackets, braces)
+      // Often LLMs allow a trailing "}" or "]" if they context switch mid-stream.
+      // We trim whitespace first, then check for trailing non-sentence punctuation if it looks like code.
+      cleaned = cleaned.trim();
+      
+      // If it ends with a stray "}" or "]" that shouldn't be there (simple heuristic)
+      // This is risky if user posted code, but for standard chat it's safer.
+      // Better: remove specific known request artifact leaks if any, but user said "}" specifically.
+      if (cleaned.endsWith('}') && !cleaned.includes('{')) {
+          cleaned = cleaned.slice(0, -1);
+      }
+      
+      return cleaned.trim();
   };
 
   const displayMessages = [...storeMessages.map(m => ({...m, content: cleanContent(m.content)}))];
