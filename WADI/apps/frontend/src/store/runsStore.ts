@@ -52,8 +52,12 @@ export const useRunsStore = create<RunsState>((set) => ({
 
       const data = await res.json();
       set({ runs: data });
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: "An unknown error occurred" });
+      }
     } finally {
       set({ loading: false });
     }
@@ -75,8 +79,12 @@ export const useRunsStore = create<RunsState>((set) => ({
 
       const newRun = await res.json();
       set((state) => ({ runs: [newRun, ...state.runs] }));
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: "An unknown error occurred" });
+      }
       throw error;
     } finally {
       set({ loading: false });
