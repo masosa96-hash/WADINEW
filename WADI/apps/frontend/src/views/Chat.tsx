@@ -42,7 +42,7 @@ export default function Chat() {
     // En nuestra implementación, usamos hasStreamingContent + displayMessages para esto.
 
     try {
-        let { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         let token = session?.access_token;
         
         // Force token refresh if missing, double check with store
