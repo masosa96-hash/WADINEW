@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { API_URL, getHeaders } from "../config/api";
-import { useAuthStore } from "./authStore";
+import { useAuthStore } from "./useAuthStore";
 
 interface Project {
   id: string;

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { User } from "@supabase/supabase-js";
+import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../config/supabase";
 
 interface AuthResponse {
@@ -9,6 +9,7 @@ interface AuthResponse {
 
 interface AuthState {
   user: User | null;
+  session: Session | null;
   loading: boolean;
   signIn: (identifier: string, password: string) => Promise<AuthResponse>;
   signUp: (
@@ -31,6 +32,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  session: null,
   loading: true,
 
   setUser: (user) => set({ user }),
@@ -41,11 +43,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    set({ user: session?.user || null, loading: false });
+    set({ user: session?.user || null, session, loading: false });
 
     // Listen to changes
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ user: session?.user || null });
+      set({ user: session?.user || null, session });
     });
   },
 
