@@ -301,20 +301,37 @@ export const useChatStore = create<ChatState>()(
         const validIds = ids && ids.length > 0 ? ids : selectedIds;
         if (validIds.length === 0) return;
 
-        await supabase.from("conversations").delete().in("id", validIds);
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        if (!token) return;
 
-        set((state) => ({
-          conversations: state.conversations.filter(
-            (c) => !validIds.includes(c.id)
-          ),
-          selectedIds: ids ? state.selectedIds : [],
-          activeId: validIds.includes(state.activeId || "")
-            ? null
-            : state.activeId,
-          messages: validIds.includes(state.activeId || "")
-            ? []
-            : state.messages,
-        }));
+        try {
+          const res = await fetch(`${API_URL}/api/conversations/bulk`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ids: validIds }),
+          });
+
+          if (!res.ok) throw new Error("Bulk delete failed");
+
+          set((state) => ({
+            conversations: state.conversations.filter(
+              (c) => !validIds.includes(c.id)
+            ),
+            selectedIds: ids ? state.selectedIds : [],
+            activeId: validIds.includes(state.activeId || "")
+              ? null
+              : state.activeId,
+            messages: validIds.includes(state.activeId || "")
+              ? []
+              : state.messages,
+          }));
+        } catch (error) {
+          console.error("Error deleting conversations:", error);
+          useLogStore.getState().addLog("Error eliminando conversaciones.", "error");
+        }
       },
 
       resetChat: () => {

@@ -225,6 +225,30 @@ router.get(
   })
 );
 
+// Bulk Delete Conversations
+router.delete(
+  "/conversations/bulk",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError("BAD_REQUEST", "No IDs provided for bulk delete", 400);
+    }
+
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .in("id", ids)
+      .eq("user_id", user!.id);
+
+    if (error) throw new AppError("DB_ERROR", error.message);
+
+    res.json({ success: true, count: ids.length });
+  })
+);
+
 // ------------------------------------------------------------------
 // DOCUMENT INTAKE (Intake & RAG Phase 1)
 // ------------------------------------------------------------------
