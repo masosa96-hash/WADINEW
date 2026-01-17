@@ -69,7 +69,7 @@ export default function ProjectBoard() {
                     className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors animate-in fade-in slide-in-from-left-2"
                 >
                     <Trash2 size={14} />
-                    <span>Borrar ({selectedIds.length})</span>
+                    <span>Borrar {selectedIds.length} proyectos</span>
                 </button>
             )}
          </div>

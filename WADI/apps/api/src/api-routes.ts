@@ -155,23 +155,20 @@ router.delete(
   authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
-    const { projectIds } = req.body;
+    const { projectIds } = req.body; // Array de UUIDs
 
     if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
-      return res.status(400).json({ error: "TL;DR: Mandame un array de Project IDs válido." });
+      return res.status(400).json({ error: "TL;DR: No mandaste IDs para borrar." });
     }
 
     const { error } = await supabase
       .from("projects")
       .delete()
-      .in("id", projectIds)
-      .eq("user_id", user!.id);
+      .eq("user_id", user!.id) // Seguridad: solo borra proyectos del dueño
+      .in("id", projectIds);
 
-    if (error) {
-       return res.status(500).json({ error: "F en el chat: No se pudieron eliminar los proyectos." });
-    }
-
-    res.json({ message: "Proyectos eliminados. Limpieza completada." });
+    if (error) return res.status(500).json({ error: "F: Error en la base de datos." });
+    return res.status(200).json({ message: "Proyectos eliminados con éxito." });
   })
 );
 
