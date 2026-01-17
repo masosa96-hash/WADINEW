@@ -275,12 +275,38 @@ export const useChatStore = create<ChatState>()(
       },
 
       deleteConversation: async (id: string) => {
-        await supabase.from("conversations").delete().eq("id", id);
+        // Optimistic Update
+        const previousConversations = get().conversations; // Backup for rollback if needed (optional)
+        const previousActive = get().activeId;
+
         set((state) => ({
           conversations: state.conversations.filter((c) => c.id !== id),
           activeId: state.activeId === id ? null : state.activeId,
           messages: state.activeId === id ? [] : state.messages,
         }));
+
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        if (!token) return;
+
+        try {
+          const res = await fetch(`${API_URL}/api/conversations/${id}`, {
+             method: 'DELETE',
+             headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (!res.ok) throw new Error("Delete failed");
+          
+          // Tabla Rasa check
+          if (get().conversations.length === 0) {
+             useLogStore.getState().addLog("Tabla rasa. El caos se fue, ahora a ver qué plan real tenés.", "info");
+          }
+
+        } catch (error) {
+          console.error("Error deleting conversation:", error);
+          useLogStore.getState().addLog("Error eliminando chat. Restaurando...", "error");
+          // Rollback
+          set({ conversations: previousConversations, activeId: previousActive });
+        }
       },
 
       toggleSelection: (id) => {
@@ -301,36 +327,49 @@ export const useChatStore = create<ChatState>()(
         const validIds = ids && ids.length > 0 ? ids : selectedIds;
         if (validIds.length === 0) return;
 
+        // Backup
+        const previousConversations = get().conversations;
+        
+        // Optimistic Update
+        set((state) => ({
+            conversations: state.conversations.filter(
+              (c) => !validIds.includes(c.id)
+            ),
+            selectedIds: [], // Clear selection
+            activeId: validIds.includes(state.activeId || "") ? null : state.activeId,
+            messages: validIds.includes(state.activeId || "") ? [] : state.messages,
+        }));
+
         const token = (await supabase.auth.getSession()).data.session?.access_token;
-        if (!token) return;
+        if (!token) {
+            // Restore if no token (shouldn't happen)
+            set({ conversations: previousConversations });
+            return;
+        }
 
         try {
+          // Use 'conversationIds' body param as per new backend spec
           const res = await fetch(`${API_URL}/api/conversations/bulk`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ ids: validIds }),
+            body: JSON.stringify({ conversationIds: validIds }),
           });
 
           if (!res.ok) throw new Error("Bulk delete failed");
+          
+           // Tabla Rasa check
+          if (get().conversations.length === 0) {
+             useLogStore.getState().addLog("Tabla rasa. El caos se fue, ahora a ver qué plan real tenés.", "info");
+          }
 
-          set((state) => ({
-            conversations: state.conversations.filter(
-              (c) => !validIds.includes(c.id)
-            ),
-            selectedIds: ids ? state.selectedIds : [],
-            activeId: validIds.includes(state.activeId || "")
-              ? null
-              : state.activeId,
-            messages: validIds.includes(state.activeId || "")
-              ? []
-              : state.messages,
-          }));
         } catch (error) {
           console.error("Error deleting conversations:", error);
-          useLogStore.getState().addLog("Error eliminando conversaciones.", "error");
+          useLogStore.getState().addLog("Error eliminando conversaciones. Restaurando...", "error");
+          // Rollback
+          set({ conversations: previousConversations, selectedIds: validIds });
         }
       },
 

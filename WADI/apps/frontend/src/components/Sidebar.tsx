@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { useChatStore } from '../store/chatStore';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SettingsModal } from './SettingsModal';
 import { Trash2, CheckSquare, Square } from 'lucide-react';
@@ -26,6 +26,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const { 
     conversations, 
@@ -40,7 +41,7 @@ export const Sidebar = () => {
 
   useEffect(() => {
     fetchConversations();
-  }, []);
+  }, [fetchConversations]);
 
   const handleOpenChat = (id: string) => {
      openConversation(id);
@@ -98,7 +99,38 @@ export const Sidebar = () => {
       </nav>
 
       {/* Historial de Conversaciones */}
-      <div className="px-4 py-2 mt-2 flex-1 overflow-hidden flex flex-col min-h-0 border-t border-gray-100">
+      <div className="px-4 py-2 mt-2 flex-1 overflow-hidden flex flex-col min-h-0 border-t border-gray-100 relative">
+         {/* Safety Modal (Inline for simplicity) */}
+         {showDeleteConfirm && (
+             <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 rounded-xl">
+                 <div className="bg-red-50 p-3 rounded-full mb-2 text-red-500">
+                     <Trash2 size={24} />
+                 </div>
+                 <h4 className="text-sm font-bold text-gray-800 mb-1">¿Estás seguro?</h4>
+                 <p className="text-xs text-gray-500 mb-4 px-2">
+                    Vas a eliminar {selectedIds.length} chats. El caos se irá para siempre.
+                 </p>
+                 <div className="flex gap-2 w-full">
+                     <button 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 py-1.5 px-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200"
+                     >
+                        Cancelar
+                     </button>
+                     <button 
+                        onClick={() => {
+                            deleteSelectedConversations();
+                            setShowDeleteConfirm(false);
+                            setIsSelectionMode(false);
+                        }}
+                        className="flex-1 py-1.5 px-3 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
+                     >
+                        Borrar Todo
+                     </button>
+                 </div>
+             </div>
+         )}
+
          <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Historial</h3>
             <button 
@@ -112,7 +144,7 @@ export const Sidebar = () => {
          
          {isSelectionMode && selectedIds.length > 0 && (
              <button 
-                onClick={() => deleteSelectedConversations()}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="w-full mb-3 flex items-center justify-center gap-2 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
              >
                 <Trash2 size={12} />
@@ -125,7 +157,7 @@ export const Sidebar = () => {
                <div 
                  key={conv.id}
                  className={`
-                    group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all cursor-pointer
+                    group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all cursor-pointer relative
                     ${activeId === conv.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}
                  `}
                  onClick={() => {
@@ -147,6 +179,19 @@ export const Sidebar = () => {
                   <span className="truncate flex-1">
                       {conv.title || "Nueva Conversación"}
                   </span>
+
+                  {!isSelectionMode && (
+                      <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            useChatStore.getState().deleteConversation(conv.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition-all absolute right-2 bg-gradient-to-l from-white via-white to-transparent pl-4"
+                        title="Eliminar"
+                      >
+                          <Trash2 size={14} />
+                      </button>
+                  )}
                </div>
             ))}
             

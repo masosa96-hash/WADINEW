@@ -12,10 +12,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { customInstructions } = useSettingsStore();
   const { session } = useAuthStore();
   const [naturalnessLevel, setNaturalnessLevel] = React.useState<number>(50);
+  const [activePersona, setActivePersona] = React.useState<string>("NORMAL");
 
-  // Load initial pseudo-state (Since we don't have a real DB field for this yet, we just mock it visualy or parse from prompt if needed)
-  // For now, it's a visual control that "adjusts params".
-  
+  // Load initial state mock (would process from customInstructions or fetch if we had store field)
+  // For now just defaulting.
+
   if (!isOpen) return null;
 
   return (
@@ -41,6 +42,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Content */}
         <div className="p-6 space-y-8">
           
+          {/* Persona Selection */}
+           <div className="space-y-2">
+             <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Modo Base</label>
+             <select 
+                value={activePersona} 
+                onChange={(e) => setActivePersona(e.target.value)}
+                className="w-full p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+             >
+                 <option value="NORMAL">Normal</option>
+                 <option value="BASED_REDDIT">Based Reddit (Entre Ríos)</option>
+                 <option value="EXECUTIVE">Ejecutivo (Sin tonterías)</option>
+                 <option value="CTO">CTO Técnico</option>
+             </select>
+           </div>
+
           {/* Naturalness Filter */}
           <div className="space-y-4">
              <div className="flex items-center justify-between">
@@ -49,7 +65,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <span>Filtro de Naturalidad</span>
                 </div>
                 <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                    {naturalnessLevel > 75 ? 'BASED' : naturalnessLevel > 40 ? 'NORMAL' : 'ROBOT'}
+                    {naturalnessLevel > 75 ? 'EXTREMO' : naturalnessLevel > 40 ? 'ALTO' : 'MODERADO'}
                 </span>
              </div>
              
@@ -64,7 +80,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
              <p className="text-xs text-gray-400">
                 Determina qué tan agresivamente WADI detecta y corrige respuestas genéricas. 
                 <br/>
-                Mayor nivel = Más informalidad y voseo (Entre Ríos Edition).
+                Mayor nivel = Más informalidad.
              </p>
           </div>
 
@@ -85,17 +101,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
             <button 
                 onClick={async () => {
-                   // Call PATCH API
                    try {
                        const { session } = useAuthStore.getState();
                        if (!session?.access_token) return;
 
-                       // Assuming API_URL is imported or available from context/config
-                       // Just using relative path /api prefix handled by proxy? 
-                       // No, we need full URL from config or useSettingsStore actions.
-                       // Let's implement logic here for speed, or better, move to store action later.
-                       
-                       const response = await fetch(`${import.meta.env.VITE_API_URL || "https://wadi-wxg7.onrender.com"}/api/user/preferences`, {
+                       // API Call
+                       const API_URL = import.meta.env.VITE_API_URL || "https://wadi-wxg7.onrender.com";
+                       const response = await fetch(`${API_URL.replace(/\/$/, "")}/api/user/preferences`, {
                            method: 'PATCH',
                            headers: {
                                'Content-Type': 'application/json',
@@ -103,19 +115,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                            },
                            body: JSON.stringify({
                                naturalness_level: naturalnessLevel,
+                               active_persona: activePersona,
                                custom_instructions: customInstructions,
-                               // Other prefs...
                            })
                        });
 
                        if (response.ok) {
+                           await response.json();
+                           useSettingsStore.getState().setCustomInstructions(customInstructions || "");
                            onClose();
-                           // Optional: refresh profile in store
                        } else {
                            console.error("Failed to save settings");
+                           // eslint-disable-next-line no-alert
+                           alert("Error guardando cambios. Verificá la consola y tu conexión a Supabase.");
                        }
                    } catch (e) {
                        console.error(e);
+                       // eslint-disable-next-line no-alert
+                       alert("Error de red al guardar configuración.");
                    }
                 }}
                 className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-200"

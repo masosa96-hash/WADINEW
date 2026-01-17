@@ -231,21 +231,21 @@ router.delete(
   authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
-    const { ids } = req.body;
+    const { conversationIds } = req.body; // Changed from 'ids' to 'conversationIds' per user request
 
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      throw new AppError("BAD_REQUEST", "No IDs provided for bulk delete", 400);
+    if (!conversationIds || !Array.isArray(conversationIds) || conversationIds.length === 0) {
+      throw new AppError("BAD_REQUEST", "No conversationIds provided for bulk delete", 400);
     }
 
     const { error } = await supabase
       .from("conversations")
       .delete()
-      .in("id", ids)
+      .in("id", conversationIds)
       .eq("user_id", user!.id);
 
     if (error) throw new AppError("DB_ERROR", error.message);
 
-    res.json({ success: true, count: ids.length });
+    res.json({ success: true, count: conversationIds.length });
   })
 );
 
@@ -255,24 +255,17 @@ router.patch(
   authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
-    const { language, theme, naturalness_level, custom_instructions } = req.body;
+    const { language, theme, naturalness_level, active_persona, custom_instructions } = req.body;
 
-    // Use jsonb column 'preferences' if available, or individual columns in 'profiles'.
-    // For now we assume 'profiles' has standard cols or we'll assume a 'preferences' jsonb column.
-    // If table structure is unknown, we try to update what we know exists/should exist.
-    // Assuming 'custom_instructions' is a column as per previous context.
-    
     // We'll update the 'profiles' table.
     const updates: any = {};
     if (language !== undefined) updates.language = language;
     if (theme !== undefined) updates.theme = theme;
     if (custom_instructions !== undefined) updates.custom_instructions = custom_instructions;
     
-    // For 'naturalness_level', if no column exists, we might need to store it in a metadata column.
-    // Let's assume we can store it in 'preferences' JSONB or just ignore if schema is rigid.
-    // WE WILL USE 'custom_instructions' to append/prepend this config if needed or store in a 'metadata' column.
-    // Let's assume there is a 'metadata' JSONB column or we create one on the fly (unlikely).
-    // BETTER APPROACH for "Functional Button": Log it effectively and try update 'profiles'.
+    // New fields for WADI personality control
+    if (naturalness_level !== undefined) updates.naturalness_level = naturalness_level;
+    if (active_persona !== undefined) updates.active_persona = active_persona;
     
     const { error } = await supabase
       .from("profiles")
@@ -280,8 +273,8 @@ router.patch(
       .eq("id", user!.id);
 
     if (error) {
-       // If error is column not found, we ignore for now to prevent 500 in this "Beta" UI
-       console.warn("Error updating profile preferences (maybe column missing):", error.message);
+       console.warn("Error updating profile preferences:", error.message);
+       // We don't throw to avoid blocking the UI if columns are missing in dev
     }
 
     res.json({ success: true, updates });
