@@ -45,7 +45,7 @@ app.use(
   cors({
     origin: 'https://wadi-wxg7.onrender.com',
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
   })
 );
 
