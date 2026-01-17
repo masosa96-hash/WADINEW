@@ -92,36 +92,27 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   },
 
   deleteSelectedProjects: async (ids: string[]) => {
-      // Optimistic Update
-      const previousProjects = get().projects;
-      set((state) => ({
-          projects: state.projects.filter(p => !ids.includes(p.id))
-      }));
+    const previousProjects = [...get().projects]; // Backup para rollback
 
-      try {
-          const token = useAuthStore.getState().session?.access_token;
-          if (!token) throw new Error("No authentifado");
+    // Actualización Optimista: Filtramos YA de la lista
+    set((state) => ({
+      projects: state.projects.filter(p => !ids.includes(p.id))
+    }));
 
-          // Explicit Auth Header ensure
-          const res = await fetch(`${API_URL}/projects/bulk`, {
-              method: 'DELETE',
-              headers: {
-                  ...getHeaders(token),
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ projectIds: ids })
-          });
+    try {
+      const token = useAuthStore.getState().session?.access_token;
+      if (!token) throw new Error("Not authenticated");
 
-          if (!res.ok) {
-              const errData = await res.json();
-              throw new Error(errData.error || "Error eliminando proyectos");
-          }
-          
-      } catch (error) {
-          console.error("Rollback Projects:", error);
-          set({ projects: previousProjects, error: "No se pudieron borrar los proyectos. Rollback activado." });
-          // Optional: Trigger toast here if we had toast in store, 
-          // generally UI handles toast based on error state or direct catch.
-      }
+      const response = await fetch(`${API_URL}/projects/bulk`, {
+        method: 'DELETE',
+        headers: getHeaders(token), // Forzar validación de token
+        body: JSON.stringify({ projectIds: ids })
+      });
+
+      if (!response.ok) throw new Error("Falla en el servidor");
+    } catch (err) {
+      set({ projects: previousProjects }); // Rollback si el 401 persiste
+      console.error("Error al borrar: volviendo al estado anterior.", err);
+    }
   }
 }));
