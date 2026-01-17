@@ -62,7 +62,7 @@ export default function ProjectBoard() {
             </button>
 
          </div>
-      </div>
+
 
        {/* Floating Delete Action - Bottom */}
        {isSelectionMode && selectedIds.length > 0 && (
