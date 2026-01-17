@@ -49,19 +49,9 @@ app.get("/health", (req, res) => {
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".onrender.com")) {
-        callback(null, true);
-      } else {
-        console.warn("Blocked by CORS:", origin);
-        callback(null, false);
-      }
-    },
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    origin: 'https://wadi-wxg7.onrender.com',
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE']
   })
 );
 

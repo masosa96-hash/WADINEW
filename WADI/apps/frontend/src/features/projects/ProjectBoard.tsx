@@ -58,7 +58,7 @@ export default function ProjectBoard() {
                }}
                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isSelectionMode ? 'bg-blue-100 text-blue-700' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
             >
-               {isSelectionMode ? "Listo" : "Editar"}
+               {isSelectionMode ? "Listo" : "Gestionar"}
             </button>
 
          </div>
