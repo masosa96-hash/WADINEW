@@ -60,8 +60,13 @@ export default function ProjectCard({ project, isSelectionMode, isSelected, onTo
         className={`group block bg-white rounded-lg shadow-sm border transition-all duration-200 cursor-pointer relative ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-transparent hover:shadow-md'}`}
       >
         {/* Selection Overlay/Checkbox */}
-        <div className={`absolute top-2 right-2 z-10 w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-white border-gray-300'}`}>
-           {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+        <div className="absolute top-2 right-2 z-10">
+           <input 
+              type="checkbox" 
+              checked={isSelected} 
+              readOnly 
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+           />
         </div>
         <div className="p-4 pointer-events-none opacity-80">
            {CardContent}

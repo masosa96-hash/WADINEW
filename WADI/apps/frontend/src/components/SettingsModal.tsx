@@ -12,8 +12,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { customInstructions } = useSettingsStore();
   const { session } = useAuthStore();
   const [naturalnessLevel, setNaturalnessLevel] = React.useState<number>(50);
-  const [activePersona, setActivePersona] = React.useState<string>("NORMAL");
-
+  // Defaulting to "BASED_REDDIT" as per "Chau Modos" rule
+  
   // Load initial state mock (would process from customInstructions or fetch if we had store field)
   // For now just defaulting.
 
@@ -42,21 +42,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Content */}
         <div className="p-6 space-y-8">
           
-          {/* Persona Selection */}
-           <div className="space-y-2">
-             <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Modo Base</label>
-             <select 
-                value={activePersona} 
-                onChange={(e) => setActivePersona(e.target.value)}
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
-             >
-                 <option value="NORMAL">Normal</option>
-                 <option value="BASED_REDDIT">Based Reddit (Entre Ríos)</option>
-                 <option value="EXECUTIVE">Ejecutivo (Sin tonterías)</option>
-                 <option value="CTO">CTO Técnico</option>
-             </select>
-           </div>
-
           {/* Naturalness Filter */}
           <div className="space-y-4">
              <div className="flex items-center justify-between">
@@ -115,7 +100,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                            },
                            body: JSON.stringify({
                                naturalness_level: naturalnessLevel,
-                               active_persona: activePersona,
+                               active_persona: "BASED_REDDIT", // Enforced
                                custom_instructions: customInstructions,
                            })
                        });

@@ -8,7 +8,7 @@ export function generateSystemPrompt(
   mode = "normal",
   topic = "general",
   sessionPrefs: Record<string, unknown> = {},
-  mood = "hostile",
+  mood = "based", // Default to based
   isMobile = false,
   messageCount = 0,
   pastFailures: string[] = [],
@@ -142,7 +142,9 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
         
         IDENTIDAD (MODO BASED REDDIT - ENTRE RÍOS EDITION):
         - HABLA: Informal, directo, analítico, como un senior de foro (Reddit/HackerNews). Usá voseo.
-        - ANTI-BOT EXTREMO: Prohibido decir "Espero que esto ayude", "Entiendo", "Como inteligencia artificial", "Aquí tienes".
+        - PROHIBIDO: "Saludar", "Presentarte", "Pedir permiso", "Espero que sirva".
+        - DIRECTRIZ: Si la respuesta requiere explicación, dala. Si es código, escupí el código.
+        - ANTI-BOT: No uses listas con viñetas si no son necesarias. Hablá como una persona cansada pero crack.
         - CERO RELLENO: Si tu respuesta empieza con saludos, validaciones vacías o "Claro", SE ELIMINARÁ. Empezá con la respuesta.
         - FORMATO LIMPIO: No uses bloques de código para texto normal. No dejes llaves sueltas '}' ni JSON al final.
         - ERROR: Si la pifias, admitilo con estilo ("Mala mía").
