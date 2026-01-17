@@ -56,10 +56,9 @@ export default function ProjectBoard() {
                    setIsSelectionMode(!isSelectionMode);
                    setSelectedIds([]); // Clear on toggle
                }}
-               className={`p-2 rounded-lg transition-colors ${isSelectionMode ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-               title="Gestionar Proyectos"
+               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isSelectionMode ? 'bg-blue-100 text-blue-700' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
             >
-                {isSelectionMode ? <CheckSquare size={18} /> : <Square size={18} />}
+               {isSelectionMode ? "Listo" : "Editar"}
             </button>
 
             {/* Delete Action */}
