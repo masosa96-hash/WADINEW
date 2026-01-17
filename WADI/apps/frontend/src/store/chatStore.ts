@@ -367,7 +367,7 @@ export const useChatStore = create<ChatState>()(
 
         } catch (error) {
           console.error("Error deleting conversations:", error);
-          useLogStore.getState().addLog("Error eliminando conversaciones. Restaurando...", "error");
+          useLogStore.getState().addLog("TL;DR: El servidor nos rebotó. Los chats volvieron.", "error");
           // Rollback
           set({ conversations: previousConversations, selectedIds: validIds });
         }

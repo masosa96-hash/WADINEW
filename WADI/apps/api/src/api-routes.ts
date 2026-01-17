@@ -231,10 +231,11 @@ router.delete(
   authenticate(),
   asyncHandler(async (req, res) => {
     const user = req.user;
-    const { conversationIds } = req.body; // Changed from 'ids' to 'conversationIds' per user request
+    const { conversationIds } = req.body; // Recibe ["id1", "id2", ...]
 
     if (!conversationIds || !Array.isArray(conversationIds) || conversationIds.length === 0) {
-      throw new AppError("BAD_REQUEST", "No conversationIds provided for bulk delete", 400);
+      // User specified error message
+      return res.status(400).json({ error: "TL;DR: Mandame un array de IDs válido." });
     }
 
     const { error } = await supabase
@@ -243,9 +244,13 @@ router.delete(
       .in("id", conversationIds)
       .eq("user_id", user!.id);
 
-    if (error) throw new AppError("DB_ERROR", error.message);
+    if (error) {
+      // User specified error message
+      return res.status(500).json({ error: "F en el chat: No se pudo limpiar el caos." });
+    }
 
-    res.json({ success: true, count: conversationIds.length });
+    // User specified success message
+    res.status(200).json({ message: "Workspace limpio. Del caos al plan." });
   })
 );
 
