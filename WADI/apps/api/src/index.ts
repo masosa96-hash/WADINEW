@@ -44,7 +44,7 @@ const allowedOrigins = [
 
 // Health Check
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).json({ status: "WADI ONLINE" });
 });
 
 app.use(
@@ -56,12 +56,12 @@ app.use(
         callback(null, true);
       } else {
         console.warn("Blocked by CORS:", origin);
-        callback(null, false); // Fail safe, don't throw to avoid crash
+        callback(null, false);
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
   })
 );
 
