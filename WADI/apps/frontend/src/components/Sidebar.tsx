@@ -14,7 +14,7 @@ import { useChatStore } from '../store/chatStore';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SettingsModal } from './SettingsModal';
-import { Trash2, CheckSquare, Square } from 'lucide-react';
+import { Trash2, CheckSquare } from 'lucide-react';
 
 const menuItems = [
   { icon: MessageSquare, label: 'Chat Principal', path: '/' },
