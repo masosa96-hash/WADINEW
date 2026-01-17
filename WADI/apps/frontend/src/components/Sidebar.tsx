@@ -131,34 +131,40 @@ export const Sidebar = () => {
              </div>
          )}
 
-         <div className="flex items-center justify-between mb-2">
+         <div className="flex items-center justify-between mb-2 px-1">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Historial</h3>
             <button 
-              onClick={() => setIsSelectionMode(!isSelectionMode)}
-              className={`p-1 rounded hover:bg-gray-200 transition-colors ${isSelectionMode ? 'text-blue-600 bg-blue-50' : 'text-gray-400'}`}
-              title="Gestión Masiva"
+              onClick={() => {
+                  setIsSelectionMode(!isSelectionMode);
+                  if (isSelectionMode) useChatStore.getState().selectAll(); // Or clear? 'Edit' implies entering mode.
+                  // User expects ChatGPT style: "Edit" enables checks.
+              }}
+              className="px-2 py-0.5 text-[10px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
-               <CheckSquare size={14} />
+               {isSelectionMode ? "Listo" : "Editar"}
             </button>
          </div>
          
+         {/* Floating Delete Button (Bottom Overlay) */}
          {isSelectionMode && selectedIds.length > 0 && (
-             <button 
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full mb-3 flex items-center justify-center gap-2 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
-             >
-                <Trash2 size={12} />
-                Eliminar ({selectedIds.length})
-             </button>
+             <div className="absolute bottom-4 left-4 right-4 z-20 animate-in slide-in-from-bottom-2 fade-in">
+                <button 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition-transform active:scale-95"
+                >
+                    <Trash2 size={16} />
+                    Eliminar {selectedIds.length}
+                </button>
+             </div>
          )}
 
-         <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+         <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-200 pb-16"> 
             {conversations.map((conv) => (
                <div 
                  key={conv.id}
                  className={`
-                    group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all cursor-pointer relative
-                    ${activeId === conv.id ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}
+                    group flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all cursor-pointer relative border border-transparent
+                    ${activeId === conv.id ? 'bg-white border-gray-200 shadow-sm text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                  `}
                  onClick={() => {
                     if (isSelectionMode) {
@@ -169,29 +175,19 @@ export const Sidebar = () => {
                  }}
                >
                   {isSelectionMode ? (
-                      <div className={`shrink-0 ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-gray-300'}`}>
-                          {selectedIds.includes(conv.id) ? <CheckSquare size={16} /> : <Square size={16} />}
+                      <div className={`shrink-0 transition-colors ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-gray-300'}`}>
+                           {/* Standard looking checkbox */}
+                           <div className={`w-4 h-4 rounded border ${selectedIds.includes(conv.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'} flex items-center justify-center`}>
+                                {selectedIds.includes(conv.id) && <CheckSquare size={12} className="text-white" />}
+                           </div>
                       </div>
                   ) : (
-                      <MessageSquare size={14} className={`shrink-0 ${activeId === conv.id ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                      <MessageSquare size={16} className={`shrink-0 ${activeId === conv.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
                   )}
                   
                   <span className="truncate flex-1">
                       {conv.title || "Nueva Conversación"}
                   </span>
-
-                  {!isSelectionMode && (
-                      <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            useChatStore.getState().deleteConversation(conv.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition-all absolute right-2 bg-gradient-to-l from-white via-white to-transparent pl-4"
-                        title="Eliminar"
-                      >
-                          <Trash2 size={14} />
-                      </button>
-                  )}
                </div>
             ))}
             
