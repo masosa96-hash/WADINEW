@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ProjectCard from "../../components/ProjectCard";
 import CreateProjectModal from "../../components/CreateProjectModal";
 import { useProjectsStore } from "../../store/projectsStore";
-import { CheckSquare, Square, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 // Columns Definition
 const COLUMNS = [
