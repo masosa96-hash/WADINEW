@@ -36,15 +36,9 @@ const app = express();
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
 // --------------------------------------------------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://wadi-wxg7.onrender.com",
-];
-
 // Health Check
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "WADI ONLINE" });
+  res.status(200).send("OK");
 });
 
 app.use(

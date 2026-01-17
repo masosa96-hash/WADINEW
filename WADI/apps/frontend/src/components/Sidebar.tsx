@@ -141,7 +141,7 @@ export const Sidebar = () => {
               }}
               className="px-2 py-0.5 text-[10px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
-               {isSelectionMode ? "Listo" : "Editar"}
+               {isSelectionMode ? "Listo" : "Gestionar"}
             </button>
          </div>
          
