@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { X, Shield, Activity, Fingerprint } from 'lucide-react';
+import { X, Shield, Fingerprint } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { customInstructions } = useSettingsStore();
   const { session } = useAuthStore();
-  const [naturalnessLevel, setNaturalnessLevel] = React.useState<number>(50);
+  // Defaulting to "BASED_REDDIT" as per "Chau Modos" rule
   // Defaulting to "BASED_REDDIT" as per "Chau Modos" rule
   
   // Load initial state mock (would process from customInstructions or fetch if we had store field)
@@ -42,34 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Content */}
         <div className="p-6 space-y-8">
           
-          {/* Naturalness Filter */}
-          <div className="space-y-4">
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-gray-700 font-medium">
-                    <Activity size={18} className="text-orange-500" />
-                    <span>Filtro de Naturalidad</span>
-                </div>
-                <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                    {naturalnessLevel > 75 ? 'EXTREMO' : naturalnessLevel > 40 ? 'ALTO' : 'MODERADO'}
-                </span>
-             </div>
-             
-             <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={naturalnessLevel} 
-                onChange={(e) => setNaturalnessLevel(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-             />
-             <p className="text-xs text-gray-400">
-                Determina qué tan agresivamente WADI detecta y corrige respuestas genéricas. 
-                <br/>
-                Mayor nivel = Más informalidad.
-             </p>
-          </div>
-
-          {/* User ID */}
+          {/* User ID Only - Clean UI */}
           <div className="p-4 bg-gray-100 rounded-xl space-y-2 border border-gray-200">
              <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
                 <Fingerprint size={14} />
@@ -99,7 +72,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                'Authorization': `Bearer ${session.access_token}`
                            },
                            body: JSON.stringify({
-                               naturalness_level: naturalnessLevel,
+                               naturalness_level: 50, // Default sane value
                                active_persona: "BASED_REDDIT", // Enforced
                                custom_instructions: customInstructions,
                            })

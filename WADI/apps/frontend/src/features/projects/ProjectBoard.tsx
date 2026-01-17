@@ -61,17 +61,21 @@ export default function ProjectBoard() {
                {isSelectionMode ? "Listo" : "Editar"}
             </button>
 
-            {/* Delete Action */}
-            {isSelectionMode && selectedIds.length > 0 && (
-                <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors animate-in fade-in slide-in-from-left-2"
-                >
-                    <Trash2 size={14} />
-                    <span>Borrar {selectedIds.length} proyectos</span>
-                </button>
-            )}
          </div>
+      </div>
+
+       {/* Floating Delete Action - Bottom */}
+       {isSelectionMode && selectedIds.length > 0 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 animate-in slide-in-from-bottom-4 fade-in duration-300">
+              <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-full text-sm font-bold shadow-xl hover:bg-red-700 hover:scale-105 transition-all"
+              >
+                  <Trash2 size={16} />
+                  <span>Eliminar {selectedIds.length} proyectos</span>
+              </button>
+          </div>
+       )}
 
          <button 
           onClick={() => setIsCreateModalOpen(true)}
