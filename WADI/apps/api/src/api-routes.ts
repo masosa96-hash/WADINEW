@@ -149,6 +149,32 @@ router.post(
   })
 );
 
+// Bulk Delete Projects
+router.delete(
+  "/projects/bulk",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const user = req.user;
+    const { projectIds } = req.body;
+
+    if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
+      return res.status(400).json({ error: "TL;DR: Mandame un array de Project IDs válido." });
+    }
+
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .in("id", projectIds)
+      .eq("user_id", user!.id);
+
+    if (error) {
+       return res.status(500).json({ error: "F en el chat: No se pudieron eliminar los proyectos." });
+    }
+
+    res.json({ message: "Proyectos eliminados. Limpieza completada." });
+  })
+);
+
 router.delete(
   "/projects/:id",
   authenticate(),

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ProjectCard from "../../components/ProjectCard";
 import CreateProjectModal from "../../components/CreateProjectModal";
 import { useProjectsStore } from "../../store/projectsStore";
+import { CheckSquare, Square, Trash2 } from "lucide-react";
 
 // Columns Definition
 const COLUMNS = [
@@ -12,22 +13,71 @@ const COLUMNS = [
 ];
 
 export default function ProjectBoard() {
-  const { projects, fetchProjects } = useProjectsStore();
+  const { projects, fetchProjects, deleteSelectedProjects } = useProjectsStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  // Bulk Action State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
+  // Handlers
+  const toggleSelection = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(prev => prev.filter(item => item !== id));
+    } else {
+      setSelectedIds(prev => [...prev, id]);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+    await deleteSelectedProjects(selectedIds);
+    setShowDeleteConfirm(false);
+    setIsSelectionMode(false);
+    setSelectedIds([]);
+  };
+
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
+    <div className="h-full flex flex-col p-6 overflow-hidden relative">
       
       {/* Kanban Actions */}
       <div className="flex justify-between items-center mb-8 shrink-0 px-2">
-         <h2 className="text-lg font-medium text-wadi-text">Projects</h2>
+         <div className="flex items-center gap-4">
+            <h2 className="text-lg font-medium text-wadi-text">Projects</h2>
+            
+            {/* Bulk Selection Toggle */}
+            <button
+               onClick={() => {
+                   setIsSelectionMode(!isSelectionMode);
+                   setSelectedIds([]); // Clear on toggle
+               }}
+               className={`p-2 rounded-lg transition-colors ${isSelectionMode ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+               title="Gestionar Proyectos"
+            >
+                {isSelectionMode ? <CheckSquare size={18} /> : <Square size={18} />}
+            </button>
+
+            {/* Delete Action */}
+            {isSelectionMode && selectedIds.length > 0 && (
+                <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors animate-in fade-in slide-in-from-left-2"
+                >
+                    <Trash2 size={14} />
+                    <span>Borrar ({selectedIds.length})</span>
+                </button>
+            )}
+         </div>
+
          <button 
           onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2 bg-wadi-text text-white rounded-md text-sm font-medium hover:bg-black/80 transition-colors shadow-sm"
+          disabled={isSelectionMode} // Disable creation while managing
+          className={`px-4 py-2 bg-wadi-text text-white rounded-md text-sm font-medium hover:bg-black/80 transition-colors shadow-sm ${isSelectionMode ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           New Project
         </button>
@@ -57,7 +107,13 @@ export default function ProjectBoard() {
                 {/* Cards Container */}
                 <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-3 scrollbar-none">
                   {colProjects.map((project) => (
-                    <ProjectCard key={project.id} project={project} />
+                    <ProjectCard 
+                        key={project.id} 
+                        project={project}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedIds.includes(project.id)}
+                        onToggle={toggleSelection}
+                    />
                   ))}
                   
                   {colProjects.length === 0 && (
@@ -72,8 +128,38 @@ export default function ProjectBoard() {
         </div>
       </div>
 
+      {/* Modals */}
       {isCreateModalOpen && (
         <CreateProjectModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 max-w-sm w-full text-center transform transition-all scale-100">
+                <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trash2 size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">¿Eliminar {selectedIds.length} proyectos?</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                    Esta acción es irreversible. Se perderán todos los datos asociados.
+                </p>
+                <div className="flex gap-3">
+                    <button 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleDelete}
+                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors text-sm shadow-lg shadow-red-200"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
       )}
     </div>
   );

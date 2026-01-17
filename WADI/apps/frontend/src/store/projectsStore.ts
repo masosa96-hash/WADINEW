@@ -16,9 +16,10 @@ interface ProjectsState {
   error: string | null;
   fetchProjects: () => Promise<void>;
   createProject: (name: string, description: string) => Promise<void>;
+  deleteSelectedProjects: (ids: string[]) => Promise<void>;
 }
 
-export const useProjectsStore = create<ProjectsState>((set) => ({
+export const useProjectsStore = create<ProjectsState>((set, get) => ({
   projects: [],
   loading: false,
   error: null,
@@ -89,4 +90,38 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
       set({ loading: false });
     }
   },
+
+  deleteSelectedProjects: async (ids: string[]) => {
+      // Optimistic Update
+      const previousProjects = get().projects;
+      set((state) => ({
+          projects: state.projects.filter(p => !ids.includes(p.id))
+      }));
+
+      try {
+          const token = useAuthStore.getState().session?.access_token;
+          if (!token) throw new Error("No authentifado");
+
+          // Explicit Auth Header ensure
+          const res = await fetch(`${API_URL}/projects/bulk`, {
+              method: 'DELETE',
+              headers: {
+                  ...getHeaders(token),
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ projectIds: ids })
+          });
+
+          if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.error || "Error eliminando proyectos");
+          }
+          
+      } catch (error) {
+          console.error("Rollback Projects:", error);
+          set({ projects: previousProjects, error: "No se pudieron borrar los proyectos. Rollback activado." });
+          // Optional: Trigger toast here if we had toast in store, 
+          // generally UI handles toast based on error state or direct catch.
+      }
+  }
 }));
