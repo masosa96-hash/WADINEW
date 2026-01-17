@@ -89,8 +89,6 @@ No digas "según mi base de datos", decilo como un socio: "Como me habías conta
 ${historyBlock}
 
 CONTEXTO DINÁMICO:
-- Modo Detectado: ${decision.personaId} (${decision.tone})
-- Razón: ${decision.reason}
 - Tópico Actual: ${topic}
 - Focos Previos: ${activeFocus || "Ninguno"}
 
