@@ -137,7 +137,7 @@ app.use(errorHandler as any);
 
 // START SERVER
 const PORT = process.env.PORT || 10000;
-app.listen(Number(PORT), '0.0.0.0', () => {
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log('Servidor escuchando en el puerto: ' + PORT);
   
   // Log Active Routes
@@ -160,6 +160,19 @@ app.listen(Number(PORT), '0.0.0.0', () => {
       console.log('Rutas Directas:', activeRoutes);
   }
 });
+
+// Graceful Custom Shutdown
+const gracefulShutdown = () => {
+  console.log('SIGTERM/SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    // Close other connections like DB if needed here in the future
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 // Helper for strict listen types if needed, though usually string port is fine in express types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
