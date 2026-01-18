@@ -42,7 +42,7 @@ app.get("/health", (req, res) => {
 });
 
 const corsOptions = {
-  origin: 'https://wadi-wxg7.onrender.com', // URL exacta de tu frontend
+  origin: ['https://wadi-wxg7.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -90,16 +90,16 @@ app.get("/system/debug-files", (req, res) => {
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
 // --------------------------------------------------
-import projectsRouter from "./routes/projects";
-import runsRouter from "./routes/runs";
+// import projectsRouter from "./routes/projects";
+// import runsRouter from "./routes/runs";
 
 // V2 Domain Routes
-import projectsV2Router from "./domain/projects/project.routes";
+// import projectsV2Router from "./domain/projects/project.routes";
 
 // Standardized API Routes
-app.use("/api/projects", projectsRouter);
-app.use("/api/v2/projects", projectsV2Router);
-app.use("/api", runsRouter);
+// app.use("/api/projects", projectsRouter);
+// app.use("/api/v2/projects", projectsV2Router);
+// app.use("/api", runsRouter);
 app.use("/api", routes);
 
 // Explicit 404 for API to prevent falling through to SPA

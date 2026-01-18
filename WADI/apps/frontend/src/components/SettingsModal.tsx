@@ -40,17 +40,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-8">
+        <div className="p-6 space-y-6">
           
           {/* User ID Only - Clean UI */}
-          <div className="p-4 bg-gray-100 rounded-xl space-y-2 border border-gray-200">
-             <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                <Fingerprint size={14} />
-                <span>Supabase ID (Identidad Neural)</span>
+          <div className="flex gap-4">
+             <div className="flex-1 p-4 bg-gray-50 rounded-xl space-y-2 border border-gray-100">
+                <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
+                    <Fingerprint size={14} />
+                    <span>Supabase ID</span>
+                </div>
+                <code className="block w-full text-xs font-mono text-gray-600 break-all select-all">
+                    {session?.user?.id || "No conectado"}
+                </code>
              </div>
-             <code className="block w-full text-xs font-mono text-gray-600 break-all bg-white p-2 rounded border border-gray-200 select-all">
-                {session?.user?.id || "No conectado"}
-             </code>
+
+             <div className="flex-1 p-4 bg-gray-50 rounded-xl space-y-2 border border-gray-100">
+                <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
+                    <Shield size={14} />
+                    <span>Persona Activa</span>
+                </div>
+                <div className="text-sm font-semibold text-gray-900">
+                    Based Reddit (Enforced)
+                </div>
+             </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Custom Instructions */}
+          <div className="space-y-4">
+               <div>
+                   <label className="text-sm font-semibold text-gray-800">Instrucciones Custom (System Prompt)</label>
+                   <p className="text-xs text-gray-500 mt-1">
+                       Estas instrucciones se inyectan en el cerebro de WADI. Usalas para definir temas prohibidos, estilo de código preferido, etc.
+                   </p>
+               </div>
+               <textarea
+                   value={customInstructions || ""}
+                   onChange={(e) => useSettingsStore.getState().setCustomInstructions(e.target.value)}
+                   placeholder="Ej: Prefiero TypeScript estricto. No uses emojis. Se breve."
+                   className="w-full h-32 p-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none shadow-sm"
+               />
           </div>
 
         </div>

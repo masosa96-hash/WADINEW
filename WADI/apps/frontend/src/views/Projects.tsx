@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useProjectsStore } from "../store/projectsStore";
 import { Link } from "react-router-dom";
-import { Plus, Folder, ArrowRight, Loader2 } from "lucide-react";
+import { Plus, Folder, ArrowRight, Loader2, LayoutGrid, LayoutList } from "lucide-react";
 
 export default function Projects() {
   const { projects, fetchProjects, createProject, loading } = useProjectsStore();
   const [showCreate, setShowCreate] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     fetchProjects();
@@ -40,6 +41,20 @@ export default function Projects() {
                 <p className="text-wadi-muted mt-2">
                     Espacios de trabajo activos.
                 </p>
+            </div>
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <button 
+                    onClick={() => setViewMode("grid")}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-black" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                    <LayoutGrid size={16} />
+                </button>
+                <button 
+                    onClick={() => setViewMode("list")}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-white shadow-sm text-black" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                    <LayoutList size={16} />
+                </button>
             </div>
             <button 
                 onClick={() => setShowCreate(true)}
@@ -99,31 +114,57 @@ export default function Projects() {
                 <button onClick={() => setShowCreate(true)} className="text-black underline mt-2 text-sm font-medium">Crear el primero</button>
             </div>
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map(project => (
-                    <Link 
-                        key={project.id} 
-                        to={`/projects/${project.id}`}
-                        className="group bg-white p-6 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all flex flex-col h-48"
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:text-black group-hover:bg-gray-100 transition-colors">
-                                <span className="font-bold text-lg">{project.name.charAt(0).toUpperCase()}</span>
-                            </div>
-                            <ArrowRight size={16} className="text-gray-300 group-hover:text-black -translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all" />
-                        </div>
-                        
-                        <h3 className="font-bold text-lg truncate mb-1">{project.name}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
-                        
-                        <div className="mt-auto pt-4 flex gap-2">
-                             <span className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-400">
-                                {new Date(project.created_at).toLocaleDateString()}
-                             </span>
-                        </div>
-                    </Link>
-                ))}
-            </div>
+            <>
+                {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {projects.map(project => (
+                            <Link 
+                                key={project.id} 
+                                to={`/projects/${project.id}`}
+                                className="group bg-white p-6 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all flex flex-col h-48"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:text-black group-hover:bg-gray-100 transition-colors">
+                                        <span className="font-bold text-lg">{project.name.charAt(0).toUpperCase()}</span>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-300 group-hover:text-black -translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition-all" />
+                                </div>
+                                
+                                <h3 className="font-bold text-lg truncate mb-1">{project.name}</h3>
+                                <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                                
+                                <div className="mt-auto pt-4 flex gap-2">
+                                     <span className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-400">
+                                        {new Date(project.created_at).toLocaleDateString()}
+                                     </span>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        {projects.map((project, idx) => (
+                           <Link key={project.id} to={`/projects/${project.id}`}>
+                                <div className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${idx !== projects.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                     <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs">
+                                            {project.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                                            <p className="text-xs text-gray-500 max-w-md truncate">{project.description}</p>
+                                        </div>
+                                     </div>
+                                     <div className="flex items-center gap-6">
+                                         <span className="text-xs text-gray-400">{new Date(project.created_at).toLocaleDateString()}</span>
+                                         <ArrowRight size={14} className="text-gray-300" />
+                                     </div>
+                                </div>
+                           </Link>
+                        ))}
+                    </div>
+                )}
+            </>
         )}
     </div>
   );
