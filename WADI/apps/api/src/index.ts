@@ -33,14 +33,6 @@ import helmet from "helmet";
 
 const app = express();
 
-// --------------------------------------------------
-// PRIORITY 0: Health Check (Render) - Must be first
-// --------------------------------------------------
-// Health Check
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
-
 const corsOptions = {
   origin: ['https://wadi-wxg7.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
@@ -50,11 +42,19 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-// 1. Habilitar CORS con la configuración estricta
+// 1. Habilitar CORS con la configuración estricta (MUST BE FIRST)
 app.use(cors(corsOptions));
 
 // 2. Manejo explícito de peticiones Preflight para todas las rutas
 app.options('*', cors(corsOptions));
+
+// --------------------------------------------------
+// PRIORITY 0: Health Check (Render) - Must be first
+// --------------------------------------------------
+// Health Check
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
