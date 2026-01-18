@@ -36,3 +36,7 @@ El sistema está ahora más robusto y preparado para desarrollo continuo. Las fu
 **Mejora**: Se mejoró la trazabilidad de logs en Render para facilitar la depuración.
 - **Rndr-Id**: El middleware `requestLogger` ahora captura y registra el `rndr-id` (o `x-request-id`), permitiendo correlacionar logs con peticiones específicas en el dashboard de Render.
 - **Log Activo**: Se habilitó el log de peticiones en `index.ts` para tener visibilidad completa del tráfico HTTP.
+
+## 6. Optimización Frontend
+**Mejora**: Se eliminó una advertencia de compilación y se optimizó el bundle.
+- **Imports Estáticos**: Se reemplazó un import dinámico de `supabase.ts` en `runsStore.ts` por uno estático para evitar ambigüedades en la generación de chunks de Vite.

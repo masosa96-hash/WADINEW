@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { API_URL, getHeaders } from "../config/api";
 import { useAuthStore } from "./useAuthStore";
+import { supabase } from "../config/supabase";
 
 interface Run {
   id: string;
@@ -38,7 +39,7 @@ export const useRunsStore = create<RunsState>((set) => ({
            // Optional: await delay(500); 
            // We'll rely on App.tsx blocking, but if we are here and no token, 
            // let's try to get it directly if possible or just fail gracefully.
-           const { data } = await import('../config/supabase').then(m => m.supabase.auth.getSession());
+           const { data } = await supabase.auth.getSession();
            token = data.session?.access_token;
       }
       
