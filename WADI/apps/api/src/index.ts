@@ -58,7 +58,7 @@ app.get("/health", (req, res) => {
 
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// app.use(requestLogger as any);
+app.use(requestLogger as any);
 
 // TOP PRIORITY DEBUG ROUTE
 app.get("/system/debug-files", (req, res) => {
