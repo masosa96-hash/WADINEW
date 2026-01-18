@@ -40,4 +40,4 @@ El sistema está ahora más robusto y preparado para desarrollo continuo. Las fu
 ## 6. Optimización Frontend
 **Mejora**: Se eliminó una advertencia de compilación y se optimizó el bundle.
 - **Imports Estáticos**: Se reemplazó un import dinámico de `supabase.ts` en `runsStore.ts` por uno estático para evitar ambigüedades en la generación de chunks de Vite.
-- **Split Chunks**: Se configuró `vite.config.ts` con `manualChunks` para separar librerías grandes (React, Supabase, UI) en archivos independientes, eliminando la advertencia de bundle size y mejorando el caché del navegador.
+- **Split Chunks**: Se mejoró la estrategia de `manualChunks` en `vite.config.ts` usando una función dinámica para asegurar que todas las dependencias de `node_modules` (React, Supabase, Lucide) se agrupen correctamente en cualquier entorno, resolviendo la advertencia de tamaño en el deploy.

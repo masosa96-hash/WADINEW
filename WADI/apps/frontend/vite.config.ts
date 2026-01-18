@@ -22,10 +22,20 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'ui-vendor': ['lucide-react'],
-            'supabase': ['@supabase/supabase-js']
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@supabase')) {
+                return 'supabase';
+              }
+              if (id.includes('lucide-react')) {
+                return 'ui-vendor';
+              }
+              // Catch-all for other large deps if any, or let them stay in index
+              // return 'vendor'; 
+            }
           }
         }
       }
