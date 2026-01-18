@@ -41,3 +41,4 @@ El sistema está ahora más robusto y preparado para desarrollo continuo. Las fu
 **Mejora**: Se eliminó una advertencia de compilación y se optimizó el bundle.
 - **Imports Estáticos**: Se reemplazó un import dinámico de `supabase.ts` en `runsStore.ts` por uno estático para evitar ambigüedades en la generación de chunks de Vite.
 - **Split Chunks**: Se mejoró la estrategia de `manualChunks` en `vite.config.ts` usando una función dinámica para asegurar que todas las dependencias de `node_modules` (React, Supabase, Lucide) se agrupen correctamente en cualquier entorno, resolviendo la advertencia de tamaño en el deploy.
+- **CORS Definitivo**: Se implementó una lógica dinámica en `index.ts` para permitir explícitamente cualquier subdominio `*.onrender.com` y `localhost`, asegurando que el frontend pueda comunicarse con el backend sin bloqueo por política de origen.

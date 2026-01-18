@@ -34,12 +34,29 @@ import helmet from "helmet";
 const app = express();
 
 const corsOptions = {
-  origin: ['https://wadi-wxg7.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5173', 
+      'http://localhost:3000',
+      'https://wadi-wxg7.onrender.com'
+    ];
+    
+    // Check if origin is in allowed list or is a Render subdomain
+    if (allowedOrigins.indexOf(origin) !== -1 || /\.onrender\.com$/.test(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked CORS for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'rndr-id'],
   preflightContinue: false,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 200
 };
 
 // 1. Habilitar CORS con la configuración estricta (MUST BE FIRST)
