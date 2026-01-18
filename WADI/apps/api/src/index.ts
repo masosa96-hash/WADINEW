@@ -41,13 +41,20 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-app.use(
-  cors({
-    origin: 'https://wadi-wxg7.onrender.com',
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
-  })
-);
+const corsOptions = {
+  origin: 'https://wadi-wxg7.onrender.com', // URL exacta de tu frontend
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// 1. Habilitar CORS con la configuración estricta
+app.use(cors(corsOptions));
+
+// 2. Manejo explícito de peticiones Preflight para todas las rutas
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
