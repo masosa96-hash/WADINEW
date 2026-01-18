@@ -33,27 +33,24 @@ import helmet from "helmet";
 
 const app = express();
 
-// 1. ESTO DEBE IR ARRIBA DE TODO (Antes de cualquier app.get o app.use)
+// 1. CONFIGURACIÓN NUCLEAR DE CORS (Debe ser lo PRIMERO que lea el servidor)
 app.use(cors({
-  origin: 'https://wadi-wxg7.onrender.com', // Sin barra al final
+  origin: '*', // Temporalmente usa '*' para descartar errores de sintaxis en la URL
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true,
-  optionsSuccessStatus: 204
+  credentials: true
 }));
 
-// 2. Manejo manual de Preflight (Por si las moscas en Render)
-app.options('*', cors()); 
+// 2. RESPUESTA MANUAL PARA PREFLIGHT (OPTIONS)
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.sendStatus(204);
+});
 
 // Enable Proxy Trust for Render
 app.set('trust proxy', 1);
-
-// DEBUG MIDDLEWARE: Log Origin
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log(`[CORS-DEBUG] Request Method: ${req.method}, Path: ${req.path}, Origin: ${origin}`);
-  next();
-});
 
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
