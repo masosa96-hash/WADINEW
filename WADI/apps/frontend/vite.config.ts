@@ -20,6 +20,15 @@ export default defineConfig(({ mode }) => {
       outDir: "dist",
       assetsDir: "assets",
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': ['lucide-react'],
+            'supabase': ['@supabase/supabase-js']
+          }
+        }
+      }
     },
   };
 });
