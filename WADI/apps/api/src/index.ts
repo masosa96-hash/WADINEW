@@ -33,20 +33,18 @@ import helmet from "helmet";
 
 const app = express();
 
-// 1. CONFIGURACIÓN NUCLEAR DE CORS (Debe ser lo PRIMERO que lea el servidor)
-app.use(cors({
-  origin: '*', // Temporalmente usa '*' para descartar errores de sintaxis en la URL
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true
-}));
-
-// 2. RESPUESTA MANUAL PARA PREFLIGHT (OPTIONS)
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
+// 1. EL "FIX" TOTAL: Configuración manual y estricta
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://wadi-wxg7.onrender.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.sendStatus(204);
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  // 2. Responder de inmediato a la "comprobación previa" (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
 });
 
 // Enable Proxy Trust for Render
@@ -57,7 +55,7 @@ app.set('trust proxy', 1);
 // --------------------------------------------------
 // Health Check
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).json({ status: 'WADI ONLINE' });
 });
 
 app.use(express.json());
