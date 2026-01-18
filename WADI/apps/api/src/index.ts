@@ -33,8 +33,18 @@ import helmet from "helmet";
 
 const app = express();
 
+// Enable Proxy Trust for Render
+app.set('trust proxy', 1);
+
+// DEBUG MIDDLEWARE: Log Origin
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  console.log(`[CORS-DEBUG] Request Method: ${req.method}, Path: ${req.path}, Origin: ${origin}`);
+  next();
+});
+
 const corsOptions = {
-  origin: ['https://wadi-wxg7.onrender.com', 'http://localhost:5173', 'http://localhost:3000'], // Fixed production + local dev
+  origin: true, // Reflect request origin (Dynamically allows strictly what is requested)
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'rndr-id'],
   credentials: true,
