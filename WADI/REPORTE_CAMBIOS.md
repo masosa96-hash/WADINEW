@@ -31,3 +31,8 @@ El sistema está ahora más robusto y preparado para desarrollo continuo. Las fu
 - [x] Backend CORS arreglado.
 - [x] Frontend Configuración expandida.
 - [x] Frontend Proyectos con más opciones.
+
+## 5. Observabilidad (Logs)
+**Mejora**: Se mejoró la trazabilidad de logs en Render para facilitar la depuración.
+- **Rndr-Id**: El middleware `requestLogger` ahora captura y registra el `rndr-id` (o `x-request-id`), permitiendo correlacionar logs con peticiones específicas en el dashboard de Render.
+- **Log Activo**: Se habilitó el log de peticiones en `index.ts` para tener visibilidad completa del tráfico HTTP.
