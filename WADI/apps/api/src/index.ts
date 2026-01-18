@@ -33,6 +33,18 @@ import helmet from "helmet";
 
 const app = express();
 
+// 1. ESTO DEBE IR ARRIBA DE TODO (Antes de cualquier app.get o app.use)
+app.use(cors({
+  origin: 'https://wadi-wxg7.onrender.com', // Sin barra al final
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
+
+// 2. Manejo manual de Preflight (Por si las moscas en Render)
+app.options('*', cors()); 
+
 // Enable Proxy Trust for Render
 app.set('trust proxy', 1);
 
@@ -42,20 +54,6 @@ app.use((req, res, next) => {
   console.log(`[CORS-DEBUG] Request Method: ${req.method}, Path: ${req.path}, Origin: ${origin}`);
   next();
 });
-
-const corsOptions = {
-  origin: true, // Reflect request origin (Dynamically allows strictly what is requested)
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'rndr-id'],
-  credentials: true,
-  optionsSuccessStatus: 204
-};
-
-// 1. Habilitar CORS con la configuración estricta (MUST BE FIRST)
-app.use(cors(corsOptions));
-
-// 2. Manejo explícito de peticiones Preflight para todas las rutas
-app.options('*', cors(corsOptions));
 
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
