@@ -34,8 +34,7 @@ const pdf = require("pdf-parse");
 // import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
-import { authenticate, AuthenticatedRequest } from "./middleware/auth";
-import { requireScope } from "./middleware/require-scope";
+
 import { getRelevantKnowledge } from "./services/knowledge-service";
 import { listRuns, createRun } from "./controllers/runsController"; // Added import
 
@@ -609,6 +608,25 @@ router.post(
 
     const args = JSON.parse(completion.choices[0].message.function_call?.arguments || "{}");
     
+    // 1.5. CHECK DUPLICATES (Senior Check)
+    const { data: existing } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('name', args.name)
+        .single();
+    
+    if (existing) {
+        console.log(`[CRYSTAL] Project ${args.name} already exists. Skipping creation.`);
+        // Devolvemos el existente pero manejamos la UI para que no explote
+        return res.json({
+            project: existing,
+            initialTasks: [], // No tasks generated if we didn't create
+            message: "Project recovered from existence."
+        });
+    }
+
+    // 2. Insert Project (Assuming 'projects' table matched expected schema)
     // 2. Insert Project (Assuming 'projects' table matched expected schema)
     const { data: project, error: projError } = await supabase
         .from("projects")
@@ -622,6 +640,21 @@ router.post(
         .single();
 
     if (projError) throw new Error("Error creating project: " + projError.message);
+
+    // 2.5. FIRST RUN (WADI SELF-DOCUMENTATION)
+    // Esto hace que el proyecto no nazca vacío y tenga la bitácora de su nacimiento.
+    try {
+        await supabase.from('runs').insert([{
+            project_id: project.id,
+            user_id: user!.id,
+            input: "System Trigger: Crystallization Event",
+            output: `Proyecto cristalizado exitosamente.\n\nDescripción Original: "${suggestionContent || message}"\n\nPlan Inicial:\n${args.tasks?.map((t: string) => `- ${t}`).join('\n') || 'Sin tareas definidas.'}`,
+            model: "WADI-CORE"
+        }]);
+    } catch (e) {
+        console.warn("Error creating initial run:", e);
+        // Non-blocking error
+    }
 
     res.json({
         project,

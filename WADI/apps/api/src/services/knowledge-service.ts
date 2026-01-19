@@ -34,14 +34,15 @@ export const extractAndSaveKnowledge = async (userId: string, userMessage: strin
       // Si detecta intención de proyecto, forzamos la categoría especial
       const finalCategory = result.is_new_project_intention ? 'PROJECT_SUGGESTION' : (result.category || 'General');
 
+      // 3. Inserta en tabla `wadi_knowledge_base`
       // 2. Guardar en Supabase
       const { error } = await supabase
         .from('wadi_knowledge_base')
         .insert({
           user_id: userId,
-          content: result.content,
+          knowledge_point: result.content, // Map content -> knowledge_point
           category: finalCategory,
-          confidence: result.confidence || 1.0
+          confidence_score: (result.confidence || 1.0) * 10 // scale to integer if needed, or keep as float if DB changed, but Migration said integer. Assuming 1-10 scale or keeping 1. 
         } as any);
 
       if (error) console.error("Error guardando conocimiento:", error);
@@ -58,7 +59,7 @@ export const getRelevantKnowledge = async (userId: string) => {
   // (En el futuro podemos filtrar por relevancia usando embeddings).
   const { data, error } = await supabase
     .from('wadi_knowledge_base')
-    .select('content, category')
+    .select('knowledge_point, category')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
@@ -66,5 +67,5 @@ export const getRelevantKnowledge = async (userId: string) => {
   if (error || !data) return "";
 
   // Cast content to string if it's not (though DB says text)
-  return data.map((f: any) => `[${f.category}]: ${f.content}`).join('\n');
+  return data.map((f: any) => `[${f.category}]: ${f.knowledge_point}`).join('\n');
 };

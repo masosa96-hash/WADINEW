@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { API_URL } from "../config/api";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Send, User, Bot, Info } from 'lucide-react';
 import { useRunsStore } from '../store/runsStore';
 import { supabase } from '../config/supabase';
@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { runs, fetchRuns, loading } = useRunsStore();
   const { session } = useAuthStore();
   
@@ -134,22 +135,29 @@ export default function Chat() {
   useEffect(() => {
     if (!streamingContent) return;
 
-    // Regex to find [CRYSTAL_CANDIDATE: {...}]
-    const match = streamingContent.match(/\[CRYSTAL_CANDIDATE:\s*({.*?})\]/);
+    // Regex robusto para JSON multilínea
+    const CRYSTAL_REGEX = /\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})\]/m;
+    const match = streamingContent.match(CRYSTAL_REGEX);
     if (match && match[1]) {
         try {
             const candidateData = JSON.parse(match[1]);
-            // Only set if not already set to avoid loops, though strict mode might trigger twice
-            setSuggestion({
-                id: 'temp-' + Date.now(), // Client-side ID until saved
-                content: JSON.stringify({ 
-                    content: candidateData.description, 
-                    name: candidateData.name, 
-                    tags: candidateData.tags 
-                }) // Matching the expected format for the existing UI
+            // Detectamos si cambió respecto al último candidato para evitar re-renders locos
+            setSuggestion(prev => {
+                const currentContent = prev ? JSON.parse(prev.content).content : "";
+                if (currentContent !== candidateData.description) {
+                    return {
+                        id: 'temp-' + Date.now(),
+                        content: JSON.stringify({ 
+                            content: candidateData.description, 
+                            name: candidateData.name, 
+                            tags: candidateData.tags 
+                        })
+                    };
+                }
+                return prev;
             });
         } catch (e) {
-            console.error("Failed to parse crystal candidate", e);
+            // Ignoramos JSONs incompletos durante el stream
         }
     }
   }, [streamingContent]);
@@ -160,21 +168,8 @@ export default function Chat() {
   // Clean displayed messages from the marker and artifacts
   // Clean displayed messages from the marker and artifacts
   const cleanContent = (text: string) => {
-      // 1. Remove the Crystal Candidate block fully
-      let cleaned = text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*$/, '');
-      
-      // 2. Aggressive cleanup of ANY trailing JSON artifacts or braces
-      cleaned = cleaned.trim();
-      // Regex to remove trailing "}", "]", "})", "}]", etc. recursively if at the end
-      // We loop briefly to catch nested ones if needed, or just use a robust regex
-      // Replace any sequence of } or ] or ) or whitespace at the very end IF it looks like an artifact
-      // Heuristic: If the last char is '}' or ']' and there is no opening counterpart in the last 20 chars, kill it.
-      
-      // Simplification: Just remove trailing '}' if it exists. 
-      while (cleaned.endsWith('}') || cleaned.endsWith(']')) {
-          cleaned = cleaned.slice(0, -1).trim();
-      }
-      return cleaned;
+      const CRYSTAL_REGEX = /\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})\]/m;
+      return text.replace(CRYSTAL_REGEX, "").trim();
   };
 
   const displayMessages = [...storeMessages.map(m => ({...m, content: cleanContent(m.content)}))];
@@ -239,7 +234,7 @@ export default function Chat() {
           const { data: { session } } = await supabase.auth.getSession();
           const token = session?.access_token;
 
-          const res = await fetch(`${API_URL}/projects/crystallize`, {
+      const res = await fetch(`${API_URL}/projects/crystallize`, {
               method: 'POST',
               headers: { 
                   'Content-Type': 'application/json',
@@ -249,9 +244,11 @@ export default function Chat() {
           });
           if (res.ok) {
               const data = await res.json();
-              console.log(`Proyecto "${data.project.name}" creado!`); // Replaced alert
+              console.log(`Proyecto "${data.project.name}" creado!`);
               setSuggestion(null);
               localStorage.setItem('last_dismissed_suggestion', suggestion.id);
+              // Redirigimos al usuario al nuevo proyecto
+              navigate(`/projects/${data.project.id}`);
           }
       } catch (e) {
           console.error(e);
@@ -283,7 +280,7 @@ export default function Chat() {
              </div>
           )}
 
-          {displayMessages.map((msg) => (
+          {displayMessages.map((msg, index) => (
             <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex gap-4 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
@@ -297,12 +294,29 @@ export default function Chat() {
                      <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                   {msg.role === 'assistant' && (
-                    <div className="flex gap-2 items-center opacity-0 hover:opacity-100 transition-opacity">
-                      <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-1">
                         <Info size={10} /> Análisis
                       </button>
                     </div>
                   )}
+
+                  {/* MAGIC BUTTON: Injected directly into flow */}
+                  {msg.role === 'assistant' && suggestion && index === displayMessages.length - 1 && (
+                      <div className="mt-4 p-4 border border-blue-200 bg-blue-50/50 rounded-xl animate-in fade-in slide-in-from-bottom-2">
+                            <div className="flex justify-between items-start gap-4">
+                            <div>
+                                <h4 className="text-sm font-bold text-blue-900">🚀 Idea Detectada: {JSON.parse(suggestion.content).name}</h4>
+                                <p className="text-xs text-blue-700 mt-1">{JSON.parse(suggestion.content).content}</p>
+                            </div>
+                            <button 
+                                onClick={handleCrystallize}
+                                className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                            >
+                                {isCrystallizing ? 'Creating...' : 'Crystallize'}
+                            </button>
+                            </div>
+                        </div>
+                  )}
+
                 </div>
               </div>
             </div>
@@ -325,7 +339,9 @@ export default function Chat() {
       </div>
 
       {/* Suggestion Card */}
-      {suggestion && (
+      {/* Old Suggestion Card Removed in favor of Magic Button in Flow */}
+      { 
+      /* {suggestion && (
           <div className="absolute bottom-24 left-0 right-0 z-20 flex justify-center px-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
               <div className="bg-white border border-blue-100 shadow-xl rounded-xl p-4 max-w-lg w-full flex items-center gap-4 ring-1 ring-blue-50">
                   <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -355,7 +371,8 @@ export default function Chat() {
                   </div>
               </div>
           </div>
-      )}
+      )} */
+      }
 
       {/* Input Flotante */}
       <footer className="p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent">

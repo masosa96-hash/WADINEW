@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../middleware/auth-beta";
 import { supabase } from "../config/supabase";
 import { getChatCompletion } from "../services/openai";
+import { extractAndSaveKnowledge } from "../services/knowledge-service";
 
 export const listRuns = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -75,6 +76,12 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (runError) throw runError;
+
+    // 4. RAG TRIGGER (Fire-and-forget)
+    // "El momento Ajá" - WADI aprende de cada interacción
+    extractAndSaveKnowledge(userId, input).catch(err => 
+        console.error("RAG Background Error:", err)
+    );
 
     res.status(201).json(run);
   } catch (error: any) {
