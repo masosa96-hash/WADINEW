@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { API_URL } from "../config/api";
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, User, Bot, Info } from 'lucide-react';
@@ -25,8 +25,14 @@ export default function Chat() {
   }, [id, fetchRuns, session?.access_token]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [runs, loading, isStreaming, streamingContent]); // Scroll on updates
+    // Mientras streameamos, el scroll debe ser instantáneo para no saturar el main thread
+    const behavior = isStreaming ? 'auto' : 'smooth';
+    
+    // Usamos requestAnimationFrame para asegurar que el DOM ya se actualizó
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollIntoView({ behavior });
+    });
+  }, [streamingContent, runs, isStreaming]);
 
   const handleSend = async () => {
     if (!input.trim() || !id || loading) return;
@@ -80,22 +86,23 @@ export default function Chat() {
             
             // Parse SSE data lines (data: {...})
             const lines = chunkValue.split('\n');
+            let chunkContent = '';
+
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     try {
                         const data = JSON.parse(line.slice(6));
                         if (data.content) {
-                            // Check for marker in the accumulated content + new chunk
-                            const newContent = data.content;
-                            // We construct the full content to check, but setting state is additive
-                            // logic is complex inside a loop. 
-                            // Easier: Just append to streamingContent, and let a useEffect handle parsing.
-                            setStreamingContent(prev => prev + newContent);
+                            chunkContent += data.content;
                         }
                     } catch {
                         // ignore broken chunks or non-json
                     }
                 }
+            }
+
+            if (chunkContent) {
+                setStreamingContent(prev => prev + chunkContent);
             }
         }
         
@@ -183,11 +190,15 @@ export default function Chat() {
       });
   }
   
+  const cleanedStreamingContent = useMemo(() => {
+      return cleanContent(streamingContent);
+  }, [streamingContent]);
+
   if (isStreaming || (streamingContent && optimisticUserMessage)) { // Show assistant bubble if streaming
       displayMessages.push({
           id: 'streaming-assistant',
           role: 'assistant',
-          content: cleanContent(streamingContent), // Cleaned visual content
+          content: cleanedStreamingContent, // Cleaned visual content
           created_at: new Date().toISOString()
       });
   }
