@@ -268,7 +268,7 @@ export default function Chat() {
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">WADI Online</span>
         </div>
-        <div className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-bold text-gray-400">
+        <div className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-bold text-gray-400 hidden">
           PERSONA: DINÁMICA
         </div>
       </header>

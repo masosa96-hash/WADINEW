@@ -34,7 +34,10 @@ const pdf = require("pdf-parse");
 // import { wadiPreFlight } from "./layers/human_pattern/index";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
+import { authenticate, AuthenticatedRequest } from "./middleware/auth";
+import { requireScope } from "./middleware/require-scope";
 import { getRelevantKnowledge } from "./services/knowledge-service";
+import { listRuns, createRun } from "./controllers/runsController"; // Added import
 
 const router = Router();
 
@@ -82,7 +85,22 @@ router.post(
       .select()
       .single();
     res.json(data);
+    res.json(data);
   })
+);
+
+// --- RUNS ROUTES (Explicitly mounted here to fix 404s) ---
+// Matches /api/projects/:id/runs
+router.get(
+    "/projects/:id/runs",
+    authenticate(),
+    asyncHandler(listRuns)
+);
+
+router.post(
+    "/projects/:id/runs",
+    authenticate(),
+    asyncHandler(createRun)
 );
 
 // Helper: Generate Technical Project Name

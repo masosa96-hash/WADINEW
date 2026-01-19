@@ -53,16 +53,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     {session?.user?.id || "No conectado"}
                 </code>
              </div>
-
-             <div className="flex-1 p-4 bg-gray-50 rounded-xl space-y-2 border border-gray-100">
-                <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                    <Shield size={14} />
-                    <span>Persona Activa</span>
-                </div>
-                <div className="text-sm font-semibold text-gray-900">
-                    Based Reddit (Enforced)
-                </div>
-             </div>
           </div>
 
           <hr className="border-gray-100" />

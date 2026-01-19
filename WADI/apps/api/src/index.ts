@@ -59,6 +59,13 @@ app.get("/health", (req, res) => {
 });
 
 app.use(express.json());
+
+// DEBUG LOGGER: Log every request path to see what reaches the server
+app.use((req, res, next) => {
+  console.log(`[INCOMING] ${req.method} ${req.path}`);
+  next();
+});
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use(requestLogger as any);
 
