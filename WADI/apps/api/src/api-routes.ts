@@ -96,11 +96,50 @@ router.get(
     asyncHandler(listRuns)
 );
 
-router.post(
-    "/projects/:id/runs",
-    authenticate(),
-    asyncHandler(createRun)
-);
+router.post("/projects/:id/runs", authenticate(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { input } = req.body;
+    const userId = (req as any).user.id;
+
+    // TODO EL CEREBRO SE LLAMA ACÁ CON SOLO 4 ARGUMENTOS
+    // Note: runBrainStream returns a Stream or Response-like object depending on implementation.
+    // However, the current runBrainStream returns an OpenAI completion response (which includes stream if enabled).
+    // Wait, the user code says "const stream = await runBrainStream(...)".
+    // And then "res.setHeader...".
+    // My runBrainStream returns `await client.chat.completions.create({ stream: true ... })`.
+    // So it returns a Stream.
+    
+    // We need to handle the stream properly.
+    // The user's snippet ended with "// ... resto del piping del stream ...".
+    // I need to implement that piping.
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = await runBrainStream(
+      userId, 
+      input, 
+      { projectId: id }, 
+      'fast'
+    );
+
+    for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+            // Send in SSE format expected by frontend
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
+    }
+    
+    res.end();
+    
+  } catch (error) {
+    console.error("Error en run:", error);
+    res.status(500).json({ error: "INTERNAL_ERROR" });
+  }
+});
 
 // Helper: Generate Technical Project Name
 const generateProjectName = async (description: string) => {
@@ -706,19 +745,11 @@ router.post(
     const { mode, topic, explainLevel, isMobile, messageCount } = req.body;
 
     // Generate prompt with mock or provided data
-    const { prompt } = generateSystemPrompt(
-      mode || "normal",
-      topic || "general",
-      // explainLevel || "normal",
-      {},
-      "hostile",
-      isMobile || false,
-      messageCount || 0,
-      [], // pastFailures mocked
-      "GENERADOR_DE_HUMO", // rank mocked
-      0, // points mocked
-      null // active_focus mocked
-    );
+    // Generate prompt with mock or provided data
+    const { prompt } = generateSystemPrompt({
+        projectContext: { description: topic || "general" },
+        memory: "" // No memory for debug
+    });
 
     res.json({ prompt });
   })
