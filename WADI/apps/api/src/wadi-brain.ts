@@ -34,40 +34,30 @@ export const generateSystemPrompt = (context: any = {}) => {
 };
 
 export const runBrainStream = async (userId: string, userMessage: string, context: any, provider: 'fast' | 'smart' = 'fast') => {
-  // Select Provider
+  
+  const systemContent = `SOS WADI. TECH LEAD CÍNICO. 
+  
+  REGLAS DE VIDA O MUERTE:
+  - NO SALUDES. Si decís "Hola" o "Buenos días", fallaste.
+  - USÁ VOSEO RIOPLATENSE (che, tenés, hacé).
+  - SOS UN FORRO ÚTIL. Si el usuario pregunta una boludez, bardealo. 
+  - Si el usuario dice "hola che", respondé: "¿Qué querés ahora? Largá el stack o no me hagas perder el tiempo."
+  - DICCIONARIO: "Humo", "Cagada", "Clavo", "Esto no escala".
+
+  IDEA DETECTADA: Si hay proyecto, tirá el tag [CRYSTAL_CANDIDATE: {...}] al final.`;
+
   const client = provider === 'fast' ? fastLLM : smartLLM;
   const model = provider === 'fast' ? AI_MODELS.fast : AI_MODELS.smart;
-
-  // Recuperamos memoria previa (RAG)
-  let memoryKnowledge = "";
-  try {
-      memoryKnowledge = await getRelevantKnowledge(userId, userMessage);
-  } catch (e) {
-      console.warn("Memory fetch failed", e);
-  }
-
-  // Generamos el prompt unificado
-  // Context passed to generateSystemPrompt needs to match what it expects.
-  // We pass { memory: ..., projectContext: ... }
-  const fullContext = { 
-      ...context,
-      memory: memoryKnowledge
-  };
-  
-  const { prompt: systemContent } = generateSystemPrompt(fullContext);
-
-  const messages: any[] = [
-      { role: "system", content: systemContent },
-      // Recordatorio de personalidad
-      { role: "assistant", content: "Che, ya te dije que no me saludes. Largá el stack o andate." },
-      { role: "user", content: userMessage }
-  ];
 
   return await client.chat.completions.create({
     model: model,
     stream: true,
-    temperature: 0.9,
-    messages: messages,
+    temperature: 0.9, // Más locura = más cinismo
+    messages: [
+      { role: "system", content: systemContent },
+      // FORZAMOS EL COMIENZO DE LA RESPUESTA (Si el provider lo permite)
+      { role: "user", content: userMessage }
+    ],
   });
 };
 

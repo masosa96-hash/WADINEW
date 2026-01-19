@@ -96,48 +96,36 @@ router.get(
     asyncHandler(listRuns)
 );
 
-router.post("/projects/:id/runs", authenticate(), async (req, res) => {
+router.post("/projects/:id/runs", authenticate(), async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const { input } = req.body;
-    const userId = (req as any).user.id;
+    const userId = req.user.id;
 
-    // TODO EL CEREBRO SE LLAMA ACÁ CON SOLO 4 ARGUMENTOS
-    // Note: runBrainStream returns a Stream or Response-like object depending on implementation.
-    // However, the current runBrainStream returns an OpenAI completion response (which includes stream if enabled).
-    // Wait, the user code says "const stream = await runBrainStream(...)".
-    // And then "res.setHeader...".
-    // My runBrainStream returns `await client.chat.completions.create({ stream: true ... })`.
-    // So it returns a Stream.
-    
-    // We need to handle the stream properly.
-    // The user's snippet ended with "// ... resto del piping del stream ...".
-    // I need to implement that piping.
-    
+    // LLAMADA LIMPIA: Solo 4 argumentos.
+    const stream = await runBrainStream(
+      userId,
+      input,
+      { projectId: id }, // Contexto
+      'fast'             // Provider
+    );
+
+    // Configuración de Headers para Streaming
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const stream = await runBrainStream(
-      userId, 
-      input, 
-      { projectId: id }, 
-      'fast'
-    );
-
     for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || "";
-        if (content) {
-            // Send in SSE format expected by frontend
-            res.write(`data: ${JSON.stringify({ content })}\n\n`);
-        }
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
     }
-    
+    res.write('data: [DONE]\n\n');
     res.end();
-    
   } catch (error) {
-    console.error("Error en run:", error);
-    res.status(500).json({ error: "INTERNAL_ERROR" });
+    console.error("Error en Run:", error);
+    if (!res.headersSent) res.status(500).json({ error: "BRAIN_FAULT" });
   }
 });
 
