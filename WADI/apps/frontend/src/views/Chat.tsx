@@ -156,7 +156,7 @@ export default function Chat() {
                 }
                 return prev;
             });
-        } catch (e) {
+        } catch {
             // Ignoramos JSONs incompletos durante el stream
         }
     }
