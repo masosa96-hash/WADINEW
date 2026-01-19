@@ -102,30 +102,19 @@ router.post("/projects/:id/runs", authenticate(), async (req: any, res: any) => 
     const { input } = req.body;
     const userId = req.user.id;
 
-    // LLAMADA LIMPIA: Solo 4 argumentos.
-    const stream = await runBrainStream(
-      userId,
-      input,
-      { projectId: id }, // Contexto
-      'fast'             // Provider
-    );
+    // Solo 4 argumentos. Si tenías más, eso rompía el build.
+    const stream = await runBrainStream(userId, input, { projectId: id }, 'fast');
 
-    // Configuración de Headers para Streaming
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
-      if (content) {
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
+      if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
     }
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error) {
-    console.error("Error en Run:", error);
-    if (!res.headersSent) res.status(500).json({ error: "BRAIN_FAULT" });
+    console.error("Error:", error);
+    res.status(500).json({ error: "WADI_OFFLINE" });
   }
 });
 
