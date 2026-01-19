@@ -31,7 +31,7 @@ export default function ProjectCard({ project, isSelectionMode, isSelected, onTo
     <>
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-sm font-medium text-wadi-text group-hover:text-wadi-accent transition-colors truncate pr-2">
-          {project.name}
+          {project.name || 'GENERAL'}
         </h3>
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide ${statusStyle}`}>
           {project.status === 'IN_PROGRESS' ? 'Active' : project.status ? project.status.charAt(0) + project.status.slice(1).toLowerCase() : 'Plan'}
@@ -39,7 +39,7 @@ export default function ProjectCard({ project, isSelectionMode, isSelected, onTo
       </div>
       
       <p className="text-wadi-muted text-xs mb-4 line-clamp-2 leading-relaxed">
-        {project.description || "No description provided."}
+        {project.description || "Default Operational Context"}
       </p>
       
       <div className="flex justify-between items-center pt-2 border-t border-gray-50">
@@ -53,34 +53,40 @@ export default function ProjectCard({ project, isSelectionMode, isSelected, onTo
     </>
   );
 
-  if (isSelectionMode) {
-    return (
-      <div 
-        onClick={() => onToggle?.(project.id)}
-        className={`group block bg-white rounded-lg shadow-sm border transition-all duration-200 cursor-pointer relative ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-transparent hover:shadow-md'}`}
-      >
-        {/* Selection Overlay/Checkbox */}
-        <div className="absolute top-2 right-2 z-10">
-           <input 
-              type="checkbox" 
-              checked={isSelected} 
-              readOnly 
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-           />
-        </div>
-        <div className="p-4 pointer-events-none opacity-80">
-           {CardContent}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Link
-      to={`/projects/${project.id}`}
-      className="group block bg-white rounded-lg shadow-sm border border-transparent hover:shadow-md hover:border-black/5 transition-all duration-200 p-4"
+    <div 
+      onClick={() => isSelectionMode && onToggle?.(project.id)}
+      className={`group block bg-white rounded-lg shadow-sm border transition-all duration-200 relative ${
+        isSelected 
+        ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50/50' 
+        : 'border-transparent hover:shadow-md'
+      } ${!isSelectionMode ? 'cursor-pointer' : ''}`}
     >
-      {CardContent}
-    </Link>
+      {isSelectionMode && (
+        <div className="absolute top-2 right-2 z-10">
+          <input 
+            type="checkbox" 
+            checked={isSelected}
+            onChange={() => onToggle?.(project.id)}
+            className="w-5 h-5 accent-blue-500 cursor-pointer"
+          />
+        </div>
+      )}
+
+      {isSelectionMode ? (
+         <div className="p-4 opacity-80 pointer-events-none">
+           {CardContent}
+         </div>
+      ) : (
+         <div className="p-0">
+            <Link
+              to={`/projects/${project.id}`}
+              className="block p-4 w-full h-full"
+            >
+              {CardContent}
+            </Link>
+         </div>
+      )}
+    </div>
   );
 }

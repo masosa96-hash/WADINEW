@@ -58,20 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           <hr className="border-gray-100" />
 
           {/* Custom Instructions */}
-          <div className="space-y-4">
-               <div>
-                   <label className="text-sm font-semibold text-gray-800">Instrucciones Custom (System Prompt)</label>
-                   <p className="text-xs text-gray-500 mt-1">
-                       Estas instrucciones se inyectan en el cerebro de WADI. Usalas para definir temas prohibidos, estilo de código preferido, etc.
-                   </p>
-               </div>
-               <textarea
-                   value={customInstructions || ""}
-                   onChange={(e) => useSettingsStore.getState().setCustomInstructions(e.target.value)}
-                   placeholder="Ej: Prefiero TypeScript estricto. No uses emojis. Se breve."
-                   className="w-full h-32 p-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none shadow-sm"
-               />
-          </div>
+{/* Custom Instructions (Removed for Simplicity) */}
 
         </div>
 

@@ -34,6 +34,14 @@ export default function ProjectBoard() {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === projects.length) {
+      setSelectedIds([]); // Si todos están marcados, desmarcar todo
+    } else {
+      setSelectedIds(projects.map(p => p.id)); // Marcar todos los IDs visibles
+    }
+  };
+
   const handleDelete = async () => {
     if (selectedIds.length === 0) return;
     await deleteSelectedProjects(selectedIds);
@@ -60,9 +68,17 @@ export default function ProjectBoard() {
             >
                {isSelectionMode ? "Listo" : "Gestionar"}
             </button>
+            
+            {isSelectionMode && (
+              <button 
+                onClick={handleSelectAll}
+                className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg text-sm transition-colors"
+              >
+                {selectedIds.length === projects.length ? 'Desmarcar todo' : 'Seleccionar todo'}
+              </button>
+            )}
 
          </div>
-
 
        {/* Floating Delete Action - Bottom */}
        {isSelectionMode && selectedIds.length > 0 && (
