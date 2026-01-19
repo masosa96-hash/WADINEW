@@ -54,9 +54,9 @@ export const extractAndSaveKnowledge = async (userId: string, userMessage: strin
   return null;
 };
 
-export const getRelevantKnowledge = async (userId: string) => {
+export const getRelevantKnowledge = async (userId: string, query?: string) => {
   // Por ahora traemos los últimos 10 hechos aprendidos. 
-  // (En el futuro podemos filtrar por relevancia usando embeddings).
+  // (En el futuro usaremos 'query' para filtrar por embeddings).
   const { data, error } = await supabase
     .from('wadi_knowledge_base')
     .select('knowledge_point, category')
