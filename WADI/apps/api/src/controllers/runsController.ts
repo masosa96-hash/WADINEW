@@ -29,6 +29,8 @@ export const listRuns = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+import { generateSystemPrompt } from "../wadi-brain";
+
 export const createRun = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -42,7 +44,7 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
     // 1. Verify project ownership
     const { data: project, error: projError } = await supabase
       .from("projects")
-      .select("id")
+      .select("*") 
       .eq("id", projectId)
       .eq("user_id", userId)
       .single();
@@ -51,11 +53,16 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ error: "Project not found" });
     }
 
-    // 2. Call OpenAI
+    // 2. Call OpenAI using UNIFIED BRAIN
     const aiModel = model || "gpt-3.5-turbo";
     let output = "";
+    
+    // Generate unified prompt with project context
+    const { prompt: systemPrompt } = generateSystemPrompt(undefined, project.description);
+
     try {
-        output = await getChatCompletion(input, aiModel) || "";
+        // Pass systemPrompt explicitly to use the unified one
+        output = await getChatCompletion(input, aiModel, systemPrompt) || "";
     } catch (aiErr) {
         return res.status(502).json({ error: "AI Service Unavailable" });
     }
