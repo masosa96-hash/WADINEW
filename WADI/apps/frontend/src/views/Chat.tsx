@@ -294,7 +294,10 @@ export default function Chat() {
                      <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                   {msg.role === 'assistant' && (
-                        <Info size={10} /> Análisis
+                    <div className="mt-2 flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                      <button className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
+                        <Info size={10} /> 
+                        <span>Análisis</span>
                       </button>
                     </div>
                   )}
