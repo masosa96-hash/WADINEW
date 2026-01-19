@@ -102,19 +102,21 @@ router.post("/projects/:id/runs", authenticate(), async (req: any, res: any) => 
     const { input } = req.body;
     const userId = req.user.id;
 
-    // Solo 4 argumentos. Si tenías más, eso rompía el build.
+    // Solo los 4 argumentos que espera la función
     const stream = await runBrainStream(userId, input, { projectId: id }, 'fast');
 
     res.setHeader('Content-Type', 'text/event-stream');
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
-      if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      if (content) {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
     }
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "WADI_OFFLINE" });
+    console.error("Build Error Fix:", error);
+    if (!res.headersSent) res.status(500).json({ error: "WADI_INTERNAL_ERROR" });
   }
 });
 
