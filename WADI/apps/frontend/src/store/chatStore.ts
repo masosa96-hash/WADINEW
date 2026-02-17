@@ -8,7 +8,7 @@ import imageCompression from "browser-image-compression";
 const rawUrl = import.meta.env.VITE_API_URL;
 const API_URL = rawUrl
   ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
-  : "https://wadi-wxg7.onrender.com";
+  : "https://wadi-api-u2vx.onrender.com";
 
 export interface Attachment {
   url: string;
