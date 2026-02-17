@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { logger } from "../core/logger";
 
 export class AppError extends Error {
   constructor(
@@ -17,7 +18,14 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error(`[ERROR] ${err.message}`, err.stack);
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  logger.error(err.message, {
+    stack: isProduction ? undefined : err.stack,
+    path: req.path,
+    method: req.method,
+    requestId: (req as any).requestId
+  });
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
@@ -31,6 +39,7 @@ export const errorHandler = (
   return res.status(500).json({
     status: "error",
     code: "INTERNAL_SERVER_ERROR",
-    message: "Something went wrong on our end.",
+    message: isProduction ? "Internal Server Error" : err.message,
+    ...(isProduction ? {} : { stack: err.stack }),
   });
 };

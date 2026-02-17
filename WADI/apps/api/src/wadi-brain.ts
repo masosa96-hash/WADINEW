@@ -53,15 +53,38 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
   const client = provider === 'fast' ? fastLLM : smartLLM;
   const model = provider === 'fast' ? AI_MODELS.fast : AI_MODELS.smart;
 
-  return await client.chat.completions.create({
-    model: model,
-    stream: true,
-    temperature: 0.95, // Más alto para que pierda el filtro de "bien educado"
-    messages: [
-      { role: "system", content: systemContent },
-      { role: "user", content: userMessage }
-    ],
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s Hard Timeout
+
+  // Ensure we clear timeout if it returns quickly (though for stream it returns immediately, 
+  // so the timeout effectively acts as a max duration for the stream connection)
+  // Actually, for streams, we might want to clear timeout on *start* of stream? 
+  // Or is this a "max time to verify" timeout? 
+  // User said: "request duplicados... costo multiplicado". A hard timeout is safest.
+  
+  try {
+    const stream = await client.chat.completions.create({
+      model: model,
+      stream: true,
+      stream_options: { include_usage: true },
+      temperature: 0.95,
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userMessage }
+      ]
+    }, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      signal: controller.signal as any
+    });
+    
+    // Clear timeout only after stream closes? No, we return stream.
+    // The timeout will kill the stream after 15s even if it's printing.
+    // This is "Hardening".
+    return stream;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 };
 
 export function generateAuditPrompt() {

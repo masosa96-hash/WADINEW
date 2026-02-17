@@ -1,45 +1,17 @@
-import { Request, Response, NextFunction } from "express";
-import { RateLimitError } from "../core/errors";
+import rateLimit from "express-rate-limit";
+import { Request, Response } from "express";
 
-const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-const MAX_REQUESTS = 30;
+export const rateLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 5 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: {
+    error: "Too many requests, please try again later.",
+  },
+  keyGenerator: (req: Request): string => {
+    // Robust IP detection for proxies (Render, etc.)
+    return (req.headers["x-forwarded-for"] as string) || req.ip || "unknown";
+  },
+});
 
-const hits = new Map<string, { count: number; startTime: number }>();
-
-export const rateLimiter = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  // Use IP or UserID as key
-  const key =
-    (req.headers["x-forwarded-for"] as string) ||
-    req.socket.remoteAddress ||
-    "unknown";
-
-  const now = Date.now();
-  const record = hits.get(key);
-
-  if (!record) {
-    hits.set(key, { count: 1, startTime: now });
-    return next();
-  }
-
-  if (now - record.startTime > WINDOW_MS) {
-    // Reset window
-    record.count = 1;
-    record.startTime = now;
-    return next();
-  }
-
-  if (record.count >= MAX_REQUESTS) {
-    return next(
-      new RateLimitError(
-        `Rate limit exceeded. Try again in ${Math.ceil((record.startTime + WINDOW_MS - now) / 1000)} seconds.`
-      )
-    );
-  }
-
-  record.count += 1;
-  next();
-};

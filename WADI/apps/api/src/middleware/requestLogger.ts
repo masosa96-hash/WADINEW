@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../core/logger";
 import crypto from "crypto";
-import { recordMetric } from "../routes/monitoring";
+
 
 export const requestLogger = (
   req: Request,
@@ -9,30 +9,22 @@ export const requestLogger = (
   next: NextFunction
 ) => {
   const start = Date.now();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (req as any).requestId = req.headers["rndr-id"] || req.headers["x-request-id"] || crypto.randomUUID();
+  const requestId = req.headers["rndr-id"] || req.headers["x-request-id"] || crypto.randomUUID();
+  (req as any).requestId = requestId;
 
   // Hook into response finish
   res.on("finish", () => {
     const duration = Date.now() - start;
 
-    // Recording metrics
-    recordMetric(res.statusCode, duration);
-
-    logger.info("Request processed", {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      requestId: (req as any).requestId,
+    logger.info("request_completed", {
+      requestId,
       method: req.method,
-      path: req.originalUrl,
+      path: req.originalUrl || req.url,
       status: res.statusCode,
-      latency: duration,
-      userId:
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (req.query && (req.query as any).user_id) ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (req.body && (req.body as any).user_id) ||
-        "anonymous", // Best effort
+      latency_ms: duration,
+      ip: req.ip,
       userAgent: req.get("user-agent"),
+      userId: (req as any).user?.id || "anonymous"
     });
   });
 

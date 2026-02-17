@@ -31,7 +31,7 @@ const frontendPath = path.resolve(__dirname, "../../frontend/dist");
 
 import helmet from "helmet";
 
-const app = express();
+export const app = express();
 
 // 1. EL "FIX" TOTAL: Configuración manual y estricta
 app.use((req, res, next) => {
@@ -60,11 +60,7 @@ app.get("/health", (req, res) => {
 
 app.use(express.json());
 
-// DEBUG LOGGER: Log every request path to see what reaches the server
-app.use((req, res, next) => {
-  console.log(`[INCOMING] ${req.method} ${req.path}`);
-  next();
-});
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use(requestLogger as any);
@@ -104,6 +100,10 @@ app.get("/system/debug-files", (req, res) => {
 
 // V2 Domain Routes
 // import projectsV2Router from "./domain/projects/project.routes";
+
+// Rate Limiter (After Logger, before Routes, scoped to /api)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+app.use("/api", rateLimiter as any);
 
 // Standardized API Routes
 // app.use("/api/projects", projectsRouter);
