@@ -58,7 +58,7 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
     let output = "";
     
     // Generate unified prompt with project context
-    const { prompt: systemPrompt } = generateSystemPrompt(undefined, project.description);
+    const { prompt: systemPrompt } = generateSystemPrompt({ projectContext: { description: project.description } });
 
     try {
         // Pass systemPrompt explicitly to use the unified one
