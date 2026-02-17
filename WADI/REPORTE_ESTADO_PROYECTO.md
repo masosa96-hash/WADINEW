@@ -1,91 +1,59 @@
-# REPORTE DE ESTADO DEL PROYECTO: WADI V5
+# REPORTE DE ESTADO DEL PROYECTO: WADI (ACTUALIZADO)
 
-**Fecha:** 5 de Enero, 2026
-**Estado:** 🟢 OPERATIVO (Hardened)
+**Fecha de Revisión:** 16 de Febrero, 2026
+**Versión Detectada:** Frontend v5.2.0 | API v5.1.0
 
-## 🏗️ Logros Recientes (Infraestructura & Core)
+## 🟢 Estado General
+El proyecto se encuentra en una fase de **estabilización y refinamiento agresivo**. La arquitectura base es sólida (Monorepo), pero ha habido cambios recientes significativos para simplificar la operación y endurecer la personalidad de la IA.
 
-### 1. Arquitectura "Monorepo Híbrido"
+## 🏗️ Arquitectura Actual
 
-- Se consolidó todo el código en un monorepo eficiente.
-- **Estrategia Inteligente:** Mantenemos la separación lógica de código (`apps/worker` vs `apps/api`), pero para el deploy en Render usamos un **proceso unificado**.
-- **Beneficio:** Arquitectura profesional de microservicios, pero costo **$0** (Free Tier).
+### Estructura: Monorepo (PNPM Workspaces)
+- **Root:** `e:\WADINEW\WADI`
+- **Apps:**
+  - `apps/frontend`: SPA con React 19, Vite, Tailwind, Zustand. Diseño "Minimalist Pro".
+  - `apps/api`: Express v5, TypeScript, Zod.
+- **Packages:**
+  - `@wadi/core`: Lógica compartida del cerebro.
+  - `@wadi/db-types`: Tipos generados de Supabase.
+  - `@wadi/persona`: Definiciones de personalidad.
 
-### 2. Seguridad & Auth (JWT)
+### Stack Tecnológico
+- **Runtime:** Node.js 20+
+- **Base de Datos:** Supabase (Postgres + Auth).
+- **IA:** Híbrida (OpenAI para razonamiento + Groq para velocidad/chat).
+- **Infraestructura:** Docker Compose para local, Render para producción.
 
-- Implementación de `authenticate` middleware con validación real de tokens.
-- Sistema de permisos RBAC con `requireScope`.
-- Tipado estricto: `req.user` ahora es TypeScript puro, nada de `any`.
-- Rutas críticas (`/inner-sanctum`, `/journal`) blindadas para administradores.
+## 🔄 Cambios Recientes y Situación Actual
 
-### 3. Cerebro Robusto (`wadi-core`)
+### 1. Simplificación de Infraestructura (Sync vs Async)
+Aunque el reporte de Enero mencionaba una arquitectura asíncrona (Colas Redis), los commits recientes indican un **retorno a modo síncrono** para el chat (`fix(api): switch chat to synchronous mode`).
+- **Motivo probable:** Estabilidad y errores de stream/conexión con Redis en despliegues sin Docker completo.
+- **Estado:** El chat funciona de manera directa (Request/Response o Stream directo) sin dependencia crítica de Redis/Workers complejos en este momento.
 
-- **`runBrain`**: El núcleo de IA ahora está aislado, validado con Zod (`brainSchema`), y tiene mecanismo de reintento automático.
-- **Fallback**: Si OpenAI falla, el sistema se degrada con elegancia en lugar de crashear con un 500.
+### 2. Identidad y Persona (WADI "Based")
+Se ha trabajado intensamente en la "personalidad" del sistema.
+- **Modo:** "Cynical / Based Reddit / Rioplatense".
+- **Ajustes:** Se han eliminado filtros de "buena onda" para priorizar una interacción directa, cruda y eficiente (Commits: `enforce Life or Death cynical persona`, `zero filter persona`).
 
-### 4. Motor Asíncrono (Colas)
+### 3. Seguridad y Conectividad
+- **CORS:** Múltiples parches recientes ("Atomic CORS fix", "Critical CORS definition") sugieren que hubo problemas de conexión entre Frontend y Backend en producción (Render), que parecen estar resueltos.
+- **Auth:** Se unificó la inyección de headers de autorización en el frontend (`inject auth headers`).
 
-- Integración de **Redis + BullMQ**.
-- Infraestructura de `Producer` (API) y `Consumer` (Worker) lista.
-- El worker corre "invisible" junto con la API, escuchando trabajos sin configuración extra.
+## 📋 Resumen de Componentes
 
----
+| Componente | Estado | Notas |
+| :--- | :--- | :--- |
+| **Frontend** | ✅ Estable | v5.2.0. Diseño "Minimalist Pro" implementado. React 19. |
+| **Backend API** | ⚠️/✅ Operativo | v5.1.0. Modo Síncrono activo. Dependencia de variables de entorno crítica. |
+| **Base de Datos** | ✅ Estructurada | Tipos generados (`wadi-db-types`). Migraciones SQL consolidadas. |
+| **DevOps** | 🟡 En Ajuste | Docker Compose presente. Scripts de build unificados en root. |
 
-## 🚧 Pendientes Inmediatos (Next Steps)
+## 🚨 Puntos de Atención Detectados
 
-1.  **Cableado Final del Chat**:
-    - La infraestructura de cola está lista, pero el endpoint `POST /chat` **todavía procesa síncronamente**.
-    - _Acción:_ Modificar `routes.ts` para que, en vez de esperar a la IA, simplemente despache el trabajo a la cola y devuelva un `jobId`.
+1.  **Divergencia con Documentación:** `REPORTE_ESTADO_PROYECTO.md` fecha del 5 de Enero y menciona características (Async Queue obligatoria) que han sido revertidas o modificadas. **Se recomienda actualizar la documentación oficial.**
+2.  **Hard-coding de Persona:** La personalidad está fuertemente "hardcodeada" en el código reciente. Si se requiere flexibilidad, esto podría ser deuda técnica.
+3.  **Dependencias de Workspace:** El build del backend depende de que se construyan primero los paquetes (`@wadi/core`, etc.). Los scripts `prebuild` están configurados para esto.
 
-2.  **Frontend Auth**:
-    - Asegurar que el cliente (React) esté enviando el header `Authorization: Bearer <token>` en cada request, ahora que la API lo exige.
-
-3.  **Observabilidad**:
-    - Verificar en los logs de Render que el "Worker" interno esté procesando mensajes correctamente cuando activemos el switch asíncrono.
-
-## 📊 Métricas Técnicas
-
-- **Node Version:** 20.x
-- **Build System:** PNPM Workspace
-- **Base de Datos:** Supabase (Postgres)
-- **Cache/Queue:** Redis (Internal Render)
-
-# HITO ALCANZADO: BETA SÓLIDO (V 5.0)
-**Fecha:** 05/01/2026
-**Estado:** 🟢DEPLOYED & READY
-
-## 🏆 Logros Críticos (La "Madurez" del Sistema)
-El proyecto ha dejado de ser un prototipo frágil. Ahora tiene una arquitectura de **software de producción**:
-
-1.  **Cerebro Asíncrono (BullMQ + Redis)**
-    *   **Antes:** Si la IA tardaba 30s, el navegador cortaba la conexión (Timeout).
-    *   **Ahora:** El frontend recibe un ticket (`jobId`), cuelga, y espera. El servidor procesa en background sin límites de tiempo. **Cero Timeouts.**
-
-2.  **Infraestructura Resiliente**
-    *   **Worker Integrado:** Corre en el mismo proceso que la API (ahorro de costos en Render), pero lógicamente separado.
-    *   **Redis Singleton:** Conexión robusta que sobrevive a reinicios y micro-cortes de red.
-    *   **Polling Inteligente:** El frontend consulta estado cada 1s, sin saturar al servidor.
-
-3.  **Seguridad & Tipado**
-    *   **Auth:** JWT Middleware (`requireScope`) protegiendo las rutas.
-    *   **TypeScript:** `ChatJobInput` y contratos de API sincronizados entre Core, API y Worker. Build robusto.
-
-## 🚀 ¿Está listo para usar?
-**SÍ. ABSOLUTAMENTE.**
-Es el momento de empezar a usar WADI ("Monday") para trabajar de verdad.
-
-### Qué puedes hacer YA:
-*   ✅ **Chat Profundo:** Hablar temas complejos sin miedo a que se corte la respuesta a la mitad.
-*   ✅ **Cristalizar Proyectos:** Convertir una idea del chat en un Proyecto formal en la DB con un click.
-*   ✅ **Subir Archivos:** El sistema ingesta PDFs/Textos (aunque el RAG es básico aún).
-*   ✅ **Memoria a Largo Plazo:** Monday recuerda tus "fracasos" y "preferencias" (Wadi Knowledge Base).
-
-### Qué falta (Roadmap vNext):
-*   RAG Avanzado (Vectores reales en pgvector).
-*   Streaming de texto (Ver la respuesta letra por letra en lugar de esperar al bloque final).
-*   Edición de proyectos más compleja desde el UI.
-
-## Conclusión
-**El sistema es estable.** La base es sólida como una roca. Ya no estás peleando contra `ECONNREFUSED` ni `Timeouts`. Estás listo para iterar sobre el **producto**, no sobre la **infraestructura**.
-
-**WADI ESTÁ ONLINE.**
+## ✅ Conclusión de la Revisión
+El sistema es funcional y ha evolucionado hacia la simplicidad operativa ("menos piezas móviles") priorizando la estabilidad del chat y la identidad del agente sobre la complejidad de la arquitectura asíncrona distribuida, probablemente para facilitar el despliegue y reducir errores en producción.
