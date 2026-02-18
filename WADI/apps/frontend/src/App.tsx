@@ -32,8 +32,8 @@ function App() {
            } else {
               throw new Error("Health check failed");
            }
-        } catch (e: any) {
-            const message = e.message || "Unknown Error";
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "Unknown Error";
             console.warn(`[WADI Health] Attempt ${retryCount + 1} failed:`, message);
             
             // Should we stop retrying eventually?
