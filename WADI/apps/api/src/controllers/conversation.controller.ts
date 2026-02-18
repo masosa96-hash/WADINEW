@@ -44,7 +44,7 @@ export const getConversation = async (
     throw new AppError("DB_ERROR", convError.message, 500);
   }
 
-  if (!conversation) {
+  if (!conversation || typeof conversation !== "object") {
     throw new AppError("NOT_FOUND", "Conversation not found", 404);
   }
 
@@ -58,7 +58,7 @@ export const getConversation = async (
 
   if (msgError) throw new AppError("DB_ERROR", msgError.message);
 
-  res.json({ ...conversation, messages });
+  res.json({ ...(conversation as Record<string, unknown>), messages });
 };
 
 export const deleteConversation = async (
