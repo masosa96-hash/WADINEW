@@ -42,7 +42,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
            throw new Error("Not authenticated (No session)");
       }
 
-      const res = await fetch(`${API_URL}/projects`, {
+      const res = await fetch(`${API_URL}/api/projects`, {
         headers: getHeaders(token),
       });
 
@@ -69,7 +69,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       const token = useAuthStore.getState().session?.access_token;
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_URL}/projects`, {
+      const res = await fetch(`${API_URL}/api/projects`, {
         method: "POST",
         headers: getHeaders(token),
         body: JSON.stringify({ name, description, status: "PLANNING" }),
@@ -103,7 +103,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       const token = useAuthStore.getState().session?.access_token;
       if (!token) throw new Error("Not authenticated");
 
-      const response = await fetch(`${API_URL}/projects/bulk`, {
+      const response = await fetch(`${API_URL}/api/projects/bulk`, {
         method: 'DELETE',
         headers: getHeaders(token), // Forzar validación de token
         body: JSON.stringify({ projectIds: ids })

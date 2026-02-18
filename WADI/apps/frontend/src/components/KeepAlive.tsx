@@ -7,11 +7,10 @@ export function KeepAlive() {
   useEffect(() => {
     const ping = async () => {
       try {
-        const rootUrl = API_URL.replace(/\/api$/, "");
-        await fetch(`${rootUrl}/health`);
+        await fetch(`${API_URL}/api/health`);
         // console.log("💓 WADI Heartbeat");
-      } catch (e) {
-        // console.warn("Heartbeat failed", e);
+      } catch {
+        // console.warn("Heartbeat failed");
       }
     };
 

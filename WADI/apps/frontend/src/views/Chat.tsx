@@ -64,7 +64,7 @@ export default function Chat() {
             return; // Don't send request to avoid 401
         }
         
-        const response = await fetch(`${API_URL}/projects/${id}/runs`, {
+        const response = await fetch(`${API_URL}/api/projects/${id}/runs`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -213,7 +213,7 @@ export default function Chat() {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
             
-            const response = await fetch(`${API_URL}/projects/suggestions/pending`, {
+            const response = await fetch(`${API_URL}/api/projects/suggestions/pending`, {
                  headers: { 
                      'Content-Type': 'application/json',
                      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -245,7 +245,7 @@ export default function Chat() {
           const { data: { session } } = await supabase.auth.getSession();
           const token = session?.access_token;
 
-      const res = await fetch(`${API_URL}/projects/crystallize`, {
+      const res = await fetch(`${API_URL}/api/projects/crystallize`, {
               method: 'POST',
               headers: { 
                   'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { API_URL, getHeaders } from '../config/api';
-import { useAuthStore } from './authStore';
+import { useAuthStore } from './useAuthStore';
 
 interface AIState {
   isProcessing: boolean;
@@ -36,7 +36,7 @@ export const useAIStore = create<AIState>((set) => ({
     const intervalId = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(`${API_URL}/v2/projects/analysis/${jobId}`, {
+        const res = await fetch(`${API_URL}/api/v2/projects/analysis/${jobId}`, {
             headers: getHeaders(token)
         });
 

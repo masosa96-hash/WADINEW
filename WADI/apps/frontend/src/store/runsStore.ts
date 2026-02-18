@@ -45,7 +45,7 @@ export const useRunsStore = create<RunsState>((set) => ({
       
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_URL}/projects/${projectId}/runs`, {
+      const res = await fetch(`${API_URL}/api/projects/${projectId}/runs`, {
         headers: getHeaders(token),
       });
 
@@ -70,7 +70,7 @@ export const useRunsStore = create<RunsState>((set) => ({
       const token = useAuthStore.getState().session?.access_token;
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${API_URL}/projects/${projectId}/runs`, {
+      const res = await fetch(`${API_URL}/api/projects/${projectId}/runs`, {
         method: "POST",
         headers: getHeaders(token),
         body: JSON.stringify({ input, model }),

@@ -1,10 +1,6 @@
-const cleanBaseUrl = (url: string) => url.replace(/\/+$/, "");
-const envApiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-// Force /api prefix if not present, but avoid double slash
-export const API_URL = envApiUrl.endsWith("/api") 
-    ? envApiUrl 
-    : `${cleanBaseUrl(envApiUrl)}/api`;
+export const API_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+  "http://localhost:3000";
 
 export const getHeaders = (token?: string) => {
   const headers: HeadersInit = {

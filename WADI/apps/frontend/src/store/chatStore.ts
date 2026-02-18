@@ -103,7 +103,7 @@ export const useChatStore = create<ChatState>()(
           ?.access_token;
         if (!token) return;
         try {
-          const res = await fetch(`${API_URL}/user/criminal-summary`, {
+          const res = await fetch(`${API_URL}/api/user/criminal-summary`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -200,7 +200,7 @@ export const useChatStore = create<ChatState>()(
         if (!token) return;
 
         try {
-          const response = await fetch(`${API_URL}/chat`, {
+          const response = await fetch(`${API_URL}/api/chat`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -226,7 +226,7 @@ export const useChatStore = create<ChatState>()(
             const jobId = data.jobId;
             const pollInterval = setInterval(async () => {
               try {
-                const pollRes = await fetch(`${API_URL}/chat/job/${jobId}`, {
+                const pollRes = await fetch(`${API_URL}/api/chat/job/${jobId}`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 const pollData = await pollRes.json();
@@ -286,7 +286,7 @@ export const useChatStore = create<ChatState>()(
         if (!token) return;
 
         try {
-          const res = await fetch(`${API_URL}/conversations/${id}`, {
+          const res = await fetch(`${API_URL}/api/conversations/${id}`, {
              method: 'DELETE',
              headers: { Authorization: `Bearer ${token}` }
           });
@@ -346,7 +346,7 @@ export const useChatStore = create<ChatState>()(
 
         try {
           // Use 'conversationIds' body param as per new backend spec
-          const res = await fetch(`${API_URL}/conversations/bulk`, {
+          const res = await fetch(`${API_URL}/api/conversations/bulk`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
