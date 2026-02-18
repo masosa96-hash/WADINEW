@@ -29,7 +29,8 @@ El proyecto se encuentra en una fase de **estabilización y refinamiento agresiv
 ### 1. Simplificación de Infraestructura (Sync vs Async)
 Aunque el reporte de Enero mencionaba una arquitectura asíncrona (Colas Redis), los commits recientes indican un **retorno a modo síncrono** para el chat (`fix(api): switch chat to synchronous mode`).
 - **Motivo probable:** Estabilidad y errores de stream/conexión con Redis en despliegues sin Docker completo.
-- **Estado:** El chat funciona de manera directa (Request/Response o Stream directo) sin dependencia crítica de Redis/Workers complejos en este momento.
+- **Estado:** El chat funciona de manera directa (Request/Response o Stream directo) sin dependencia de Redis/Workers.
+- **Limpieza:** Se han eliminado scripts muertos y refactorizado `api-routes.ts` en controladores modulares.
 
 ### 2. Identidad y Persona (WADI "Based")
 Se ha trabajado intensamente en la "personalidad" del sistema.
@@ -45,7 +46,7 @@ Se ha trabajado intensamente en la "personalidad" del sistema.
 | Componente | Estado | Notas |
 | :--- | :--- | :--- |
 | **Frontend** | ✅ Estable | v5.2.0. Diseño "Minimalist Pro" implementado. React 19. |
-| **Backend API** | ⚠️/✅ Operativo | v5.1.0. Modo Síncrono activo. Dependencia de variables de entorno crítica. |
+| **Backend API** | ✅ Operativo | v5.1.0. Modo Síncrono activo. Rutas refactorizadas en controladores. |
 | **Base de Datos** | ✅ Estructurada | Tipos generados (`wadi-db-types`). Migraciones SQL consolidadas. |
 | **DevOps** | 🟡 En Ajuste | Docker Compose presente. Scripts de build unificados en root. |
 

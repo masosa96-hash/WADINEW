@@ -35,7 +35,21 @@ export const app = express();
 
 // 1. EL "FIX" TOTAL: Configuración manual y estricta
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://wadi-wxg7.onrender.com');
+  const allowedOrigins = [
+    'https://wadi-wxg7.onrender.com', 
+    'http://localhost:5173', 
+    'http://localhost:3000'
+  ];
+  const origin = req.headers.origin;
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default to production if no match (or block, but for now we want to be safe)
+    // Actually, if we don't send the header, browser blocks it. 
+    // Let's allow specific origins only.
+  }
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -56,6 +70,10 @@ app.set('trust proxy', 1);
 // Health Check
 app.get("/health", (req, res) => {
   res.status(200).json({ status: 'WADI ONLINE' });
+});
+// Health Check Alias for Frontend (VITE_API_URL often includes /api)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: 'WADI ONLINE (API Alias)' });
 });
 
 app.use(express.json());

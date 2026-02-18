@@ -32,10 +32,19 @@ function App() {
            } else {
               throw new Error("Health check failed");
            }
-        } catch (e) {
-           console.log("Waiting for WADI Backend...", e);
-           setTimeout(() => setRetryCount(c => c + 1), 3000);
-        }
+        } catch (e: any) {
+            const message = e.message || "Unknown Error";
+            console.warn(`[WADI Health] Attempt ${retryCount + 1} failed:`, message);
+            
+            // Should we stop retrying eventually?
+            // For now, infinite retry is "resilient", but maybe after 10 tries we show a manual button?
+            if (retryCount > 10) {
+               console.error("Giving up on auto-retry. Backend seems dead.");
+               // We could set a "Dead" state here to show a different UI
+            }
+
+            setTimeout(() => setRetryCount(c => c + 1), 3000);
+         }
      };
      checkHealth();
   }, [retryCount]);
