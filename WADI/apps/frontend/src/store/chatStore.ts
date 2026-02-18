@@ -5,10 +5,7 @@ import { useLogStore } from "./logStore";
 import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 import imageCompression from "browser-image-compression";
 
-const rawUrl = import.meta.env.VITE_API_URL;
-const API_URL = rawUrl
-  ? rawUrl.replace(/\/api\/?$/, "").replace(/\/$/, "")
-  : "https://wadi-api-u2vx.onrender.com";
+import { API_URL } from "../config/api";
 
 export interface Attachment {
   url: string;
@@ -106,7 +103,7 @@ export const useChatStore = create<ChatState>()(
           ?.access_token;
         if (!token) return;
         try {
-          const res = await fetch(`${API_URL}/api/user/criminal-summary`, {
+          const res = await fetch(`${API_URL}/user/criminal-summary`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -203,7 +200,7 @@ export const useChatStore = create<ChatState>()(
         if (!token) return;
 
         try {
-          const response = await fetch(`${API_URL}/api/chat`, {
+          const response = await fetch(`${API_URL}/chat`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -229,7 +226,7 @@ export const useChatStore = create<ChatState>()(
             const jobId = data.jobId;
             const pollInterval = setInterval(async () => {
               try {
-                const pollRes = await fetch(`${API_URL}/api/chat/job/${jobId}`, {
+                const pollRes = await fetch(`${API_URL}/chat/job/${jobId}`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 const pollData = await pollRes.json();
@@ -289,7 +286,7 @@ export const useChatStore = create<ChatState>()(
         if (!token) return;
 
         try {
-          const res = await fetch(`${API_URL}/api/conversations/${id}`, {
+          const res = await fetch(`${API_URL}/conversations/${id}`, {
              method: 'DELETE',
              headers: { Authorization: `Bearer ${token}` }
           });
@@ -349,7 +346,7 @@ export const useChatStore = create<ChatState>()(
 
         try {
           // Use 'conversationIds' body param as per new backend spec
-          const res = await fetch(`${API_URL}/api/conversations/bulk`, {
+          const res = await fetch(`${API_URL}/conversations/bulk`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
