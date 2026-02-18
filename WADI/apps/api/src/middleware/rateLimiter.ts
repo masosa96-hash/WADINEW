@@ -9,9 +9,6 @@ export const rateLimiter = rateLimit({
   message: {
     error: "Too many requests, please try again later.",
   },
-  keyGenerator: (req: Request): string => {
-    // Robust IP detection for proxies (Render, etc.)
-    return (req.headers["x-forwarded-for"] as string) || req.ip || "unknown";
-  },
+
 });
 
