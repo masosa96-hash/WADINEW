@@ -108,34 +108,9 @@ app.get("/system/debug-files", (req, res) => {
   }
 });
 
-// DB Debug Route
-import { supabase } from "./supabase";
-
-app.get("/system/debug-db", async (req, res) => {
-  try {
-    const hasUrl = !!process.env.SUPABASE_URL;
-    const hasKey = !!process.env.SUPABASE_KEY;
-    
-    // Check connection by selecting 1 row from ANY public table (e.g. conversations or even just checking auth status)
-    // We'll try a lightweight query. "conversations" exists.
-    const { data, error } = await supabase.from('conversations').select('id').limit(1);
-
-    res.json({
-      status: error ? "ERROR" : "CONNECTED",
-      env: {
-        SUPABASE_URL: hasUrl,
-        SUPABASE_KEY: hasKey
-      },
-      db_check: {
-        success: !error,
-        error: error ? error.message : null,
-        data_preview: data ? data.length : 0
-      }
-    });
-  } catch (err: any) {
-     res.status(500).json({ error: err.message });
-  }
-});
+// System Routes (Temporary Debug)
+import systemRoutes from "./routes/system.routes";
+app.use(systemRoutes);
 
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
