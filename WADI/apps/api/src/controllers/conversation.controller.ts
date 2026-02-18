@@ -40,8 +40,12 @@ export const getConversation = async (
     .eq("user_id", userId)
     .single();
 
-  if (convError || !conversation) {
-    throw new AppError("NOT_FOUND", "Conversation not found");
+  if (convError) {
+    throw new AppError("DB_ERROR", convError.message, 500);
+  }
+
+  if (!conversation) {
+    throw new AppError("NOT_FOUND", "Conversation not found", 404);
   }
 
   // 2. Get Messages
