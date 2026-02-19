@@ -10,23 +10,21 @@ function App() {
 
   /* New Health Gate */
   const [isSystemHealthy, setIsSystemHealthy] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [healthError, setHealthError] = useState<string | null>(null);
 
   useEffect(() => {
      const checkHealth = async () => {
         try {
            const res = await fetch(`${API_URL}/api/health`);
-
-           if (!res.ok) throw new Error("Health check failed");
-
+           if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
            setIsSystemHealthy(true);
-        } catch {
-           console.warn("[WADI Health] Retry...");
-           setTimeout(() => setRetryCount(c => c + 1), 3000);
+        } catch (e) {
+           console.error("[WADI Health] Failed:", e);
+           setHealthError("No se pudo conectar con el servidor WADI. Por favor recarga la página.");
         }
      };
      checkHealth();
-  }, [retryCount]);
+  }, []);
 
   useEffect(() => {
     if (isSystemHealthy) {
@@ -34,11 +32,26 @@ function App() {
     }
   }, [initializeAuth, isSystemHealthy]);
 
+  if (healthError) {
+      return (
+        <div className="flex h-screen flex-col items-center justify-center bg-gray-50 text-red-500 font-mono text-sm space-y-4 p-4 text-center">
+            <div className="text-xl">⚠️ ERROR DE CONEXIÓN</div>
+            <p>{healthError}</p>
+            <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-100 rounded hover:bg-red-200 transition-colors"
+            >
+                Reintentar
+            </button>
+        </div>
+      );
+  }
+
   if (!isSystemHealthy) {
      return (
         <div className="flex h-screen flex-col items-center justify-center bg-gray-50 text-gray-400 font-mono text-sm space-y-4">
             <div className="w-8 h-8 rounded-full border-2 border-t-blue-500 border-gray-200 animate-spin" />
-            <p>Conectando con el Núcleo WADI... (Puede tardar si está dormido)</p>
+            <p>Conectando con el Núcleo WADI...</p>
         </div>
      );
   }
