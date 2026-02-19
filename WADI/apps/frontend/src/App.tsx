@@ -15,33 +15,15 @@ function App() {
   useEffect(() => {
      const checkHealth = async () => {
         try {
-           const controller = new AbortController();
-           const timeoutId = setTimeout(() => controller.abort(), 15000); 
+           const res = await fetch(`${API_URL}/api/health`);
 
-           const res = await fetch(`${API_URL}/api/health`, {
-             signal: controller.signal
-           });
-           
-           clearTimeout(timeoutId);
+           if (!res.ok) throw new Error("Health check failed");
 
-           if (res.ok) {
-              setIsSystemHealthy(true);
-           } else {
-              throw new Error("Health check failed");
-           }
-        } catch (e: unknown) {
-            const message = e instanceof Error ? e.message : "Unknown Error";
-            console.warn(`[WADI Health] Attempt ${retryCount + 1} failed:`, message);
-            
-            // Should we stop retrying eventually?
-            // For now, infinite retry is "resilient", but maybe after 10 tries we show a manual button?
-            if (retryCount > 10) {
-               console.error("Giving up on auto-retry. Backend seems dead.");
-               // We could set a "Dead" state here to show a different UI
-            }
-
-            setTimeout(() => setRetryCount(c => c + 1), 3000);
-         }
+           setIsSystemHealthy(true);
+        } catch {
+           console.warn("[WADI Health] Retry...");
+           setTimeout(() => setRetryCount(c => c + 1), 3000);
+        }
      };
      checkHealth();
   }, [retryCount]);
