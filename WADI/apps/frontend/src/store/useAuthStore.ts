@@ -28,6 +28,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
   initializeAuth: () => Promise<void>;
+  setLoadingFalse: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -37,18 +38,26 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user) => set({ user }),
 
-  initializeAuth: async () => {
-    set({ loading: true });
-    // Check active session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    set({ user: session?.user || null, session, loading: false });
+  setLoadingFalse: () => set({ loading: false }),
 
-    // Listen to changes
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+  initializeAuth: async () => {
+    try {
+      set({ loading: true });
+      // Check active session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       set({ user: session?.user || null, session });
-    });
+
+      // Listen to changes
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        set({ user: session?.user || null, session });
+      });
+    } catch (e) {
+      console.error("Auth init error:", e);
+    } finally {
+      set({ loading: false });
+    }
   },
 
   signIn: async (identifier, password) => {
