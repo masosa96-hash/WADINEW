@@ -1,5 +1,5 @@
 
-import { NavLink } from 'react-router-dom';
+import { NavLink, useParams } from 'react-router-dom';
 import { 
   MessageSquare, 
   LayoutGrid, 
@@ -11,10 +11,12 @@ import {
 } from 'lucide-react';
 
 import { useChatStore } from '../store/chatStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SettingsModal } from './SettingsModal';
 import { Trash2, CheckSquare } from 'lucide-react';
+import { GUEST_PROJECT_ID } from '../views/Chat';
 
 const menuItems = [
   { icon: MessageSquare, label: 'Chat Principal', path: '/' },
@@ -24,6 +26,10 @@ const menuItems = [
 
 export const Sidebar = () => {
   const navigate = useNavigate();
+  const { id: projectId } = useParams<{ id: string }>();
+  const { session } = useAuthStore();
+  const isGuest = projectId === GUEST_PROJECT_ID || !session;
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -40,8 +46,10 @@ export const Sidebar = () => {
   } = useChatStore();
 
   useEffect(() => {
+    // Never touch chatStore state for guests — it would interfere with ephemeral messages
+    if (isGuest) return;
     fetchConversations();
-  }, [fetchConversations]);
+  }, [isGuest, fetchConversations]);
 
   const handleOpenChat = (id: string) => {
      openConversation(id);
@@ -98,105 +106,123 @@ export const Sidebar = () => {
         ))}
       </nav>
 
-      {/* Historial de Conversaciones */}
+      {/* Historial de Conversaciones — solo usuarios autenticados */}
       <div className="px-4 py-2 mt-2 flex-1 overflow-hidden flex flex-col min-h-0 border-t border-gray-100 relative">
-         {/* Safety Modal (Inline for simplicity) */}
-         {showDeleteConfirm && (
-             <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 rounded-xl">
-                 <div className="bg-red-50 p-3 rounded-full mb-2 text-red-500">
-                     <Trash2 size={24} />
+         {isGuest ? (
+           // Guest mode: no history, just a login prompt
+           <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
+             <p className="text-xs text-gray-400 mb-3">Sesión efímera</p>
+             <button
+               onClick={() => navigate('/login')}
+               className="w-full py-2 px-3 bg-gray-900 text-white text-xs font-medium rounded-xl hover:bg-gray-800 transition-colors"
+             >
+               Iniciar sesión
+             </button>
+             <button
+               onClick={() => navigate('/register')}
+               className="w-full mt-2 py-2 px-3 bg-white border border-gray-200 text-xs font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+             >
+               Crear cuenta
+             </button>
+           </div>
+         ) : (
+           <>
+             {/* Safety Modal */}
+             {showDeleteConfirm && (
+                 <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 rounded-xl">
+                     <div className="bg-red-50 p-3 rounded-full mb-2 text-red-500">
+                         <Trash2 size={24} />
+                     </div>
+                     <h4 className="text-sm font-bold text-gray-800 mb-1">¿Estás seguro?</h4>
+                     <p className="text-xs text-gray-500 mb-4 px-2">
+                        Vas a eliminar {selectedIds.length} chats. El caos se irá para siempre.
+                     </p>
+                     <div className="flex gap-2 w-full">
+                         <button 
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 py-1.5 px-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200"
+                         >
+                            Cancelar
+                         </button>
+                         <button 
+                            onClick={() => {
+                                deleteSelectedConversations();
+                                setShowDeleteConfirm(false);
+                                setIsSelectionMode(false);
+                            }}
+                            className="flex-1 py-1.5 px-3 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
+                         >
+                            Borrar Todo
+                         </button>
+                     </div>
                  </div>
-                 <h4 className="text-sm font-bold text-gray-800 mb-1">¿Estás seguro?</h4>
-                 <p className="text-xs text-gray-500 mb-4 px-2">
-                    Vas a eliminar {selectedIds.length} chats. El caos se irá para siempre.
-                 </p>
-                 <div className="flex gap-2 w-full">
-                     <button 
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 py-1.5 px-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200"
-                     >
-                        Cancelar
-                     </button>
-                     <button 
-                        onClick={() => {
-                            deleteSelectedConversations();
-                            setShowDeleteConfirm(false);
-                            setIsSelectionMode(false);
-                        }}
-                        className="flex-1 py-1.5 px-3 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
-                     >
-                        Borrar Todo
-                     </button>
-                 </div>
-             </div>
-         )}
+             )}
 
-         <div className="flex items-center justify-between mb-2 px-1">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Historial</h3>
-            <button 
-              onClick={() => {
-                  setIsSelectionMode(!isSelectionMode);
-                  if (isSelectionMode) useChatStore.getState().selectAll(); // Or clear? 'Edit' implies entering mode.
-                  // User expects ChatGPT style: "Edit" enables checks.
-              }}
-              className="px-2 py-0.5 text-[10px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-               {isSelectionMode ? "Listo" : "Gestionar"}
-            </button>
-         </div>
-         
-         {/* Floating Delete Button (Bottom Overlay) */}
-         {isSelectionMode && selectedIds.length > 0 && (
-             <div className="absolute bottom-4 left-4 right-4 z-20 animate-in slide-in-from-bottom-2 fade-in">
+             <div className="flex items-center justify-between mb-2 px-1">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Historial</h3>
                 <button 
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition-transform active:scale-95"
+                  onClick={() => {
+                      setIsSelectionMode(!isSelectionMode);
+                      if (isSelectionMode) useChatStore.getState().selectAll();
+                  }}
+                  className="px-2 py-0.5 text-[10px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                    <Trash2 size={16} />
-                    Eliminar {selectedIds.length}
+                   {isSelectionMode ? "Listo" : "Gestionar"}
                 </button>
              </div>
-         )}
+             
+             {isSelectionMode && selectedIds.length > 0 && (
+                 <div className="absolute bottom-4 left-4 right-4 z-20 animate-in slide-in-from-bottom-2 fade-in">
+                    <button 
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition-transform active:scale-95"
+                    >
+                        <Trash2 size={16} />
+                        Eliminar {selectedIds.length}
+                    </button>
+                 </div>
+             )}
 
-         <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-200 pb-16"> 
-            {conversations.map((conv) => (
-               <div 
-                 key={conv.id}
-                 className={`
-                    group flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all cursor-pointer relative border border-transparent
-                    ${activeId === conv.id ? 'bg-white border-gray-200 shadow-sm text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-                 `}
-                 onClick={() => {
-                    if (isSelectionMode) {
-                        toggleSelection(conv.id);
-                    } else {
-                        handleOpenChat(conv.id);
-                    }
-                 }}
-               >
-                  {isSelectionMode ? (
-                      <div className={`shrink-0 transition-colors ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-gray-300'}`}>
-                           {/* Standard looking checkbox */}
-                           <div className={`w-4 h-4 rounded border ${selectedIds.includes(conv.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'} flex items-center justify-center`}>
-                                {selectedIds.includes(conv.id) && <CheckSquare size={12} className="text-white" />}
-                           </div>
-                      </div>
-                  ) : (
-                      <MessageSquare size={16} className={`shrink-0 ${activeId === conv.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                  )}
-                  
-                  <span className="truncate flex-1">
-                      {conv.title || "Nueva Conversación"}
-                  </span>
-               </div>
-            ))}
-            
-            {conversations.length === 0 && (
-                <div className="text-center py-6 text-xs text-gray-400 italic">
-                    Sin historial reciente.
-                </div>
-            )}
-         </div>
+             <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-200 pb-16">
+                {conversations.map((conv) => (
+                   <div 
+                     key={conv.id}
+                     className={`
+                        group flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all cursor-pointer relative border border-transparent
+                        ${activeId === conv.id ? 'bg-white border-gray-200 shadow-sm text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                     `}
+                     onClick={() => {
+                        if (isSelectionMode) {
+                            toggleSelection(conv.id);
+                        } else {
+                            handleOpenChat(conv.id);
+                        }
+                     }}
+                   >
+                     {isSelectionMode ? (
+                         <div className={`shrink-0 transition-colors ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-gray-300'}`}>
+                              <div className={`w-4 h-4 rounded border ${selectedIds.includes(conv.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'} flex items-center justify-center`}>
+                                   {selectedIds.includes(conv.id) && <CheckSquare size={12} className="text-white" />}
+                              </div>
+                         </div>
+                     ) : (
+                         <MessageSquare size={16} className={`shrink-0 ${activeId === conv.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                     )}
+                     
+                     <span className="truncate flex-1">
+                         {conv.title || "Nueva Conversación"}
+                     </span>
+                  </div>
+                ))}
+                
+                {conversations.length === 0 && (
+                    <div className="text-center py-6 text-xs text-gray-400 italic">
+                        Sin historial reciente.
+                    </div>
+                )}
+             </div>
+           </>
+         )}
       </div>
 
       {/* Sección Inferior / Status */}
