@@ -65,8 +65,8 @@ router.get(
   asyncHandler(listRuns)
 );
 
-// New Chat Run (Stream)
-router.post("/projects/:id/runs", authenticate(), handleChatStream);
+// New Chat Run (Stream) — optional auth, guests allowed
+router.post("/projects/:id/runs", authenticate(true), handleChatStream);
 
 /* =========================================
    CONVERSATIONS ROUTES

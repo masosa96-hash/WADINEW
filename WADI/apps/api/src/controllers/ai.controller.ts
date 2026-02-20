@@ -28,7 +28,8 @@ export const handleChatStream = async (req: Request, res: Response) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const userId = (req as any).user.id; // From authenticate middleware
+  // Support guests: if no auth, use an ephemeral guest ID
+  const userId = (req as any).user?.id ?? `guest-${crypto.randomUUID()}`;
   const { id } = req.params; // Project ID
   const { input } = req.body;
 

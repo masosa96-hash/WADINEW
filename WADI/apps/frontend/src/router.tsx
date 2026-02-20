@@ -6,12 +6,10 @@ import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
 
-// New Views
+// Views
 import Projects from "./views/Projects";
 import Chat from "./views/Chat";
 import Knowledge from "./views/Knowledge";
-
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -26,37 +24,37 @@ export const router = createBrowserRouter([
         path: "register",
         element: <Register />,
       },
-      // Authenticated Routes wrapped in Layout
+      // All routes are public — guest-first mode (like ChatGPT)
+      // Auth is optional: logged-in users get persistence, guests get ephemeral sessions
       {
-        element: (
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        ),
+        element: <Layout />,
         children: [
-           {
-             index: true,
-             element: <ChatRedirect />
-           },
-           {
+          {
+            index: true,
+            element: <ChatRedirect />,
+          },
+          {
             path: "projects",
             element: <Projects />,
-           },
-           {
+          },
+          {
             path: "projects/:id",
             element: <Chat />,
-           },
-           {
+          },
+          {
             path: "knowledge",
             element: <Knowledge />,
-           },
-           {
+          },
+          {
             path: "settings",
-            element: <div className="p-8 text-center text-gray-500">Configuración (Próximamente)</div> // Placeholder
-           }
+            element: (
+              <div className="p-8 text-center text-gray-500">
+                Configuración (Próximamente)
+              </div>
+            ),
+          },
         ],
       },
     ],
   },
 ]);
-
