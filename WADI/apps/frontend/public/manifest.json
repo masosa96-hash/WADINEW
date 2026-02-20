@@ -1,25 +1,44 @@
 {
   "name": "WADI",
   "short_name": "WADI",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1115",
   "theme_color": "#0f1115",
-  "id": "/",
   "orientation": "portrait",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "categories": ["productivity", "utilities"]
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png"
+    }
+  ]
 }
