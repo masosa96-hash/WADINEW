@@ -1,27 +1,74 @@
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-dotenv.config({ path: '../../.env' });
 
-// 1. SMART LLM (OpenAI) - Para tareas complejas, tools y razonamiento
-// 1. SMART LLM (OpenAI or Groq Fallback)
-// Si no hay API Key de OpenAI, usamos Groq con un modelo más potente (Llama 70B)
-const useOpenAI = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy-key";
+// ─── Lazy Getters ─────────────────────────────────────────────────────────────
+// Never instantiate at module level — that crashes the server on missing keys.
+// Instead, lazy-initialize on first use so the server can boot without AI keys.
 
-export const smartLLM = useOpenAI
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : new OpenAI({
+let _smartLLM: OpenAI | null = null;
+let _fastLLM: OpenAI | null = null;
+
+export function getSmartLLM(): OpenAI {
+  if (_smartLLM) return _smartLLM;
+
+  const hasOpenAI =
+    !!process.env.OPENAI_API_KEY &&
+    process.env.OPENAI_API_KEY !== "dummy-key";
+
+  if (hasOpenAI) {
+    _smartLLM = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } else if (process.env.GROQ_API_KEY) {
+    console.warn("[AI] OPENAI_API_KEY not set — falling back to Groq (smart)");
+    _smartLLM = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
     });
+  } else {
+    throw new Error(
+      "❌ No AI key found. Set OPENAI_API_KEY or GROQ_API_KEY in environment."
+    );
+  }
 
-// 2. FAST LLM (Groq) - Para chat streaming y respuestas instantáneas
-export const fastLLM = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
+  return _smartLLM;
+}
+
+export function getFastLLM(): OpenAI {
+  if (_fastLLM) return _fastLLM;
+
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error(
+      "❌ GROQ_API_KEY is not set. Fast LLM (Groq) is required for streaming."
+    );
+  }
+
+  _fastLLM = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
+
+  return _fastLLM;
+}
+
+// ─── Model Names ──────────────────────────────────────────────────────────────
+export const AI_MODELS = {
+  fast: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+  smart:
+    process.env.OPENAI_API_KEY &&
+    process.env.OPENAI_API_KEY !== "dummy-key"
+      ? "gpt-4o"
+      : "llama-3.1-70b-versatile",
+};
+
+// ─── Backward-compat aliases (lazy) ───────────────────────────────────────────
+// Some callers might import `smartLLM` / `fastLLM` directly.
+// Export these as getters to avoid breaking existing usage while still being lazy.
+export const smartLLM = new Proxy({} as OpenAI, {
+  get(_target, prop) {
+    return (getSmartLLM() as unknown as Record<string | symbol, unknown>)[prop];
+  },
 });
 
-// Helper to get model names
-export const AI_MODELS = {
-    fast: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-    smart: useOpenAI ? "gpt-4o" : "llama-3.1-70b-versatile"
-};
+export const fastLLM = new Proxy({} as OpenAI, {
+  get(_target, prop) {
+    return (getFastLLM() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
