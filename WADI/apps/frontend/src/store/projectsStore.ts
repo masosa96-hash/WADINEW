@@ -25,50 +25,43 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   error: null,
 
   fetchProjects: async () => {
+    const token = useAuthStore.getState().session?.access_token;
+
+    // Guests have no session → skip silently (they use ephemeral chat)
+    if (!token) {
+      set({ loading: false, error: null });
+      return;
+    }
+
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      
-      // Sincronización de Sesión (Retry simple)
-      if (!token) {
-          // Intentamos esperar un poco o refrescar desde la fuente de verdad
-          /* 
-             NOTE: useAuthStore initialize is async but getState is sync.
-             If App.tsx blocked, we should have it. If not, maybe session expired?
-          */
-           // console.warn("Token missing in store, checking supabase...");
-           // We can't await initialize here efficiently without circular deps or side effects.
-           // Better to throw a specific error that UI can handle or just rely on App blocking.
-           throw new Error("Not authenticated (No session)");
-      }
-
       const res = await fetch(`${API_URL}/api/projects`, {
         headers: getHeaders(token),
       });
 
       if (!res.ok) {
-          if (res.status === 401) throw new Error("Unauthorized (401)");
-          throw new Error("Failed to fetch projects");
+        if (res.status === 401) throw new Error("Unauthorized (401)");
+        throw new Error("Failed to fetch projects");
       }
 
       const data = await res.json();
       set({ projects: data });
     } catch (error) {
-      if (error instanceof Error) {
-        set({ error: error.message });
-      } else {
-        set({ error: "An unknown error occurred" });
-      }    } finally {
+      set({ error: error instanceof Error ? error.message : "An unknown error occurred" });
+    } finally {
       set({ loading: false });
     }
   },
 
   createProject: async (name: string, description: string) => {
+    const token = useAuthStore.getState().session?.access_token;
+    if (!token) {
+      // Guests cannot create persistent projects — silently no-op
+      return;
+    }
+
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
       const res = await fetch(`${API_URL}/api/projects`, {
         method: "POST",
         headers: getHeaders(token),
@@ -80,11 +73,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       const newProject = await res.json();
       set((state) => ({ projects: [newProject, ...state.projects] }));
     } catch (error) {
-      if (error instanceof Error) {
-        set({ error: error.message });
-      } else {
-        set({ error: "An unknown error occurred" });
-      }
+      set({ error: error instanceof Error ? error.message : "An unknown error occurred" });
       throw error;
     } finally {
       set({ loading: false });
@@ -92,11 +81,11 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   },
 
   deleteSelectedProjects: async (ids: string[]) => {
-    const previousProjects = [...get().projects]; // Backup para rollback
+    const previousProjects = [...get().projects];
 
-    // Actualización Optimista: Filtramos YA de la lista
+    // Optimistic update
     set((state) => ({
-      projects: state.projects.filter(p => !ids.includes(p.id))
+      projects: state.projects.filter((p) => !ids.includes(p.id)),
     }));
 
     try {
@@ -104,15 +93,15 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       if (!token) throw new Error("Not authenticated");
 
       const response = await fetch(`${API_URL}/api/projects/bulk`, {
-        method: 'DELETE',
-        headers: getHeaders(token), // Forzar validación de token
-        body: JSON.stringify({ projectIds: ids })
+        method: "DELETE",
+        headers: getHeaders(token),
+        body: JSON.stringify({ projectIds: ids }),
       });
 
       if (!response.ok) throw new Error("Falla en el servidor");
     } catch (err) {
-      set({ projects: previousProjects }); // Rollback si el 401 persiste
+      set({ projects: previousProjects }); // Rollback
       console.error("Error al borrar: volviendo al estado anterior.", err);
     }
-  }
+  },
 }));
