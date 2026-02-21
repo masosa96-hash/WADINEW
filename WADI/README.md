@@ -1,126 +1,102 @@
-# 🧠 WADI — Asistente de Desarrollo e Infraestructura
+# WADI
 
 ![WADI Status](https://img.shields.io/badge/status-EN%20LÍNEA-brightgreen?style=flat-square&logo=github)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/masosa96-hash/WADINEW/wadi-ci.yml?branch=master&label=CI&style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-**Versión:** 1.0  
-**Identidad:** WADI  
-**Estado:** Completamente operativo y en línea.  
-**Modo Visual:** Tema `Deep Bunker` (Dark Mode activado por defecto)
+**AI Co-Founder para Builders.**
+
+WADI es un asistente de IA orientado a proyectos que transforma ideas caóticas en planes estructurados y accionables. Diseñado para founders e indie hackers que necesitan claridad estratégica y ejecución, no solo respuestas.
+
+> No es un chatbot genérico.  
+> Es un sistema de pensamiento estructurado.
 
 ---
 
-## 📋 Descripción
+## ¿Para quién?
 
-**WADI** es un asistente técnico diseñado para ambientes de desarrollo modernos. Su objetivo:  
-_resolver problemas complejos con precisión técnica y honestidad brutal_, sin ruido, sin validaciones forzadas, sin efectos de sonido innecesarios.
-
-> "WADI no es tu amigo. Es tu herramienta. Brutal, eficiente, y siempre funcional."
-
----
-
-## 🚀 Capacidades
-
-- **Interfaz Terminal:** Chat con entrada optimizada para comandos y texto técnico.
-- **Respuesta Contextual:** Motor `wadi-brain.js` con prompt personalizado.
-- **Modo Oscuro Profundo:** Estética 'Deep Bunker' (`#0f111a`) para sesiones largas.
-- **Estructura de UI Limpia:** Sidebar reactivo, Layout minimalista.
-- **Soporte de Comandos:** Integración de comandos desde el frontend hacia el backend.
-- **Silencio Total:** Sistema de audio neutralizado por diseño (funciones dummy).
+| | |
+|---|---|
+| **Perfil primario** | Indie hackers · Founders técnicos · Builders de SaaS |
+| **Edad** | 20–40 años |
+| **Problema** | Saturación mental, falta de estructura, ideas que no se convierten en proyectos |
+| **Por qué WADI** | ChatGPT responde preguntas. WADI estructura proyectos. |
 
 ---
 
-## 🛠 Entorno Técnico
+## Diferenciación
 
-| Área          | Tecnología                                                       |
-| ------------- | ---------------------------------------------------------------- |
-| **Frontend**  | React + TypeScript + Vite                                        |
-| **Estilos**   | TailwindCSS + CSS Variables (`--wadi-*`)                         |
-| **Backend**   | Node.js + Express (`wadi-brain.js`)                              |
-| **Ruta base** | `ChatPage.tsx`, `Sidebar.tsx`, `Layout.tsx`, `TerminalInput.tsx` |
-
----
-
-## 🔐 Restricciones del Sistema
-
-1. **Branding Unificado:** No hay referencias a la identidad anterior ("Monday").
-2. **Audio Nulo:** No se cargan ni ejecutan sonidos.
-3. **Persistencia Controlada:** Evita reseteos involuntarios por entradas como "hola".
-4. **Código Higiénico:** Linter limpio. Sin variables sin usar.
-5. **Accesibilidad Básica:** Todos los `input` tienen `id` y `name` definidos.
+| Herramienta | Qué hace bien | Qué no hace |
+|---|---|---|
+| ChatGPT / Claude | Responden bien | No estructuran proyectos persistentes con intención estratégica |
+| Notion AI | Ayuda con texto | No piensa con vos, no detecta ideas |
+| Perplexity | Excelente para research | No organiza ejecución |
+| **WADI** | Estructura proyectos · Crystallize · Personalidades estratégicas | — |
 
 ---
 
-## 🧃 Filosofía
+## Features
 
-- No valida emociones. Valida `props`.
-- No suena. Responde.
-- No se reinicia por cualquier "hola".
-- No pregunta si querés ayuda. Te la da (cuando la merecés).
+- **Proyectos con contexto persistente** — cada proyecto tiene su propio hilo de pensamiento
+- **Crystallize** — detección automática de ideas con potencial y conversión a proyectos
+- **Personalidades estratégicas** — EJECUCION, CALMA, IRONICO, SERIO según el contexto
+- **Guest mode** — sesión efímera sin registro, igual que ChatGPT
+- **Streaming** — respuestas en tiempo real via SSE
 
 ---
 
-## 📦 Ejecución Local
+## Stack
+
+```
+Frontend:  React + TypeScript + Vite (Render)
+Backend:   Node.js + Express + TypeScript (Render)
+DB:        Supabase (Postgres + Auth + Realtime + Storage)
+LLM:       Groq (streaming rápido) + OpenAI (fallback)
+Monorepo:  pnpm workspaces + Turborepo
+```
+
+---
+
+## Ejecución local
 
 ```bash
 # Instalar dependencias
-npm install
+pnpm install
 
-# Iniciar el entorno de desarrollo
-npm run dev
+# Iniciar frontend + backend en paralelo
+pnpm dev
 ```
 
-### 📁 Estructura Relevante
-
-```text
-apps/
-  frontend/
-    src/
-      components/
-        ui/
-          TerminalInput.tsx       # Input de terminal WADI
-          MondayButton.tsx        # Botón reutilizable
-          MondayCard.tsx          # Tarjetas estilizadas
-        Sidebar.tsx               # Navegación lateral
-        Layout.tsx                # Layout principal
-        MessageBubble.tsx         # Mensajes del chat
-      hooks/
-        useScouter.ts             # Audio neutralizado (dummy)
-      pages/
-        ChatPage.tsx              # Página principal
-    index.css                     # Tema 'Deep Bunker'
-    index.html                    # Favicon y meta
-  api/
-    src/
-      wadi-brain.js               # Motor principal de respuesta
+Requiere `.env` con:
 ```
-
-### 🧪 Estado de QA
-
-- [x] Branding aplicado (WADI)
-- [x] Componentes eliminados (Brainstorming, etc.)
-- [x] Tema oscuro funcional
-- [x] Lint sin errores
-- [x] Audio neutralizado
-- [x] Input accesible (id y name)
-- [x] Favicon personalizado (wadi.svg)
-- [x] No más Monday
-
-### 🧠 Changelog
-
-#### v1.0 - Inicial
-
-- Reemplazo total de identidad visual y funcional.
-- Rediseño de UI con tema oscuro.
-- Refactor de componentes y limpieza de código.
-- Implementación de lógica WADI-brain para respuestas contextuales.
-- Elimincación de sonido y elementos innecesarios.
+GROQ_API_KEY=
+OPENAI_API_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
+```
 
 ---
 
+## Roadmap
+
+**v1.0**
+- [ ] Proyectos estructurados
+- [ ] Crystallize mejorado
+- [ ] Exportación básica
+
+**v1.1**
+- [ ] Generación automática de PRDs
+- [ ] Análisis competitivo por proyecto
+- [ ] Roadmap automático
+
+**v1.2**
+- [ ] Seguimiento de milestones
+- [ ] Dashboard estratégico
+
+**v2.0**
+- [ ] Sistema de ejecución con métricas
+- [ ] Integraciones (GitHub, Notion, Linear)
+
 ---
 
-[🧾 Contributing](CONTRIBUTING.md) • [📜 Code of Conduct](CODE_OF_CONDUCT.md)
-
-Made with 🧠 by un desarrollador que claramente odia el ruido.
+**Objetivo a 12 meses:** Convertir WADI en el AI co-founder estándar para indie hackers que construyen SaaS.
