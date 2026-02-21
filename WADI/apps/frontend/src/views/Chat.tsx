@@ -205,8 +205,9 @@ export default function Chat() {
   };
 
   // ─── Message display ──────────────────────────────────────────────────────
+  // Strip [CRYSTAL_CANDIDATE:...] in all forms — JSON or freetext
   const cleanContent = (text: string) =>
-    text.replace(/\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})\]/m, '').trim();
+    text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*?\]/gm, '').trim();
 
   const storeMessages = runs
     .slice()
