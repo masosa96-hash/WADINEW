@@ -44,8 +44,9 @@ async function fetchProjectById(id: string, token: string): Promise<Project> {
 async function patchProjectStructure(
   id: string,
   token: string,
-  structure: ProjectStructure
-): Promise<void> {
+  structure: ProjectStructure,
+  signal?: AbortSignal
+): Promise<Project> {
   const res = await fetch(`${API_BASE}/api/projects/${id}/structure`, {
     method: "PATCH",
     headers: {
@@ -53,8 +54,11 @@ async function patchProjectStructure(
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ structure }),
+    signal,
   });
   if (!res.ok) throw new Error("Failed to save structure");
+  const data = await res.json();
+  return data.project as Project;
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -385,17 +389,28 @@ export default function ProjectDetail() {
     return () => stopPolling();
   }, [loadProject, startPolling, stopPolling]);
 
-  // Edición inline con debounce de 600ms antes de llamar al backend
+  // Edición inline: debounce 600ms + AbortController para cancelar request anterior en-flight
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const handleStructureChange = useCallback(
     (updated: ProjectStructure) => {
       if (!id || !session?.access_token) return;
+      // Optimistic update — UI refleja el cambio instantáneamente
       setProject((prev) => prev ? { ...prev, structure: updated } : prev);
+      // Cancel any pending in-flight request
+      if (abortControllerRef.current) abortControllerRef.current.abort();
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
       saveDebounceRef.current = setTimeout(async () => {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
         try {
-          await patchProjectStructure(id, session.access_token!, updated);
-        } catch (e) {
-          console.error("[STRUCTURE SAVE]", e);
+          const saved = await patchProjectStructure(id, session.access_token!, updated, controller.signal);
+          // Sync structure_version from server response
+          setProject((prev) => prev ? { ...prev, structure_version: saved.structure_version } : prev);
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name !== "AbortError") {
+            console.error("[STRUCTURE SAVE]", e);
+          }
         }
       }, 600);
     },

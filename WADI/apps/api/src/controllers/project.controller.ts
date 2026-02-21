@@ -143,6 +143,49 @@ export const crystallizeProject = async (
   })();
 };
 
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type ProjectUpdate = {
+  structure: Record<string, unknown>;
+  structure_version: number;
+  updated_at: string;
+};
+
+const STRUCTURE_REQUIRED_KEYS = [
+  "problem",
+  "solution",
+  "target_icp",
+  "value_proposition",
+  "recommended_stack",
+  "milestones",
+  "risks",
+  "validation_steps",
+] as const;
+
+const STRUCTURE_ARRAY_KEYS = ["milestones", "risks", "validation_steps"] as const;
+
+function validateStructurePayload(s: any): string | null {
+  if (!s || typeof s !== "object" || Array.isArray(s)) return "structure must be a plain object";
+  for (const key of STRUCTURE_REQUIRED_KEYS) {
+    if (s[key] === undefined || s[key] === null) return `Missing required field: ${key}`;
+  }
+  for (const key of STRUCTURE_ARRAY_KEYS) {
+    if (!Array.isArray(s[key]) || s[key].length < 1) {
+      return `Field "${key}" must be a non-empty array`;
+    }
+    if (s[key].some((item: any) => typeof item !== "string" || item.trim() === "")) {
+      return `All items in "${key}" must be non-empty strings`;
+    }
+  }
+  const textKeys = ["problem", "solution", "target_icp", "value_proposition", "recommended_stack"] as const;
+  for (const key of textKeys) {
+    if (typeof s[key] !== "string" || s[key].trim().length < 3) {
+      return `Field "${key}" must be a string with at least 3 characters`;
+    }
+  }
+  return null; // valid
+}
+
 export const updateProjectStructure = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -152,22 +195,40 @@ export const updateProjectStructure = async (
   const userId = req.user!.id as any;
   const { structure } = req.body;
 
-  if (!structure || typeof structure !== "object") {
-    return res.status(400).json({ error: "structure is required and must be an object" });
+  const validationError = validateStructurePayload(structure);
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
   }
+
+  // Fetch current version to increment
+  const { data: current, error: fetchError } = await (supabase as any)
+    .from("projects")
+    .select("structure_version")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError) throw new AppError("NOT_FOUND", "Proyecto no encontrado");
+
+  const nextVersion = (current?.structure_version ?? 1) + 1;
+
+  const updatePayload: ProjectUpdate = {
+    structure,
+    structure_version: nextVersion,
+    updated_at: new Date().toISOString(),
+  };
 
   const { data, error } = await (supabase as any)
     .from("projects")
-    .update({
-      structure,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", id)
     .eq("user_id", userId)
     .select()
     .single();
 
   if (error) throw new AppError("DB_ERROR", error.message);
+
+  console.log(`[STRUCTURE EDIT] Project ${id} — version ${nextVersion}`);
   res.json({ project: data });
 };
 
