@@ -8,6 +8,13 @@ import { useAuthStore } from '../store/useAuthStore';
 // Central constant — avoids magic string bugs
 export const GUEST_PROJECT_ID = "guest";
 
+interface LocalMessage {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+}
+
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,6 +29,8 @@ export default function Chat() {
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<{ id: string; content: string } | null>(null);
   const [isCrystallizing, setIsCrystallizing] = useState(false);
+  // In-memory history for guests (lost on page reload — intentional ephemeral behavior)
+  const [guestMessages, setGuestMessages] = useState<LocalMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ─── Load history (authenticated users only) ──────────────────────────────
@@ -37,7 +46,7 @@ export default function Chat() {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollIntoView({ behavior });
     });
-  }, [streamingContent, runs, isStreaming]);
+  }, [streamingContent, runs, guestMessages, isStreaming]);
 
   // ─── Crystal candidate detection ──────────────────────────────────────────
   useEffect(() => {
@@ -131,6 +140,8 @@ export default function Chat() {
     setIsStreaming(true);
     setStreamingContent('');
 
+    let fullAssistantResponse = '';
+
     try {
       // Token is optional — guests send without auth header
       const token = session?.access_token;
@@ -160,6 +171,7 @@ export default function Chat() {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.content) {
+                fullAssistantResponse += data.content;
                 setStreamingContent((prev) => prev + data.content);
               }
             } catch {
@@ -174,8 +186,21 @@ export default function Chat() {
       setIsStreaming(false);
       setOptimisticUserMessage(null);
       setStreamingContent('');
-      // Re-sync run history only for authenticated users
-      if (!isGuest && id) fetchRuns(id);
+
+      if (isGuest) {
+        // Persist messages in local in-memory state for the duration of the session
+        const now = new Date().toISOString();
+        setGuestMessages((prev) => [
+          ...prev,
+          { id: `guest-user-${Date.now()}`, role: 'user', content: currentInput, created_at: now },
+          ...(fullAssistantResponse
+            ? [{ id: `guest-assistant-${Date.now()}`, role: 'assistant', content: fullAssistantResponse, created_at: now }]
+            : []),
+        ]);
+      } else if (id) {
+        // Re-sync run history only for authenticated users
+        fetchRuns(id);
+      }
     }
   };
 
@@ -194,7 +219,12 @@ export default function Chat() {
       return msgs;
     });
 
-  const displayMessages = [...storeMessages.map((m) => ({ ...m, content: cleanContent(m.content) }))];
+  // Guests use their in-memory list; authenticated users use the store
+  const baseMessages: LocalMessage[] = isGuest
+    ? guestMessages.map((m) => ({ ...m, content: cleanContent(m.content) }))
+    : storeMessages.map((m) => ({ ...m, content: cleanContent(m.content) }));
+
+  const displayMessages = [...baseMessages];
 
   if (optimisticUserMessage) {
     displayMessages.push({ id: 'optimistic-user', role: 'user', content: optimisticUserMessage, created_at: new Date().toISOString() });
