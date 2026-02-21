@@ -15,7 +15,6 @@ export default function Register() {
     setLoading(true);
     setError(null);
 
-    // 1. Sign Up
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -28,23 +27,12 @@ export default function Register() {
     }
 
     if (data.user) {
-      // 2. Create Profile
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert([
-          {
-            user_id: data.user.id,
-            display_name: displayName,
-          },
-        ]); // RLS allows insert own id usually, or use trigger. Plan assumes direct insert?
-        // Wait, default Supabase behavior often requires a Trigger for profiles creation to be safe.
-        // Or if RLS allows insert with auth.uid() = user_id, it is fine.
-        // Let's assume we handle it here. If it fails due to RLS or trigger, we might need a trigger.
-        // For Beta 1, let's try direct insert.
+        .insert([{ user_id: data.user.id, display_name: displayName }]);
 
       if (profileError) {
         console.error("Profile creation failed:", profileError);
-        // Continue anyway? Or show error.
         setError("Account created but profile setup failed: " + profileError.message);
         setLoading(false);
         return;
@@ -53,71 +41,96 @@ export default function Register() {
       setLoading(false);
       navigate("/projects");
     } else {
-        setLoading(false);
-        setError("Registration successful but no user returned. Check email confirmation settings.");
+      setLoading(false);
+      setError("Registration successful but no user returned. Check email confirmation settings.");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-6 text-center">WADI Register</h2>
-        
+    <div className="flex flex-col items-center justify-center h-screen bg-wadi-base text-wadi-text">
+
+      <div className="w-full max-w-sm p-8 border border-wadi-border rounded bg-wadi-surface/50">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-mono font-bold tracking-tighter text-wadi-text mb-2">
+            WADI<span className="text-wadi-accent">.SYS</span>
+          </h1>
+          <p className="text-xs font-mono text-wadi-muted uppercase tracking-widest">
+            New Identity Registration
+          </p>
+        </div>
+
         {error && (
-          <div className="bg-red-500 text-white p-2 rounded mb-4 text-sm">
-            {error}
+          <div className="bg-wadi-error/10 border border-wadi-error text-wadi-error p-3 rounded mb-6 text-xs font-mono">
+            ERROR: {error}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-            <label className="block mb-1">Display Name</label>
+        <form onSubmit={handleRegister} className="space-y-5">
+          <div>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
+              Display Name
+            </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="wadi-input w-full"
               required
+              autoFocus
+              autoComplete="username"
             />
           </div>
           <div>
-            <label className="block mb-1">Email</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
+              Identity
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="wadi-input w-full"
               required
+              autoComplete="email"
             />
           </div>
           <div>
-            <label className="block mb-1">Password</label>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
+              Access Key
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="wadi-input w-full"
               required
+              autoComplete="new-password"
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-green-600 hover:bg-green-700 rounded transition disabled:opacity-50"
+            className="w-full btn-primary py-3 text-sm"
           >
-            {loading ? "Creating Account..." : "Register"}
+            {loading ? "CREATING ID..." : "REGISTER IDENTITY"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-400">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-400 hover:underline">
-            Login here
-          </Link>
+        <div className="mt-8 text-center border-t border-wadi-border/50 pt-4">
+          <p className="text-[10px] text-wadi-muted font-mono">
+            ALREADY REGISTERED?{" "}
+            <Link to="/login" className="text-wadi-accent hover:underline">
+              INITIATE SESSION
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 text-center">
+        <p className="text-[9px] font-mono text-wadi-muted/30 uppercase tracking-[0.2em]">
+          System v5.0 // Deep Bunker Layout
         </p>
       </div>
     </div>
   );
 }
-
