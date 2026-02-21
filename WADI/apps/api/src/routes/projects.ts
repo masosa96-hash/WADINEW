@@ -1,16 +1,5 @@
+// Legacy routes file — routes are now handled via api-routes.ts
+// This file is kept to avoid breaking any potential dynamic imports but exports nothing active.
 import { Router } from "express";
-import { listProjects, createProject } from "../controllers/projectsController";
-import { authenticate } from "../middleware/auth-beta";
-import { crystallize } from "../controllers/projectsController";
-
-
 const router = Router();
-
-router.use(authenticate());
-
-router.get("/", listProjects);
-router.post("/", createProject);
-router.post("/crystallize", crystallize);
-
-
 export default router;

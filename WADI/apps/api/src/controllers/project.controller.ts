@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { supabase } from "../supabase";
 import { AppError } from "../middleware/error.middleware";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { generateCrystallizeStructure } from "../wadi-brain";
 
 // Helper: Generate Technical Project Name
 export function generateProjectName(description: string): string {
@@ -20,14 +21,11 @@ export const listProjects = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = req.user;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = user!.id as any;
+  const userId = req.user!.id as any;
 
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -41,14 +39,11 @@ export const getProject = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
-  const user = req.user;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = user!.id as any;
+  const userId = req.user!.id as any;
 
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .eq("id", id as any)
     .eq("user_id", userId)
     .single();
@@ -67,36 +62,78 @@ export const crystallizeProject = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = req.user;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = user!.id as any;
+  const userId = req.user!.id as any;
+  let { name, description, suggestionContent } = req.body as any;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let { name, description } = req.body as any;
-
-  if (!name && description) {
-    name = generateProjectName(description);
-  } else if (!name && !description) {
-    name = `project-${Date.now()}`;
-    description = "Sin descripción";
+  // Support both direct name/description and legacy suggestionContent JSON
+  if (!name && suggestionContent) {
+    try {
+      const parsed = typeof suggestionContent === "string"
+        ? JSON.parse(suggestionContent)
+        : suggestionContent;
+      name = parsed.name || "Idea Sin Nombre";
+      description = parsed.content || parsed.description || "";
+    } catch {
+      name = "Idea Sin Nombre";
+      description = typeof suggestionContent === "string" ? suggestionContent : "";
+    }
   }
 
-  const { data, error } = await supabase
+  if (!name) {
+    name = description ? generateProjectName(description) : `project-${Date.now()}`;
+  }
+  if (!description) description = "Generado por WADI";
+
+  // Step 1: INSERT inmediato con status GENERATING_STRUCTURE
+  const { data: project, error: insertError } = await supabase
     .from("projects")
-    .insert([
-      {
-        user_id: userId,
-        name: name,
-        description: description,
-        status: "PLANNING",
-      },
-    ] as any)
+    .insert([{
+      user_id: userId,
+      name,
+      description,
+      status: "GENERATING_STRUCTURE",
+    }] as any)
     .select()
     .single();
 
-  if (error) throw new AppError("DB_ERROR", error.message);
+  if (insertError) throw new AppError("DB_ERROR", insertError.message);
 
-  res.json(data);
+  // Respond immediately — frontend starts polling
+  res.status(201).json({ project });
+
+  // Step 2: Async job — generate structure without blocking response
+  (async () => {
+    try {
+      // Fetch existing project names for deduplication context
+      const { data: existing } = await supabase
+        .from("projects")
+        .select("name")
+        .eq("user_id", userId)
+        .neq("id", project.id);
+
+      const existingNames = (existing || []).map((p: any) => p.name);
+
+      const structure = await generateCrystallizeStructure(name, description, existingNames);
+
+      await supabase
+        .from("projects")
+        .update({
+          structure,
+          structure_version: 1,
+          status: "READY",
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", project.id);
+
+      console.log(`[CRYSTALLIZE] Project ${project.id} — structure generated OK`);
+    } catch (err) {
+      console.error(`[CRYSTALLIZE] Project ${project.id} — structure generation FAILED:`, err);
+      await supabase
+        .from("projects")
+        .update({ status: "STRUCTURE_FAILED", updated_at: new Date().toISOString() } as any)
+        .eq("id", project.id);
+    }
+  })();
 };
 
 export const bulkDeleteProjects = async (
@@ -104,10 +141,8 @@ export const bulkDeleteProjects = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = req.user;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = user!.id as any;
-  const { projectIds } = req.body; // Array de UUIDs
+  const userId = req.user!.id as any;
+  const { projectIds } = req.body;
 
   if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
     return res.status(400).json({ error: "No project IDs provided" });
@@ -116,13 +151,10 @@ export const bulkDeleteProjects = async (
   const { error } = await supabase
     .from("projects")
     .delete()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .in("id", projectIds as any)
     .eq("user_id", userId);
 
-  if (error) {
-    throw new AppError("DB_ERROR", error.message);
-  }
+  if (error) throw new AppError("DB_ERROR", error.message);
 
   res.json({ message: "Projects deleted successfully" });
 };
