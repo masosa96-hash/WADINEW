@@ -85,7 +85,7 @@ export const crystallizeProject = async (
   if (!description) description = "Generado por WADI";
 
   // Step 1: INSERT inmediato con status GENERATING_STRUCTURE
-  const { data: project, error: insertError } = await supabase
+  const { data: projectRaw, error: insertError } = await supabase
     .from("projects")
     .insert([{
       user_id: userId,
@@ -97,12 +97,15 @@ export const crystallizeProject = async (
     .single();
 
   if (insertError) throw new AppError("DB_ERROR", insertError.message);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const project = projectRaw as any;
 
   // Respond immediately — frontend starts polling
   res.status(201).json({ project });
 
   // Step 2: Async job — generate structure without blocking response
   (async () => {
+    const startedAt = Date.now();
     try {
       // Fetch existing project names for deduplication context
       const { data: existing } = await supabase
@@ -114,23 +117,27 @@ export const crystallizeProject = async (
       const existingNames = (existing || []).map((p: any) => p.name);
 
       const structure = await generateCrystallizeStructure(name, description, existingNames);
+      const duration = Date.now() - startedAt;
 
-      await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
         .from("projects")
         .update({
           structure,
           structure_version: 1,
           status: "READY",
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq("id", project.id);
 
-      console.log(`[CRYSTALLIZE] Project ${project.id} — structure generated OK`);
+      console.log(`[CRYSTALLIZE] Project ${project.id} — OK — ${duration}ms`);
     } catch (err) {
-      console.error(`[CRYSTALLIZE] Project ${project.id} — structure generation FAILED:`, err);
-      await supabase
+      const duration = Date.now() - startedAt;
+      console.error(`[CRYSTALLIZE] Project ${project.id} — FAILED — ${duration}ms —`, (err as Error).message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
         .from("projects")
-        .update({ status: "STRUCTURE_FAILED", updated_at: new Date().toISOString() } as any)
+        .update({ status: "STRUCTURE_FAILED", updated_at: new Date().toISOString() })
         .eq("id", project.id);
     }
   })();
