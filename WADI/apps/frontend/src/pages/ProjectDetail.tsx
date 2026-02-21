@@ -29,7 +29,7 @@ interface Project {
   updated_at?: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -41,7 +41,23 @@ async function fetchProjectById(id: string, token: string): Promise<Project> {
   return res.json();
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+async function patchProjectStructure(
+  id: string,
+  token: string,
+  structure: ProjectStructure
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/projects/${id}/structure`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ structure }),
+  });
+  if (!res.ok) throw new Error("Failed to save structure");
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function StructureSkeleton() {
   return (
@@ -62,16 +78,158 @@ function StructureSkeleton() {
   );
 }
 
+// ─── Editable Text Field ──────────────────────────────────────────────────────
+
+function EditableText({
+  value,
+  onSave,
+  label,
+}: {
+  value: string;
+  onSave: (val: string) => void;
+  label: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  const commit = () => {
+    setEditing(false);
+    if (draft.trim() !== value) onSave(draft.trim());
+  };
+
+  return editing ? (
+    <textarea
+      className="w-full bg-wadi-base border border-wadi-accent/50 rounded p-2 text-sm font-mono text-wadi-text resize-none focus:outline-none focus:border-wadi-accent"
+      rows={3}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) commit(); }}
+      autoFocus
+      aria-label={`Editar ${label}`}
+    />
+  ) : (
+    <p
+      className="text-sm font-mono text-wadi-text cursor-pointer hover:text-wadi-accent transition-colors group"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Click para editar"
+    >
+      {value}
+      <span className="ml-2 text-[9px] text-wadi-muted/40 uppercase group-hover:text-wadi-accent/60">edit</span>
+    </p>
+  );
+}
+
+// ─── Editable List ───────────────────────────────────────────────────────────
+
+function EditableList({
+  items,
+  onSave,
+  label,
+  color,
+}: {
+  items: string[];
+  onSave: (items: string[]) => void;
+  label: string;
+  color?: string;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+  const [drafts, setDrafts] = useState<string[]>(items);
+
+  const commit = (i: number) => {
+    setEditing(null);
+    const updated = [...drafts];
+    if (updated[i].trim() === "") {
+      updated.splice(i, 1);
+    }
+    setDrafts(updated);
+    onSave(updated);
+  };
+
+  const addItem = () => {
+    const updated = [...drafts, ""];
+    setDrafts(updated);
+    setEditing(updated.length - 1);
+  };
+
+  return (
+    <ul className="space-y-1">
+      {drafts.map((item, i) =>
+        editing === i ? (
+          <li key={i}>
+            <input
+              className="w-full bg-wadi-base border border-wadi-accent/50 rounded px-2 py-1 text-sm font-mono text-wadi-text focus:outline-none focus:border-wadi-accent"
+              value={drafts[i]}
+              onChange={(e) => {
+                const u = [...drafts];
+                u[i] = e.target.value;
+                setDrafts(u);
+              }}
+              onBlur={() => commit(i)}
+              onKeyDown={(e) => { if (e.key === "Enter") commit(i); if (e.key === "Escape") setEditing(null); }}
+              autoFocus
+              aria-label={`Editar ${label} ${i + 1}`}
+            />
+          </li>
+        ) : (
+          <li
+            key={i}
+            className={`text-sm font-mono cursor-pointer hover:opacity-80 transition-opacity flex items-start gap-2 group ${color || "text-wadi-text/90"}`}
+            onClick={() => setEditing(i)}
+          >
+            <span className="mt-0.5 shrink-0">›</span>
+            <span>{item}</span>
+            <span className="ml-auto text-[9px] text-wadi-muted/30 uppercase group-hover:text-wadi-accent/50 shrink-0">edit</span>
+          </li>
+        )
+      )}
+      <li>
+        <button
+          onClick={addItem}
+          className="text-[10px] font-mono text-wadi-muted/50 hover:text-wadi-accent transition-colors uppercase tracking-widest mt-1"
+        >
+          + agregar
+        </button>
+      </li>
+    </ul>
+  );
+}
+
+// ─── Structure Card ───────────────────────────────────────────────────────────
+
 function StructureCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border border-wadi-border/50 rounded-lg p-4 bg-wadi-surface/30 space-y-2">
       <h3 className="text-[10px] font-mono text-wadi-accent uppercase tracking-widest">{title}</h3>
-      <div className="text-sm text-wadi-text font-mono">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
 
-function StructureView({ project, onRetry }: { project: Project; onRetry: () => void }) {
+// ─── Structure View (editable) ────────────────────────────────────────────────
+
+function StructureView({
+  project,
+  onRetry,
+  onStructureChange,
+}: {
+  project: Project;
+  onRetry: () => void;
+  onStructureChange: (updated: ProjectStructure) => void;
+}) {
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const save = useCallback(
+    (updated: ProjectStructure) => {
+      onStructureChange(updated);
+      setSaveStatus("saving");
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      saveTimeout.current = setTimeout(() => setSaveStatus("saved"), 500);
+    },
+    [onStructureChange]
+  );
+
   if (project.status === "STRUCTURE_FAILED") {
     return (
       <div className="w-full max-w-3xl mx-auto py-10 px-4 text-center space-y-4">
@@ -81,10 +239,7 @@ function StructureView({ project, onRetry }: { project: Project; onRetry: () => 
         <p className="text-xs text-wadi-muted font-mono">
           WADI no pudo generar la estructura. Podés reintentar o empezar a trabajar directamente.
         </p>
-        <button
-          onClick={onRetry}
-          className="btn-primary text-xs py-2 px-6"
-        >
+        <button onClick={onRetry} className="btn-primary text-xs py-2 px-6">
           REINTENTAR
         </button>
       </div>
@@ -94,61 +249,78 @@ function StructureView({ project, onRetry }: { project: Project; onRetry: () => 
   const s = project.structure;
   if (!s || !s.problem) return null;
 
+  const update = (patch: Partial<ProjectStructure>) =>
+    save({ ...s, ...patch });
+
   return (
     <div className="w-full max-w-3xl mx-auto py-6 px-4 space-y-4">
-      <div className="mb-6 border-b border-wadi-border/30 pb-4">
-        <p className="text-[10px] font-mono text-wadi-accent uppercase tracking-widest mb-1">
-          Project Brief · v{project.structure_version ?? 1}
-        </p>
-        <h2 className="text-lg font-mono font-bold text-wadi-text">{project.name}</h2>
+      {/* Header */}
+      <div className="mb-4 border-b border-wadi-border/30 pb-4 flex items-end justify-between">
+        <div>
+          <p className="text-[10px] font-mono text-wadi-accent uppercase tracking-widest mb-1">
+            Project Brief · v{project.structure_version ?? 1}
+          </p>
+          <h2 className="text-lg font-mono font-bold text-wadi-text">{project.name}</h2>
+        </div>
+        <span className={`text-[9px] font-mono uppercase tracking-widest transition-colors ${
+          saveStatus === "saving" ? "text-wadi-muted animate-pulse" :
+          saveStatus === "saved"  ? "text-wadi-accent" :
+          saveStatus === "error"  ? "text-wadi-error" : "text-transparent"
+        }`}>
+          {saveStatus === "saving" ? "guardando…" : saveStatus === "saved" ? "✓ guardado" : saveStatus === "error" ? "error al guardar" : "·"}
+        </span>
       </div>
 
+      {/* Text fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StructureCard title="Problem">
-          {s.problem}
+          <EditableText value={s.problem} label="Problem" onSave={(v) => update({ problem: v })} />
         </StructureCard>
         <StructureCard title="Solution">
-          {s.solution}
+          <EditableText value={s.solution} label="Solution" onSave={(v) => update({ solution: v })} />
         </StructureCard>
         <StructureCard title="Target ICP">
-          {s.target_icp}
+          <EditableText value={s.target_icp} label="ICP" onSave={(v) => update({ target_icp: v })} />
         </StructureCard>
         <StructureCard title="Value Proposition">
-          {s.value_proposition}
+          <EditableText value={s.value_proposition} label="Value Proposition" onSave={(v) => update({ value_proposition: v })} />
         </StructureCard>
         <StructureCard title="Recommended Stack">
-          {s.recommended_stack}
+          <EditableText value={s.recommended_stack} label="Stack" onSave={(v) => update({ recommended_stack: v })} />
         </StructureCard>
       </div>
 
+      {/* Milestones */}
       <StructureCard title="Milestones">
-        <ol className="list-decimal list-inside space-y-1">
-          {s.milestones.map((m, i) => (
-            <li key={i} className="text-wadi-text/90">{m}</li>
-          ))}
-        </ol>
+        <EditableList
+          items={s.milestones}
+          label="Milestone"
+          onSave={(items) => update({ milestones: items })}
+        />
       </StructureCard>
 
+      {/* Risks + Validation */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StructureCard title="Risks">
-          <ul className="list-disc list-inside space-y-1">
-            {s.risks.map((r, i) => (
-              <li key={i} className="text-wadi-error/80">{r}</li>
-            ))}
-          </ul>
+          <EditableList
+            items={s.risks}
+            label="Risk"
+            color="text-wadi-error/80"
+            onSave={(items) => update({ risks: items })}
+          />
         </StructureCard>
         <StructureCard title="Validation Steps">
-          <ul className="list-disc list-inside space-y-1">
-            {s.validation_steps.map((v, i) => (
-              <li key={i} className="text-wadi-text/80">{v}</li>
-            ))}
-          </ul>
+          <EditableList
+            items={s.validation_steps}
+            label="Validation Step"
+            onSave={(items) => update({ validation_steps: items })}
+          />
         </StructureCard>
       </div>
 
       <div className="pt-2 border-t border-wadi-border/20">
         <p className="text-[9px] font-mono text-wadi-muted/40 uppercase tracking-widest text-center">
-          Estructura generada por WADI · Crystallize v{project.structure_version ?? 1}
+          Crystallize v{project.structure_version ?? 1} · Click en cualquier campo para editar
         </p>
       </div>
     </div>
@@ -166,9 +338,10 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null);
   const [projectLoading, setProjectLoading] = useState(true);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const loadProject = useCallback(async () => {
@@ -178,17 +351,14 @@ export default function ProjectDetail() {
       setProject(p);
       return p;
     } catch {
-      // silently ignore, fallback to run view
+      // silently ignore
     } finally {
       setProjectLoading(false);
     }
   }, [id, session?.access_token]);
 
   const stopPolling = useCallback(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
+    if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
   }, []);
 
   const startPolling = useCallback(() => {
@@ -198,12 +368,8 @@ export default function ProjectDetail() {
       try {
         const p = await fetchProjectById(id, session.access_token);
         setProject(p);
-        if (p.status !== "GENERATING_STRUCTURE") {
-          stopPolling();
-        }
-      } catch {
-        stopPolling();
-      }
+        if (p.status !== "GENERATING_STRUCTURE") stopPolling();
+      } catch { stopPolling(); }
     }, 2000);
   }, [id, session?.access_token, stopPolling]);
 
@@ -214,17 +380,32 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     loadProject().then((p) => {
-      if (p?.status === "GENERATING_STRUCTURE") {
-        startPolling();
-      }
+      if (p?.status === "GENERATING_STRUCTURE") startPolling();
     });
     return () => stopPolling();
   }, [loadProject, startPolling, stopPolling]);
 
+  // Edición inline con debounce de 600ms antes de llamar al backend
+  const handleStructureChange = useCallback(
+    (updated: ProjectStructure) => {
+      if (!id || !session?.access_token) return;
+      setProject((prev) => prev ? { ...prev, structure: updated } : prev);
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+      saveDebounceRef.current = setTimeout(async () => {
+        try {
+          await patchProjectStructure(id, session.access_token!, updated);
+        } catch (e) {
+          console.error("[STRUCTURE SAVE]", e);
+        }
+      }, 600);
+    },
+    [id, session?.access_token]
+  );
+
   const handleRetryCrystallize = useCallback(async () => {
     if (!project || !session?.access_token) return;
     try {
-      await fetch(`${API_BASE}/api/projects/crystallize`, {
+      const res = await fetch(`${API_BASE}/api/projects/crystallize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,10 +413,11 @@ export default function ProjectDetail() {
         },
         body: JSON.stringify({ name: project.name, description: project.description }),
       });
-      // Navigate to new project? For now just re-poll current
-      setProject((prev) => prev ? { ...prev, status: "GENERATING_STRUCTURE" } : prev);
-      startPolling();
-    } catch {/* ignore */}
+      if (res.ok) {
+        setProject((prev) => prev ? { ...prev, status: "GENERATING_STRUCTURE" } : prev);
+        startPolling();
+      }
+    } catch { /* ignore */ }
   }, [project, session?.access_token, startPolling]);
 
   const handleRun = async (input: string) => {
@@ -246,7 +428,7 @@ export default function ProjectDetail() {
     }
   };
 
-  // ─── Crystallize rendering ─────────────────────────────────────────────────
+  // ─── Crystallize status check ─────────────────────────────────────────────
 
   const isCrystallized =
     project &&
@@ -267,21 +449,24 @@ export default function ProjectDetail() {
       <div className="flex flex-col h-full bg-transparent overflow-y-auto">
         {project.status === "GENERATING_STRUCTURE" && <StructureSkeleton />}
         {(project.status === "READY" || project.status === "STRUCTURE_FAILED") && (
-          <StructureView project={project} onRetry={handleRetryCrystallize} />
+          <StructureView
+            project={project}
+            onRetry={handleRetryCrystallize}
+            onStructureChange={handleStructureChange}
+          />
         )}
       </div>
     );
   }
 
-  // ─── Default: runs view (pre-Crystallize projects) ─────────────────────────
+  // ─── Default: runs view ───────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col h-full bg-transparent relative p-4 lg:p-6 overflow-hidden">
-
       <div className="absolute top-4 right-4 z-40 opacity-0 hover:opacity-100 transition-opacity">
         <div className="text-[10px] font-mono text-wadi-muted/20 uppercase tracking-widest text-right">
           CTX :: {id?.slice(0, 8)} <br />
-          {loading ? 'BUSY' : 'READY'}
+          {loading ? "BUSY" : "READY"}
         </div>
       </div>
 
@@ -304,10 +489,7 @@ export default function ProjectDetail() {
         </div>
 
         <div className="shrink-0 z-20 w-full pb-6 pt-2">
-          <RunInputForm
-            onSubmit={handleRun}
-            loading={loading}
-          />
+          <RunInputForm onSubmit={handleRun} loading={loading} />
         </div>
       </div>
     </div>

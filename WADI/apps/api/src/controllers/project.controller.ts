@@ -143,6 +143,34 @@ export const crystallizeProject = async (
   })();
 };
 
+export const updateProjectStructure = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+  const userId = req.user!.id as any;
+  const { structure } = req.body;
+
+  if (!structure || typeof structure !== "object") {
+    return res.status(400).json({ error: "structure is required and must be an object" });
+  }
+
+  const { data, error } = await (supabase as any)
+    .from("projects")
+    .update({
+      structure,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+
+  if (error) throw new AppError("DB_ERROR", error.message);
+  res.json({ project: data });
+};
+
 export const bulkDeleteProjects = async (
   req: AuthenticatedRequest,
   res: Response,

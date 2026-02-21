@@ -3,11 +3,11 @@ import { Router, Request, Response, NextFunction } from "express";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
 
-// Controllers
 import {
   listProjects,
   getProject,
   crystallizeProject,
+  updateProjectStructure,
   bulkDeleteProjects,
 } from "./controllers/project.controller";
 import {
@@ -52,6 +52,12 @@ router.delete(
   "/projects/bulk",
   authenticate(),
   asyncHandler(bulkDeleteProjects)
+);
+
+router.patch(
+  "/projects/:id/structure",
+  authenticate(),
+  asyncHandler(updateProjectStructure)
 );
 
 /* =========================================
