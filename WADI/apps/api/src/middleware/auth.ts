@@ -54,7 +54,7 @@ export const authenticate = (optional = false) => {
       next();
     } catch (err) {
       if (optional) {
-        (authReq as any).user = undefined;
+        authReq.user = undefined;
         return next();
       }
       next(err);

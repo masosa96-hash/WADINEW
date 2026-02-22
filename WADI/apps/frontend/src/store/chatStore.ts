@@ -30,15 +30,16 @@ export interface Conversation {
 interface ChatState {
   conversations: Conversation[];
   messages: Message[];
+  guestMessages: Message[];
   activeId: string | null;
   conversationTitle: string | null;
-  isLoading: boolean;
-  isTyping: boolean;
-  isStreaming: boolean;
+  chatStatus: "idle" | "loading" | "streaming" | "error" | "uploading";
   streamingContent: string;
-  isUploading: boolean;
   isSidebarOpen: boolean;
   selectedIds: string[]; // For bulk actions
+  abortController: AbortController | null;
+  readonly isStreaming: boolean;
+  readonly isLoading: boolean;
 
   // Actions
   fetchConversations: () => Promise<void>;
@@ -72,6 +73,7 @@ interface ChatState {
   startNewChat: () => void;
   loadConversations: () => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
+  cancelStream: () => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -79,24 +81,31 @@ export const useChatStore = create<ChatState>()(
     (set, get) => ({
       conversations: [],
       messages: [],
+      guestMessages: [],
       activeId: null,
       get conversationId() {
         return get().activeId;
       },
       conversationTitle: null,
-      isLoading: false,
+      chatStatus: "idle",
       isTyping: false,
-      isStreaming: false,
       streamingContent: "",
       isUploading: false,
       isSidebarOpen: false,
       selectedIds: [],
       auditCount: 0,
       riskCount: 0,
+      abortController: null,
 
       // Aliases
       get isWadiThinking() {
-        return get().isTyping;
+        return get().chatStatus === "loading" || get().chatStatus === "streaming";
+      },
+      get isLoading() {
+        return get().chatStatus === "loading";
+      },
+      get isStreaming() {
+        return get().chatStatus === "streaming";
       },
 
       toggleSidebar: () =>
@@ -153,23 +162,42 @@ export const useChatStore = create<ChatState>()(
       },
 
       openConversation: async (id: string, initialTitle?: string) => {
+        get().cancelStream();
         set({
           activeId: id,
           conversationTitle: initialTitle || null,
           messages: [],
-          isLoading: true,
+          chatStatus: "loading",
         });
 
-        const { data: messages, error } = await supabase
-          .from("messages")
-          .select("*")
-          .eq("conversation_id", id)
-          .order("created_at", { ascending: true });
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        if (!error && messages) {
-          set({ messages: messages as Message[], isLoading: false });
+        if (session && id !== "guest") {
+          const { data: msgs, error } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("conversation_id", id)
+            .order("created_at", { ascending: true });
+
+          if (error) {
+            handleSupabaseError(error, "Cargando mensajes");
+            set({ chatStatus: "error" });
+          } else {
+            set({ messages: (msgs as Message[]) || [], chatStatus: "idle" });
+          }
         } else {
-          set({ isLoading: false });
+          // Guest mode: use in-memory guestMessages
+          set({ messages: get().guestMessages, chatStatus: "idle" });
+        }
+      },
+
+      cancelStream: () => {
+        const { abortController } = get();
+        if (abortController) {
+          abortController.abort();
+          set({ abortController: null, chatStatus: "idle" });
         }
       },
 
@@ -178,21 +206,23 @@ export const useChatStore = create<ChatState>()(
       },
 
       startNewConversation: async (initialTitle?: string) => {
+        get().cancelStream();
         set({
           activeId: null,
           conversationTitle: initialTitle || null,
           messages: [],
-          isTyping: false,
+          chatStatus: "idle",
         });
         return null;
       },
 
       startNewChat: () => {
+        get().cancelStream();
         set({
           activeId: null,
           conversationTitle: null,
           messages: [],
-          isTyping: false,
+          chatStatus: "idle",
         });
       },
 
@@ -204,13 +234,19 @@ export const useChatStore = create<ChatState>()(
       },
 
       sendMessageStream: async (projectId: string, content: string) => {
-        const { isStreaming } = get();
-        if (isStreaming) return;
+        get().cancelStream();
+        const controller = new AbortController();
 
-        set({ isStreaming: true, streamingContent: "" });
+        set({
+          chatStatus: "loading",
+          streamingContent: "",
+          abortController: controller,
+        });
 
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           const token = session?.access_token;
 
           const response = await fetch(`${API_URL}/api/projects/${projectId}/runs`, {
@@ -220,38 +256,45 @@ export const useChatStore = create<ChatState>()(
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({ input: content }),
+            signal: controller.signal,
           });
 
           if (!response.ok) {
             const errData = await response.json().catch(() => ({ error: "UNKNOWN_ERROR" }));
-            set({ isStreaming: false, streamingContent: "" });
+            set({ chatStatus: "error", streamingContent: "" });
             useLogStore.getState().addLog(`WADI está ocupado o falló: ${errData.error}`, "error");
             return;
           }
 
           if (!response.body) throw new Error("No response body");
 
+          set({ chatStatus: "streaming" });
+
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
-          let done = false;
           let fullResponse = "";
 
-          while (!done) {
-            const { value, done: doneReading } = await reader.read();
-            done = doneReading;
-            const chunkValue = decoder.decode(value, { stream: !done });
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-            const lines = chunkValue.split("\n");
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
             for (const line of lines) {
               if (line.startsWith("data: ")) {
+                const dataStr = line.replace("data: ", "").trim();
+                if (dataStr === "[DONE]") continue;
+
                 try {
-                  const data = JSON.parse(line.slice(6));
+                  const data = JSON.parse(dataStr);
                   if (data.content) {
                     fullResponse += data.content;
                     set({ streamingContent: fullResponse });
                   }
                   if (data.error) {
                     useLogStore.getState().addLog(`Error en stream: ${data.error}`, "error");
+                    set({ chatStatus: "error" });
                   }
                 } catch {
                   // Ignore partial JSON
@@ -261,19 +304,28 @@ export const useChatStore = create<ChatState>()(
           }
 
           // Finalize
-          set({ isStreaming: false, streamingContent: "" });
-          
+          set({ chatStatus: "idle", streamingContent: "", abortController: null });
+
           // Re-sync messages or buffer if guest
           if (projectId === "guest") {
               const now = new Date().toISOString();
+              const cleanResponse = fullResponse.replace(/\[CRYSTAL_CANDIDATE:.*?\]/g, "").trim();
+
               set((state) => ({
+                guestMessages: [
+                  ...state.guestMessages,
+                  { id: `guest-user-${Date.now()}`, role: "user" as const, content: content, created_at: now },
+                  ...(cleanResponse
+                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: cleanResponse, created_at: now }]
+                    : []),
+                ],
                 messages: [
                   ...state.messages,
                   { id: `guest-user-${Date.now()}`, role: "user" as const, content: content, created_at: now },
-                  ...(fullResponse
-                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: fullResponse, created_at: now }]
+                  ...(cleanResponse
+                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: cleanResponse, created_at: now }]
                     : []),
-                ]
+              ],
               }));
           } else {
             const { data: msgs } = await supabase
@@ -283,10 +335,14 @@ export const useChatStore = create<ChatState>()(
               .order("created_at", { ascending: true });
             if (msgs) set({ messages: msgs as Message[] });
           }
-          
-        } catch (error) {
+
+        } catch (error: unknown) {
+          if (error instanceof Error && error.name === "AbortError") {
+            console.log("[WADI_CHAT]: Stream cancelado por el usuario.");
+            return;
+          }
           console.error("Error in sendMessageStream:", error);
-          set({ isStreaming: false, streamingContent: "" });
+          set({ chatStatus: "error", streamingContent: "", abortController: null });
           useLogStore.getState().addLog("Fallo crítico en el stream neural.", "error");
         }
       },
@@ -405,7 +461,7 @@ export const useChatStore = create<ChatState>()(
       },
 
       uploadFile: async (file: File) => {
-        set({ isUploading: true });
+        set({ chatStatus: "uploading" });
         const log = useLogStore.getState().addLog;
         log(`Iniciando procesamiento de archivo: ${file.name}`, "process");
 
@@ -454,7 +510,7 @@ export const useChatStore = create<ChatState>()(
             .from("attachments")
             .getPublicUrl(fileName);
 
-          set({ isUploading: false });
+          set({ chatStatus: "idle" });
           log("Subida completada. URL pública generada.", "success");
 
           return {
@@ -464,7 +520,7 @@ export const useChatStore = create<ChatState>()(
           };
         } catch (error) {
           console.error("Error uploading file:", error);
-          set({ isUploading: false });
+          set({ chatStatus: "error" });
           if (error instanceof Error)
             log(`Error crítico en subida: ${error.message}`, "error");
           else log("Error desconocido en subida.", "error");
@@ -498,9 +554,7 @@ export const useChatStore = create<ChatState>()(
                   created_at: newMessage.created_at,
                 };
 
-                let newTypingState = state.isTyping;
                 if (incomingMsg.role === "assistant") {
-                  newTypingState = false;
                   useLogStore
                     .getState()
                     .addLog(
@@ -511,7 +565,7 @@ export const useChatStore = create<ChatState>()(
 
                 return {
                   messages: [...state.messages, incomingMsg],
-                  isTyping: newTypingState,
+                  chatStatus: "idle",
                 };
               });
             }

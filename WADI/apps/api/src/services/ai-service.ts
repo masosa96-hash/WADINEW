@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { CircuitBreaker } from '../utils/circuit-breaker';
 
 // ─── Lazy Getters ─────────────────────────────────────────────────────────────
 // Never instantiate at module level — that crashes the server on missing keys.
@@ -71,4 +72,15 @@ export const fastLLM = new Proxy({} as OpenAI, {
   get(_target, prop) {
     return (getFastLLM() as unknown as Record<string | symbol, unknown>)[prop];
   },
+});
+
+// ─── Circuit Breakers ─────────────────────────────────────────────────────────
+export const smartBreaker = new CircuitBreaker("SmartAI", { 
+  failureThreshold: 3, 
+  recoveryTimeout: 60000 // 1 minute
+});
+
+export const fastBreaker = new CircuitBreaker("FastAI", { 
+  failureThreshold: 5, 
+  recoveryTimeout: 30000 // 30 seconds
 });

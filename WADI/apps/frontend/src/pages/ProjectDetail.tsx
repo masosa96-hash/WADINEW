@@ -498,7 +498,8 @@ function StructureView({
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
-  const { runs, loading, error, fetchRuns, createRun, clearRuns } = useRunsStore();
+  const { runs, status, errorMessage: error, fetchRuns, createRun, clearRuns } = useRunsStore();
+  const loading = status === "loading";
   const { session } = useAuthStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 

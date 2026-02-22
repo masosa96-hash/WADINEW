@@ -13,26 +13,28 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Install Pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
+
+      - name: Type Check (Frontend)
+        run: pnpm --filter frontend exec tsc --noEmit
+
+      - name: Type Check (API)
+        run: pnpm --filter wadi-api exec tsc --noEmit
 
       - name: Run ESLint
-        run: |
-          npx eslint "apps/frontend/src/**/*.{ts,tsx}" --max-warnings=0
+        run: pnpm lint
 
-      - name: Validate Markdown files
-        uses: DavidAnson/markdownlint-cli2-action@v14
-        with:
-          globs: |
-            **/*.md
-
-      - name: Check CNAME placeholder
-        run: |
-          if grep -q "wadi.tudominio.com" docs/CNAME; then
-            echo "WARNING: CNAME still has placeholder domain"
-          fi
+      - name: Run API Smoke Tests
+        run: pnpm --filter wadi-api vitest run health.smoke.test.ts

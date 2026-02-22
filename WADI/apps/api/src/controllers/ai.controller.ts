@@ -26,6 +26,11 @@ export function isStronger(newId: string, currentId: string): boolean {
 // In-memory locks to prevent race conditions on the same project
 const streamLocks: Set<string> = new Set();
 
+interface RequestWithContext extends Request {
+  user?: { id: string };
+  requestId?: string;
+}
+
 export const handleChatStream = async (req: Request, res: Response) => {
   const { id } = req.params; // Project ID
 
@@ -36,9 +41,10 @@ export const handleChatStream = async (req: Request, res: Response) => {
   streamLocks.add(id);
 
   // Support guests: if no auth, use an ephemeral guest ID
-  const userId = (req as any).user?.id ?? `guest-${crypto.randomUUID()}`;
+  const extendedReq = req as unknown as RequestWithContext;
+  const userId = extendedReq.user?.id ?? `guest-${crypto.randomUUID()}`;
   const { input } = req.body;
-  const requestId = (req as any).requestId as string;
+  const requestId = extendedReq.requestId;
 
   // Set headers for SSE
   res.setHeader("Content-Type", "text/event-stream");
@@ -78,57 +84,54 @@ export const handleChatStream = async (req: Request, res: Response) => {
     for await (const chunk of stream) {
       if (!chunk.choices?.[0]?.delta?.content) continue;
 
-      // Check if we need to filter any remaining "reasoning_content" if the provider leaks it
-      // Groq sometimes sends empty delta with reasoning_content field separate.
-      // We only care about standard content for now.
-
-      // If [CRYSTAL_CANDIDATE: ... ] appears, we might want to log it serverside too?
-      // For now, just pass it through to frontend.
-      if (chunk.choices[0].delta.content.includes("CRYSTAL_CANDIDATE")) {
-        // Log it silently
-        logger.info("CRYSTAL_DETECTED", {
-          projectId: id,
-          content: chunk.choices[0].delta.content,
-        });
+      const content = chunk.choices[0].delta.content;
+      
+      if (content.includes("CRYSTAL_CANDIDATE")) {
+        logger.info({ 
+          msg: "crystal_detected", 
+          projectId: id, 
+          userId 
+        }, "A potential idea was detected for crystallization");
       }
 
-      const content = chunk.choices[0]?.delta?.content || "";
-      if (content) {
-        hasSentContent = true;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
+      hasSentContent = true;
+      res.write(`data: ${JSON.stringify({ content })}\n\n`);
     }
 
     if (!hasSentContent) {
-      logger.warn("llm_empty_stream", {
+      logger.warn({
+        msg: "llm_empty_stream",
         userId,
         projectId: id,
-        requestId: (req as any).requestId,
-      });
-      // Can't send 500 if headers already sent (Content-Type), but we can send a specific error data packet?
-      // Client expects [DONE] or text. sending error might break client parsers, but checking logs is key.
+        requestId,
+      }, "The LLM returned an empty stream");
       res.write(`data: ${JSON.stringify({ error: "EMPTY_RESPONSE" })}\n\n`);
     }
 
     res.write("data: [DONE]\n\n");
     res.end();
-  } catch (error: any) {
-    logger.error({ msg: "Stream Error", error: error.message, projectId: id, requestId });
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string; meta?: Record<string, unknown> };
+    logger.error({ 
+      msg: "chat_stream_failed", 
+      error: err.message, 
+      projectId: id, 
+      requestId 
+    }, "Error during chat streaming");
 
-    if (
-      error.name === "AbortError" ||
-      error.message?.includes("user aborted")
-    ) {
+    if (err.name === "AbortError" || err.message?.includes("user aborted")) {
       if (!res.headersSent) {
-        return res.status(504).json({ error: "LLM_TIMEOUT" });
+        return res.status(504).json({ success: false, error: "LLM_TIMEOUT" });
       }
       res.end();
       return;
     }
 
-    if (!res.headersSent)
-      res.status(500).json({ error: "WADI_INTERNAL_ERROR" });
-    else res.end();
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: "STREAMING_ERROR" });
+    } else {
+      res.end();
+    }
   } finally {
     streamLocks.delete(id);
   }

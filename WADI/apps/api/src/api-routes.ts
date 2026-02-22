@@ -19,6 +19,7 @@ import {
 import { handleChatStream } from "./controllers/ai.controller";
 import { listRuns } from "./controllers/runsController";
 import { getSnapshots } from "./controllers/system.controller";
+import { updatePreferences } from "./controllers/user.controller";
 import { rateLimiter, expensiveRateLimiter, adminRateLimiter, globalBudgetGuard } from "./middleware/rateLimiter";
 const router = Router();
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
@@ -68,6 +69,10 @@ router.patch(
    RUNS / CHAT ROUTES
    ========================================= */
 
+import { validate } from "./middleware/validate";
+import { chatRunSchema } from "./schemas/chat.schema";
+import { userPreferencesSchema } from "./schemas/user.schema";
+
 // List Runs (History)
 router.get(
   "/projects/:id/runs",
@@ -76,7 +81,12 @@ router.get(
 );
 
 // New Chat Run (Stream) — optional auth, guests allowed
-router.post("/projects/:id/runs", authenticate(true), handleChatStream);
+router.post(
+  "/projects/:id/runs", 
+  authenticate(true), 
+  validate(chatRunSchema),
+  handleChatStream
+);
 
 /* =========================================
    CONVERSATIONS ROUTES
@@ -114,24 +124,8 @@ router.delete(
 router.patch(
   "/user/preferences",
   authenticate(),
-  asyncHandler(async (req, res) => {
-    // This could also be moved to a user.controller.ts if it grows
-    // For now, it's small enough to keep inline or TODO refactor
-    const { supabase } = await import("./supabase");
-    const user = req.user;
-    const { naturalness_level, active_persona } = req.body;
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        naturalness_level,
-        active_persona,
-      },
-    });
-
-    if (error) throw new Error(error.message);
-
-    res.json({ message: "Preferences updated", naturalness_level, active_persona });
-  })
+  validate(userPreferencesSchema),
+  asyncHandler(updatePreferences)
 );
 
 // Maintenance: Trigger Global Meta-Analysis

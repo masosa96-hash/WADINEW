@@ -134,14 +134,14 @@ app.use("/api", routes);
 
 // Explicit 404 for API to prevent falling through to SPA
 app.all(/\/api\/.*/, (req, res, next) => {
-  next(new AppError("API_ROUTE_NOT_FOUND", `Route ${req.path} not found`, 404));
+  next(new AppError("API_ROUTE_NOT_FOUND", `Ruta de API no encontrada: ${req.method} ${req.path}`, 404));
 });
 
 // --------------------------------------------------
 // PRIORITY 3: Fallback (404)
 // --------------------------------------------------
 app.use((req, res, next) => {
-  next(new AppError("NOT_FOUND", `Path ${req.path} not found`, 404));
+  next(new AppError("NOT_FOUND", `Ruta no encontrada: ${req.method} ${req.path}`, 404));
 });
 
 // Error Handler
@@ -150,54 +150,45 @@ app.use(errorHandler as any);
 
 // START SERVER
 const PORT = process.env.PORT || 10000;
-const server = app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log('Servidor escuchando en el puerto: ' + PORT);
-  
-  // Log Active Routes
-  if (app._router && app._router.stack) {
-      console.log('Rutas activas:');
-      app._router.stack.forEach((r: any) => {
-          if (r.route && r.route.path) {
-              console.log(r.route.path);
-          } else if (r.name === 'router') {
-              // Express routers don't expose paths easily in the regex, 
-              // but we can imply them from the mount points we just set.
-              // Just logging the top level is often enough, or specifically known routes.
-              // Logic requested by user:
-              // app._router.stack.filter(r => r.route).map(r => r.route.path)
-          }
-      });
-      const activeRoutes = app._router.stack
-        .filter((r: any) => r.route)
-        .map((r: any) => r.route.path);
-      console.log('Rutas Directas:', activeRoutes);
-  }
 
-  // Automation: Run Global Meta-Analysis every 24 hours
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-  setInterval(() => {
-    console.log('[SYSTEM] Triggering autonomous meta-analysis...');
-    runGlobalMetaAnalysis().catch(err => console.error('[SYSTEM] Meta-analysis auto-trigger failed:', err));
-  }, TWENTY_FOUR_HOURS);
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log('Servidor escuchando en el puerto: ' + PORT);
+    
+    // Log Active Routes
+    if (app._router && app._router.stack) {
+        console.log('Rutas activas:');
+        const activeRoutes = app._router.stack
+          .filter((r: any) => r.route)
+          .map((r: any) => r.route.path);
+        console.log('Rutas Directas:', activeRoutes);
+    }
 
-  // Run once on startup (optional, let's delay 1 min to not overload boot)
-  setTimeout(() => {
-    console.log('[SYSTEM] Initial meta-analysis run...');
-    runGlobalMetaAnalysis();
-  }, 60000);
-});
+    // Automation: Run Global Meta-Analysis every 24 hours
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    setInterval(() => {
+      console.log('[SYSTEM] Triggering autonomous meta-analysis...');
+      runGlobalMetaAnalysis().catch(err => console.error('[SYSTEM] Meta-analysis auto-trigger failed:', err));
+    }, TWENTY_FOUR_HOURS);
 
-// Graceful Custom Shutdown
-const gracefulShutdown = () => {
-  console.log('SIGTERM/SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    // Close other connections like DB if needed here in the future
-    process.exit(0);
+    // Run once on startup (optional, let's delay 1 min to not overload boot)
+    setTimeout(() => {
+      console.log('[SYSTEM] Initial meta-analysis run...');
+      runGlobalMetaAnalysis();
+    }, 60000);
   });
-};
 
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+  // Graceful Custom Shutdown
+  const gracefulShutdown = () => {
+    console.log('SIGTERM/SIGINT signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+}
 
 // Final check: ensure no dead functions

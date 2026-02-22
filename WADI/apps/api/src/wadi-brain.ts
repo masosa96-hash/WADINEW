@@ -1,5 +1,5 @@
 import { resolvePersona, PersonaInput } from "@wadi/persona";
-import { getSmartLLM, fastLLM, smartLLM, AI_MODELS } from "./services/ai-service";
+import { getSmartLLM, fastLLM, smartLLM, AI_MODELS, smartBreaker, fastBreaker } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
 import { getGlobalPromptAdjustments, runDailySnapshot } from "./services/cognitive-service";
 import * as crypto from "crypto";
@@ -102,7 +102,8 @@ Si la idea tiene potencial real, tirá el tag al final:
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const stream = await client.chat.completions.create({
+    const breaker = provider === "fast" ? fastBreaker : smartBreaker;
+    const stream = await breaker.execute(() => client.chat.completions.create({
       model: model,
       stream: true,
       stream_options: { include_usage: true },
@@ -114,7 +115,7 @@ Si la idea tiene potencial real, tirá el tag al final:
     }, {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       signal: controller.signal as any
-    });
+    }));
 
     return { stream, personaId: persona.personaId };
   } catch (err) {
@@ -227,7 +228,7 @@ Generate the structured project brief.`;
   for (let attempt = 0; attempt < temperatures.length; attempt++) {
     const startedAt = Date.now();
     try {
-      const response = await Promise.race([
+      const response = await smartBreaker.execute(() => Promise.race([
         llm.chat.completions.create({
           model: AI_MODELS.smart,
           temperature: temperatures[attempt],
@@ -239,7 +240,7 @@ Generate the structured project brief.`;
           ],
         }, { timeout: 30000 }),
         new Promise((_, reject) => setTimeout(() => reject(new Error("LLM_HARD_TIMEOUT")), 35000))
-      ]) as any;
+      ])) as any;
 
       const duration = Date.now() - startedAt;
       const pHash = getPromptHash(systemPrompt, userPrompt.slice(0, 6000));
