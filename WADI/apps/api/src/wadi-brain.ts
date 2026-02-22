@@ -2,6 +2,7 @@ import { resolvePersona, PersonaInput } from "@wadi/persona";
 import { getSmartLLM, fastLLM, smartLLM, AI_MODELS } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
 import { getGlobalPromptAdjustments } from "./services/cognitive-service";
+import * as crypto from "crypto";
 
 // ─── Prompt Layers ──────────────────────────────────────────────────────────
 
@@ -146,6 +147,17 @@ function validateStructure(parsed: any): ProjectStructure {
   return parsed as ProjectStructure;
 }
 
+/**
+ * Calculates a SHA256 hash of the full prompt to detect modifications during Cold Freeze.
+ */
+function getPromptHash(systemPrompt: string, userPrompt: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(systemPrompt + userPrompt)
+    .digest("hex")
+    .slice(0, 8); // 8 chars is enough for internal audit
+}
+
 export async function generateCrystallizeStructure(
   name: string,
   description: string,
@@ -217,7 +229,8 @@ Generate the structured project brief.`;
       ]) as any;
 
       const duration = Date.now() - startedAt;
-      console.log(`[CRYSTALLIZE] project_id=${name.slice(0, 10)}... model=${AI_MODELS.smart} duration=${duration}ms attempt=${attempt + 1} status=SUCCESS`);
+      const pHash = getPromptHash(systemPrompt, userPrompt.slice(0, 6000));
+      console.log(`[CRYSTALLIZE] project_id=${name.slice(0, 10)}... p_hash=${pHash} model=${AI_MODELS.smart} duration=${duration}ms attempt=${attempt + 1} status=SUCCESS`);
 
       const raw = response.choices[0]?.message?.content ?? "";
       const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();

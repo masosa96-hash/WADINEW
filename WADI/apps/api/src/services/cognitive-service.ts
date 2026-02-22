@@ -274,8 +274,66 @@ export async function runGlobalMetaAnalysis() {
       }, { onConflict: 'date' });
 
     console.log(`[COGNITIVE] Global meta-analysis ${analysisId} completed.`);
+    
+    // Trigger snapshot after analysis
+    await runDailySnapshot();
   } catch (err) {
     console.error(`[COGNITIVE] Global analysis ${analysisId} failed:`, err);
+  }
+}
+
+/**
+ * Creates a historical snapshot of the day's key metrics for comparison.
+ */
+export async function runDailySnapshot() {
+  const date = new Date().toISOString().split('T')[0];
+  console.log(`[SNAPSHOT] Generating daily snapshot for ${date}...`);
+
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // 1. Projects Created
+    const { count: totalProjects } = await supabase
+      .from("projects")
+      .select("*", { count: "exact", head: true })
+      .gt("created_at", startOfDay.toISOString());
+
+    // 2. Crystallized Count (status changes to success today)
+    // Note: status log table would be better, but we heuristic via projects.updated_at
+    const { count: crystallizeCount } = await supabase
+      .from("projects")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "SUCCESS")
+      .gt("updated_at", startOfDay.toISOString());
+
+    // 3. Edit Count (project_edits today)
+    const { count: editCount } = await supabase
+      .from("project_edits")
+      .select("*", { count: "exact", head: true })
+      .gt("created_at", startOfDay.toISOString());
+
+    // 4. Structure Failures
+    const { count: failedCount } = await supabase
+      .from("projects")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "STRUCTURE_FAILED")
+      .gt("updated_at", startOfDay.toISOString());
+
+    await (supabase as any)
+      .from("daily_snapshots")
+      .upsert({
+        date,
+        total_projects: totalProjects || 0,
+        crystallize_count: crystallizeCount || 0,
+        edit_count: editCount || 0,
+        structure_failed_count: failedCount || 0,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'date' });
+
+    console.log(`[SNAPSHOT] Daily snapshot completed for ${date}`);
+  } catch (err) {
+    console.error(`[SNAPSHOT] Snapshot failed:`, err);
   }
 }
 

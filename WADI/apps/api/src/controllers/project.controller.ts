@@ -173,6 +173,7 @@ export const crystallizeProject = async (
         .eq("id", project.id)
         .eq("user_id", userId); // Critical: Security check even in async update
 
+      console.log(`[DASHBOARD_SIGNAL] event=CRYSTALLIZE_READY user_id=${userId} project_id=${project.id} job_duration=${duration}ms`);
       console.log(`[CRYSTALLIZE] Project ${project.id} — OK — ${duration}ms`);
     } catch (err) {
       const duration = Date.now() - startedAt;
