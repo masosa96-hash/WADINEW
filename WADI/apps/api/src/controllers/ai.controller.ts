@@ -23,16 +23,27 @@ export function isStronger(newId: string, currentId: string): boolean {
   return (personaStrength[newId] || 0) > (personaStrength[currentId] || 0);
 }
 
+// In-memory locks to prevent race conditions on the same project
+const streamLocks: Set<string> = new Set();
+
 export const handleChatStream = async (req: Request, res: Response) => {
+  const { id } = req.params; // Project ID
+
+  if (streamLocks.has(id)) {
+    return res.status(429).json({ error: "CONCURRENT_STREAM_NOT_ALLOWED" });
+  }
+
+  streamLocks.add(id);
+
+  // Support guests: if no auth, use an ephemeral guest ID
+  const userId = (req as any).user?.id ?? `guest-${crypto.randomUUID()}`;
+  const { input } = req.body;
+  const requestId = (req as any).requestId as string;
+
   // Set headers for SSE
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-
-  // Support guests: if no auth, use an ephemeral guest ID
-  const userId = (req as any).user?.id ?? `guest-${crypto.randomUUID()}`;
-  const { id } = req.params; // Project ID
-  const { input } = req.body;
 
   try {
     const cached = personaCache[id] || { personaId: "SOCIO_IRONICO", turnsActive: 0, messageCount: 0 };
@@ -102,22 +113,23 @@ export const handleChatStream = async (req: Request, res: Response) => {
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (error: any) {
-    console.error("Stream Error:", error);
+    logger.error({ msg: "Stream Error", error: error.message, projectId: id, requestId });
 
     if (
       error.name === "AbortError" ||
       error.message?.includes("user aborted")
     ) {
-      // If headers sent, we destroy stream. If not, 504.
       if (!res.headersSent) {
         return res.status(504).json({ error: "LLM_TIMEOUT" });
       }
-      res.end(); // Just end stream
+      res.end();
       return;
     }
 
     if (!res.headersSent)
       res.status(500).json({ error: "WADI_INTERNAL_ERROR" });
     else res.end();
+  } finally {
+    streamLocks.delete(id);
   }
 };

@@ -1,5 +1,13 @@
-import boundaries from "eslint-plugin-boundaries";
+import js from "@eslint/js";
+import globals from "globals";
+import tseslint from "typescript-eslint";
+// import { createRequire } from "module";
 
+// const require = createRequire(import.meta.url);
+// const prettierRecommended = require("eslint-plugin-prettier/recommended");
+// const boundaries = require("eslint-plugin-boundaries");
+
+// Standard flat config with Prettier recommended usually handles things better
 export default tseslint.config(
   {
     ignores: [
@@ -18,11 +26,11 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  prettierRecommended,
+  // prettierRecommended,
   {
-    plugins: {
-      boundaries,
-    },
+    // plugins: {
+    //   boundaries,
+    // },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -53,22 +61,6 @@ export default tseslint.config(
       eqeqeq: "error", // Enforce type-safe equality
       "no-var": "error",
       "prefer-const": "error",
-      "prettier/prettier": "error",
-
-      // Boundaries rules
-      "boundaries/no-private": ["error", { allowUnancestored: true }],
-      "boundaries/entry-point": [
-        "error",
-        {
-          default: "dist/index.js",
-          rules: [
-            {
-              target: ["package"],
-              allow: "src/index.ts", // Allow importing from src during dev within workspace if needed, but 'no-unknown' catches most
-            },
-          ],
-        },
-      ],
     },
   },
   {

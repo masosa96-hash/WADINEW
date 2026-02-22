@@ -2,46 +2,40 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { API_URL } from "../config/api";
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, User, Bot } from 'lucide-react';
-import { useRunsStore } from '../store/runsStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProjectsStore } from '../store/projectsStore';
+import { useChatStore } from '../store/chatStore';
 
 // Central constant — avoids magic string bugs
 export const GUEST_PROJECT_ID = "guest";
 
-interface LocalMessage {
-  id: string;
-  role: string;
-  content: string;
-  created_at: string;
-}
-
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { runs, fetchRuns } = useRunsStore();
   const { session } = useAuthStore();
   const { projects } = useProjectsStore();
+  const { 
+    messages, 
+    isStreaming, 
+    streamingContent, 
+    sendMessageStream, 
+    openConversation 
+  } = useChatStore();
 
   const isGuest = id === GUEST_PROJECT_ID;
 
   const [input, setInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<{ id: string; content: string } | null>(null);
   const [isCrystallizing, setIsCrystallizing] = useState(false);
-  // In-memory history for guests (lost on page reload — intentional ephemeral behavior)
-  const [guestMessages, setGuestMessages] = useState<LocalMessage[]>([]);
   const [firstMessageAt, setFirstMessageAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ─── Load history (authenticated users only) ──────────────────────────────
   useEffect(() => {
     if (!isGuest && id && session?.access_token) {
-      fetchRuns(id);
+      openConversation(id);
     }
-  }, [id, isGuest, fetchRuns, session?.access_token]);
+  }, [id, isGuest, openConversation, session?.access_token]);
 
   // ─── Auto-scroll ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -49,11 +43,9 @@ export default function Chat() {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollIntoView({ behavior });
     });
-  }, [streamingContent, runs, guestMessages, isStreaming]);
+  }, [streamingContent, messages, isStreaming]);
 
   // ─── Crystal candidate detection ──────────────────────────────────────────
-  // Matches [CRYSTAL_CANDIDATE: {...}] even if the model adds trailing text
-  // after the closing bracket or before the opening brace.
   const extractCrystalCandidate = (text: string) => {
     const CRYSTAL_REGEX = /\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})(?:\s*\]|$)/m;
     const match = text.match(CRYSTAL_REGEX);
@@ -63,7 +55,7 @@ export default function Chat() {
       if (!data?.name || !data?.description) return null;
       return data;
     } catch {
-      return null; // Incomplete JSON mid-stream — ignore
+      return null;
     }
   };
 
@@ -116,18 +108,13 @@ export default function Chat() {
   // ─── Crystallize ────────────────────────────────────────────────────────
   const handleCrystallize = async () => {
     if (!suggestion) return;
-    
     let currentSession = session;
-    
     if (!currentSession) {
-      // Create anon session on the fly if needed
       const res = await useAuthStore.getState().loginAsGuest();
       if (res.error) return;
       currentSession = useAuthStore.getState().session;
     }
-
     if (!currentSession?.access_token) return;
-
     setIsCrystallizing(true);
     try {
       const res = await fetch(`${API_URL}/api/projects/crystallize`, {
@@ -157,113 +144,29 @@ export default function Chat() {
   // ─── Send message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!input.trim() || !id) return;
-
     const currentInput = input;
     setInput('');
-    
     if (!firstMessageAt) {
       setFirstMessageAt(new Date().toISOString());
     }
-
-    setOptimisticUserMessage(currentInput);
-    setIsStreaming(true);
-    setStreamingContent('');
-
-    let fullAssistantResponse = '';
-
-    try {
-      // Token is optional — guests send without auth header
-      const token = session?.access_token;
-
-      const response = await fetch(`${API_URL}/api/projects/${id}/runs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ input: currentInput }),
-      });
-
-      if (!response.body) return;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value, { stream: !done });
-
-        for (const line of chunkValue.split('\n')) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.content) {
-                fullAssistantResponse += data.content;
-                setStreamingContent((prev) => prev + data.content);
-              }
-            } catch {
-              // Ignore broken/non-json chunks
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Stream failed', err);
-    } finally {
-      setIsStreaming(false);
-      setOptimisticUserMessage(null);
-      setStreamingContent('');
-
-      if (isGuest) {
-        // Persist messages in local in-memory state for the duration of the session
-        const now = new Date().toISOString();
-        setGuestMessages((prev) => [
-          ...prev,
-          { id: `guest-user-${Date.now()}`, role: 'user', content: currentInput, created_at: now },
-          ...(fullAssistantResponse
-            ? [{ id: `guest-assistant-${Date.now()}`, role: 'assistant', content: fullAssistantResponse, created_at: now }]
-            : []),
-        ]);
-      } else if (id) {
-        // Re-sync run history only for authenticated users
-        fetchRuns(id);
-      }
-    }
+    await sendMessageStream(id, currentInput);
   };
 
   // ─── Message display ──────────────────────────────────────────────────────
-  // Strip [CRYSTAL_CANDIDATE:...] in all forms — handles unclosed tags at end of stream
   const cleanContent = (text: string) =>
     text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*/gm, '').trim();
 
-  const storeMessages = runs
-    .slice()
-    .reverse()
-    .flatMap((run) => {
-      const msgs = [{ id: `${run.id}-user`, role: 'user', content: run.input, created_at: run.created_at }];
-      if (run.output) {
-        msgs.push({ id: `${run.id}-assistant`, role: 'assistant', content: run.output, created_at: run.created_at });
-      }
-      return msgs;
-    });
-
-  // Guests use their in-memory list; authenticated users use the store
-  const baseMessages: LocalMessage[] = isGuest
-    ? guestMessages.map((m) => ({ ...m, content: cleanContent(m.content) }))
-    : storeMessages.map((m) => ({ ...m, content: cleanContent(m.content) }));
-
-  const displayMessages = [...baseMessages];
-
-  if (optimisticUserMessage) {
-    displayMessages.push({ id: 'optimistic-user', role: 'user', content: optimisticUserMessage, created_at: new Date().toISOString() });
-  }
+  const displayMessages = messages.map((m) => ({ ...m, content: cleanContent(m.content) }));
 
   const cleanedStreamingContent = useMemo(() => cleanContent(streamingContent), [streamingContent]);
 
-  if (isStreaming || (streamingContent && optimisticUserMessage)) {
-    displayMessages.push({ id: 'streaming-assistant', role: 'assistant', content: cleanedStreamingContent, created_at: new Date().toISOString() });
+  if (isStreaming || streamingContent) {
+    displayMessages.push({ 
+        id: 'streaming-assistant', 
+        role: 'assistant', 
+        content: cleanedStreamingContent, 
+        created_at: new Date().toISOString() 
+    });
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────

@@ -1,35 +1,19 @@
-export const logger = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  info: (msg: string, meta: any = {}) => {
-    console.log(
-      JSON.stringify({
-        level: "info",
-        message: msg,
-        ...meta,
-        timestamp: new Date().toISOString(),
-      })
-    );
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error: (msg: string, meta: any = {}) => {
-    console.error(
-      JSON.stringify({
-        level: "error",
-        message: msg,
-        ...meta,
-        timestamp: new Date().toISOString(),
-      })
-    );
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn: (msg: string, meta: any = {}) => {
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        message: msg,
-        ...meta,
-        timestamp: new Date().toISOString(),
-      })
-    );
-  },
-};
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pino = require("pino");
+
+const isProduction = process.env.NODE_ENV === "production";
+
+export const logger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  base: isProduction ? { pid: process.pid } : undefined,
+  transport: isProduction
+    ? undefined
+    : {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          translateTime: "HH:MM:ss Z",
+          ignore: "pid,hostname",
+        },
+      },
+});

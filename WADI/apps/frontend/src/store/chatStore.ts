@@ -33,7 +33,9 @@ interface ChatState {
   activeId: string | null;
   conversationTitle: string | null;
   isLoading: boolean;
-  isTyping: boolean; // isWadiThinking replacement
+  isTyping: boolean;
+  isStreaming: boolean;
+  streamingContent: string;
   isUploading: boolean;
   isSidebarOpen: boolean;
   selectedIds: string[]; // For bulk actions
@@ -43,6 +45,7 @@ interface ChatState {
   openConversation: (id: string, initialTitle?: string) => Promise<void>;
   startNewConversation: (initialTitle?: string) => Promise<string | null>;
   sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
+  sendMessageStream: (projectId: string, content: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   deleteSelectedConversations: (ids?: string[]) => Promise<void>;
 
@@ -83,6 +86,8 @@ export const useChatStore = create<ChatState>()(
       conversationTitle: null,
       isLoading: false,
       isTyping: false,
+      isStreaming: false,
+      streamingContent: "",
       isUploading: false,
       isSidebarOpen: false,
       selectedIds: [],
@@ -137,7 +142,7 @@ export const useChatStore = create<ChatState>()(
         if (error) {
            handleSupabaseError(error, "Cargando conversaciones");
         } else {
-           console.log("[WADI_CHAT]: Conversaciones recibidas:", data?.length || 0);
+           console.log("[WADI_CHAT]: Conversaciones recibidas:", (data as unknown[])?.length || 0);
         }
 
         set({ conversations: data || [] });
@@ -191,83 +196,98 @@ export const useChatStore = create<ChatState>()(
         });
       },
 
-      sendMessage: async (content: string, attachments: Attachment[] = []) => {
+      sendMessage: async (content: string) => {
+        // Legacy sendMessage refactored to use sendMessageStream if possible
         const { activeId } = get();
-        set({ isTyping: true });
+        if (!activeId) return;
+        await get().sendMessageStream(activeId, content);
+      },
 
-        const token = (await supabase.auth.getSession()).data.session
-          ?.access_token;
-        if (!token) return;
+      sendMessageStream: async (projectId: string, content: string) => {
+        const { isStreaming } = get();
+        if (isStreaming) return;
+
+        set({ isStreaming: true, streamingContent: "" });
 
         try {
-          const response = await fetch(`${API_URL}/api/chat`, {
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+
+          const response = await fetch(`${API_URL}/api/projects/${projectId}/runs`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({
-              message: content,
-              conversationId: activeId,
-              attachments,
-            }),
+            body: JSON.stringify({ input: content }),
           });
 
-          const data = await response.json();
-
-          if (response.ok) {
-            // Updated conversation ID if new
-            if (!activeId && data.conversationId) {
-              set({ activeId: data.conversationId });
-              get().fetchConversations();
-            }
-
-            // Start Polling
-            const jobId = data.jobId;
-            const pollInterval = setInterval(async () => {
-              try {
-                const pollRes = await fetch(`${API_URL}/api/chat/job/${jobId}`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                });
-                const pollData = await pollRes.json();
-
-                if (pollData.status === "completed") {
-                  clearInterval(pollInterval);
-                  set({ isTyping: false });
-                  
-                  // Force refresh messages to ensure we have the latest
-                  // (Supabase realtime might have picked it up, but this is safe)
-                  const convId = get().activeId;
-                  if (convId) {
-                     const { data: msgs } = await supabase
-                      .from("messages")
-                      .select("*")
-                      .eq("conversation_id", convId)
-                      .order("created_at", { ascending: true });
-                     if (msgs) set({ messages: msgs as Message[] });
-                  }
-                  
-                  useLogStore.getState().addLog("WADI ha respondido (Async).", "success");
-                } 
-                else if (pollData.status === "failed") {
-                  clearInterval(pollInterval);
-                  set({ isTyping: false });
-                  useLogStore.getState().addLog(`Error en worker: ${pollData.error}`, "error");
-                }
-              } catch (err) {
-                 console.error("Polling error", err);
-                 // Don't clear interval, retry.
-              }
-            }, 1000);
-          } else {
-             throw new Error("API request failed");
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({ error: "UNKNOWN_ERROR" }));
+            set({ isStreaming: false, streamingContent: "" });
+            useLogStore.getState().addLog(`WADI está ocupado o falló: ${errData.error}`, "error");
+            return;
           }
+
+          if (!response.body) throw new Error("No response body");
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let done = false;
+          let fullResponse = "";
+
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            const chunkValue = decoder.decode(value, { stream: !done });
+
+            const lines = chunkValue.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.content) {
+                    fullResponse += data.content;
+                    set({ streamingContent: fullResponse });
+                  }
+                  if (data.error) {
+                    useLogStore.getState().addLog(`Error en stream: ${data.error}`, "error");
+                  }
+                } catch {
+                  // Ignore partial JSON
+                }
+              }
+            }
+          }
+
+          // Finalize
+          set({ isStreaming: false, streamingContent: "" });
+          
+          // Re-sync messages or buffer if guest
+          if (projectId === "guest") {
+              const now = new Date().toISOString();
+              set((state) => ({
+                messages: [
+                  ...state.messages,
+                  { id: `guest-user-${Date.now()}`, role: "user" as const, content: content, created_at: now },
+                  ...(fullResponse
+                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: fullResponse, created_at: now }]
+                    : []),
+                ]
+              }));
+          } else {
+            const { data: msgs } = await supabase
+              .from("messages")
+              .select("*")
+              .eq("conversation_id", projectId)
+              .order("created_at", { ascending: true });
+            if (msgs) set({ messages: msgs as Message[] });
+          }
+          
         } catch (error) {
-          console.error("Error sending message:", error);
-          set({ isTyping: false });
-          useLogStore
-            .getState()
-            .addLog("Error enviando mensaje al cerebro.", "error");
+          console.error("Error in sendMessageStream:", error);
+          set({ isStreaming: false, streamingContent: "" });
+          useLogStore.getState().addLog("Fallo crítico en el stream neural.", "error");
         }
       },
 

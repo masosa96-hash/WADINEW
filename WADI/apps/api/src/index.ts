@@ -10,7 +10,7 @@ import routes from "./api-routes"; // TS file
 
 import { requestLogger } from "./middleware/requestLogger";
 import { rateLimiter } from "./middleware/rateLimiter";
-import { errorHandler } from "./middleware/error.middleware";
+import { errorHandler, AppError } from "./middleware/error.middleware";
 // import { startWorker } from "./queue/worker";
 // import "./queue/aiWorker"; // Start AI Worker side-effect
 
@@ -102,9 +102,9 @@ app.get("/system/debug-files", (req, res) => {
       env: process.env.NODE_ENV
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
-      error: err.message
+      error: (err as Error).message
     });
   }
 });
@@ -133,15 +133,15 @@ app.use("/api", rateLimiter as any);
 app.use("/api", routes);
 
 // Explicit 404 for API to prevent falling through to SPA
-app.all(/\/api\/.*/, (req, res) => {
-  res.status(404).json({ error: "API_ROUTE_NOT_FOUND" });
+app.all(/\/api\/.*/, (req, res, next) => {
+  next(new AppError("API_ROUTE_NOT_FOUND", `Route ${req.path} not found`, 404));
 });
 
 // --------------------------------------------------
 // PRIORITY 3: Fallback (404)
 // --------------------------------------------------
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found", path: req.path });
+app.use((req, res, next) => {
+  next(new AppError("NOT_FOUND", `Path ${req.path} not found`, 404));
 });
 
 // Error Handler
@@ -200,8 +200,4 @@ const gracefulShutdown = () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Helper for strict listen types if needed, though usually string port is fine in express types
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function asAny(val: any): any {
-  return val;
-}
+// Final check: ensure no dead functions
