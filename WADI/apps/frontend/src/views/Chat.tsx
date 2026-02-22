@@ -262,8 +262,14 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 scrollbar-thin scrollbar-thumb-gray-200">
         <div className="max-w-3xl mx-auto space-y-12 pb-10">
           {displayMessages.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <p>Inicia la conversación...</p>
+            <div className="text-center py-20 px-6">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot size={24} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">WADI: Socio Operacional</h2>
+              <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
+                Decime qué estás intentando construir. Aunque esté desordenado. Lo convertimos en algo concreto y ejecutable.
+              </p>
             </div>
           )}
 
