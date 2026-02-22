@@ -1,0 +1,1 @@
+export default function DbDash() { return <div>DB Dashboard</div> }
