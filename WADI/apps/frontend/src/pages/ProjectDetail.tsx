@@ -265,6 +265,9 @@ function StructureView({
             Project Brief · v{project.structure_version ?? 1}
           </p>
           <h2 className="text-lg font-mono font-bold text-wadi-text">{project.name}</h2>
+          <p className="text-[10px] text-gray-400 mt-2 italic font-sans">
+            Este es un borrador inicial. Ajustalo hasta que sientas que es tuyo.
+          </p>
         </div>
         <span className={`text-[9px] font-mono uppercase tracking-widest transition-colors ${
           saveStatus === "saving" ? "text-wadi-muted animate-pulse" :

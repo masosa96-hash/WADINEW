@@ -137,7 +137,10 @@ export default function ProjectBoard() {
                   
                   {colProjects.length === 0 && (
                     <div className="border border-dashed border-gray-200 rounded-lg p-8 text-center opacity-40">
-                      <p className="text-sm text-wadi-muted font-light">Empty</p>
+                      <p className="text-sm text-wadi-muted font-medium mb-1">Sin proyectos</p>
+                      <p className="text-[10px] text-wadi-muted leading-relaxed">
+                        Cuando crystallizás una idea, aparece acá con su roadmap.
+                      </p>
                     </div>
                   )}
                 </div>

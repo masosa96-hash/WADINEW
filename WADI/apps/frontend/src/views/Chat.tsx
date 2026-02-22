@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Send, User, Bot } from 'lucide-react';
 import { useRunsStore } from '../store/runsStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useProjectsStore } from '../store/projectsStore';
 
 // Central constant — avoids magic string bugs
 export const GUEST_PROJECT_ID = "guest";
@@ -20,6 +21,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const { runs, fetchRuns } = useRunsStore();
   const { session } = useAuthStore();
+  const { projects } = useProjectsStore();
 
   const isGuest = id === GUEST_PROJECT_ID;
 
@@ -267,9 +269,27 @@ export default function Chat() {
                 <Bot size={24} />
               </div>
               <h2 className="text-lg font-bold text-gray-900 mb-2">WADI: Socio Operacional</h2>
-              <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
-                Decime qué estás intentando construir. Aunque esté desordenado. Lo convertimos en algo concreto y ejecutable.
-              </p>
+              <div className="text-gray-500 max-w-sm mx-auto leading-relaxed space-y-4">
+                {isGuest ? (
+                  <p>
+                    Traé una idea, aunque esté desordenada. En segundos la convierto en un plan claro y accionable. No hace falta que esté perfecta. Arrancamos desde donde estés.
+                  </p>
+                ) : projects.length > 0 ? (
+                  <p>
+                    Tenés proyectos en marcha. ¿Querés mejorar uno o arrancar algo nuevo? Lo bajamos a tierra y lo hacemos avanzar. No acumulemos ideas, estructurémoslas.
+                  </p>
+                ) : (
+                  <p>
+                    ¿Qué estamos construyendo ahora? Traé la próxima idea o mejoramos un proyecto existente. Vamos a hacerlo más claro y más ejecutable.
+                  </p>
+                )}
+                
+                {(!isGuest && projects.length === 0) && (
+                  <div className="pt-4 text-xs font-medium text-blue-600 uppercase tracking-widest animate-pulse">
+                    Listo para tu primer Crystallize
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -300,8 +320,9 @@ export default function Chat() {
                         <button
                           onClick={handleCrystallize}
                           className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                          title="Convertir esta idea en un proyecto estructurado"
                         >
-                          {isCrystallizing ? 'Creating...' : 'Crystallize'}
+                          {isCrystallizing ? 'Creating...' : 'Crystallize Project'}
                         </button>
                       </div>
                     </div>
@@ -329,7 +350,7 @@ export default function Chat() {
                 handleSend();
               }
             }}
-            placeholder="Preguntale algo a WADI..."
+            placeholder="Escribí tu idea desordenada acá..."
             className="w-full p-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-gray-400 font-light"
             rows={1}
             style={{ minHeight: '60px' }}
