@@ -198,32 +198,38 @@ ${description}${existingProjectsNote}
 
 Generate the structured project brief.`;
 
-  // Attempt 1: temperature 0.4
-  // Attempt 2 (retry): temperature 0.2
+  // Attempt 1: temperature 0.4, Attempt 2 (retry): temperature 0.2
   for (let attempt = 0; attempt < temperatures.length; attempt++) {
-    const response = await llm.chat.completions.create({
-      model: AI_MODELS.smart,
-      temperature: temperatures[attempt],
-      top_p: 0.9,
-      max_tokens: 1500, // Balanced limit for structured project brief
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt.slice(0, 6000) }, // Input truncation for safety
-      ],
-    }, { timeout: 45000 }); // 45s Timeout to avoid zombie requests
-
-    const raw = response.choices[0]?.message?.content ?? "";
-
+    const startedAt = Date.now();
     try {
-      // Strip potential markdown fences if model misbehaves
+      const response = await Promise.race([
+        llm.chat.completions.create({
+          model: AI_MODELS.smart,
+          temperature: temperatures[attempt],
+          top_p: 0.9,
+          max_tokens: 1500,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt.slice(0, 6000) },
+          ],
+        }, { timeout: 30000 }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("LLM_HARD_TIMEOUT")), 35000))
+      ]) as any;
+
+      const duration = Date.now() - startedAt;
+      console.log(`[CRYSTALLIZE] project_id=${name.slice(0, 10)}... model=${AI_MODELS.smart} duration=${duration}ms attempt=${attempt + 1} status=SUCCESS`);
+
+      const raw = response.choices[0]?.message?.content ?? "";
       const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
       const parsed = JSON.parse(cleaned);
       return validateStructure(parsed);
     } catch (err) {
+      const duration = Date.now() - startedAt;
+      console.warn(`[CRYSTALLIZE] project_id=${name.slice(0, 10)}... attempt=${attempt + 1} duration=${duration}ms status=FAILED error=${(err as Error).message}`);
+      
       if (attempt === temperatures.length - 1) {
         throw new Error(`LLM returned invalid structure after ${attempt + 1} attempts: ${(err as Error).message}`);
       }
-      console.warn(`[CRYSTALLIZE] Attempt ${attempt + 1} failed, retrying with lower temperature...`);
     }
   }
 

@@ -4,6 +4,7 @@ import { AppError } from "../middleware/error.middleware";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { generateCrystallizeStructure, CRYSTALLIZE_PROMPT_VERSION } from "../wadi-brain";
 import { logProjectEdit, updateCognitiveProfile, getCognitiveProfileSummary } from "../services/cognitive-service";
+import { incrementGlobalBudget } from "../middleware/rateLimiter";
 import { z } from "zod";
 
 // Helper: Generate Technical Project Name
@@ -62,7 +63,7 @@ const CrystallizeSchema = z.object({
   name: z.string().max(100).optional(),
   description: z.string().max(5000).min(10),
   suggestionContent: z.any().optional(),
-});
+}).strict(); // Reject unknown fields to prevent metadata manipulation
 
 export const crystallizeProject = async (
   req: AuthenticatedRequest,
@@ -70,6 +71,12 @@ export const crystallizeProject = async (
   next: NextFunction
 ) => {
   const userId = req.user!.id as any;
+  
+  // 1. Initial length guard
+  if (req.body?.description?.length > 5000) {
+    return res.status(400).json({ error: "Description is too large (max 5000 chars)" });
+  }
+
   const validated = CrystallizeSchema.safeParse(req.body);
   
   if (!validated.success) {
@@ -112,6 +119,10 @@ export const crystallizeProject = async (
     .single();
 
   if (insertError) throw new AppError("DB_ERROR", insertError.message);
+  
+  // Track global budget usage
+  incrementGlobalBudget();
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = projectRaw as any;
 
@@ -182,7 +193,7 @@ const ProjectStructureSchema = z.object({
   milestones: z.array(z.string().min(1).max(500)).min(1).max(30),
   risks: z.array(z.string().min(1).max(500)).min(1).max(20),
   validation_steps: z.array(z.string().min(1).max(500)).min(1).max(20),
-});
+}).strict(); // Security: Prevent extra top-level keys like { "admin": true }
 
 export const updateProjectStructure = async (
   req: AuthenticatedRequest,
@@ -207,6 +218,11 @@ export const updateProjectStructure = async (
     .single();
 
   if (fetchError || !current) throw new AppError("NOT_FOUND", "Proyecto no encontrado o acceso denegado");
+
+  // Concurrency Lock: Prevent editing while generating
+  if (current.status === "GENERATING_STRUCTURE") {
+    return res.status(409).json({ error: "No se puede editar mientras se genera la estructura" });
+  }
 
   // Verify ownership again explicitly just in case PGRST116 is handled differently
   if (current.user_id !== userId) throw new AppError("NOT_AUTHORIZED", "No tenés permiso para editar este proyecto");

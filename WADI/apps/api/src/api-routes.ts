@@ -18,7 +18,7 @@ import {
 } from "./controllers/conversation.controller";
 import { handleChatStream } from "./controllers/ai.controller";
 import { listRuns } from "./controllers/runsController";
-import { rateLimiter, expensiveRateLimiter, adminRateLimiter } from "./middleware/rateLimiter";
+import { rateLimiter, expensiveRateLimiter, adminRateLimiter, globalBudgetGuard } from "./middleware/rateLimiter";
 const router = Router();
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
 
@@ -46,6 +46,7 @@ router.get("/projects/:id", authenticate(), asyncHandler(getProject));
 router.post(
   "/projects/crystallize",
   authenticate(),
+  globalBudgetGuard,
   expensiveRateLimiter,
   asyncHandler(crystallizeProject)
 );
