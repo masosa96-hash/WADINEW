@@ -20,6 +20,7 @@ import { errorHandler } from "./middleware/error.middleware";
 import path from "path";
 import fs from "fs";
 // import { fileURLToPath } from "url";
+import { runGlobalMetaAnalysis } from "./services/cognitive-service";
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: "../../.env" });
@@ -171,6 +172,19 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
         .map((r: any) => r.route.path);
       console.log('Rutas Directas:', activeRoutes);
   }
+
+  // Automation: Run Global Meta-Analysis every 24 hours
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  setInterval(() => {
+    console.log('[SYSTEM] Triggering autonomous meta-analysis...');
+    runGlobalMetaAnalysis().catch(err => console.error('[SYSTEM] Meta-analysis auto-trigger failed:', err));
+  }, TWENTY_FOUR_HOURS);
+
+  // Run once on startup (optional, let's delay 1 min to not overload boot)
+  setTimeout(() => {
+    console.log('[SYSTEM] Initial meta-analysis run...');
+    runGlobalMetaAnalysis();
+  }, 60000);
 });
 
 // Graceful Custom Shutdown

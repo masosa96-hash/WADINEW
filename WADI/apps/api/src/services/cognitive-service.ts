@@ -12,6 +12,7 @@ export interface UserCognitiveProfile {
 
 const SCORE_RANGE = { MIN: -5, MAX: 5 };
 const MIN_REPETITIONS = 3;
+const DECAY_FACTOR = 0.95; // Profiles tend to 0 over time to prevent rigidity
 
 /**
  * Log a specific field edit in a project structure
@@ -133,6 +134,39 @@ export async function updateCognitiveProfile(userId: string) {
 }
 
 /**
+ * PHASE 4: Score Decay
+ * Gradually normalizes profiles towards 0 to maintain flexibility.
+ */
+export async function applyProfileDecay(userId: string) {
+  try {
+    const { data: profile } = await (supabase as any)
+      .from("user_cognitive_profile_current")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (!profile) return;
+
+    const p = profile as UserCognitiveProfile;
+    const updates = {
+      stack_complexity_score: Math.round(p.stack_complexity_score * DECAY_FACTOR * 10) / 10,
+      milestone_length_score: Math.round(p.milestone_length_score * DECAY_FACTOR * 10) / 10,
+      risk_tolerance_score: Math.round(p.risk_tolerance_score * DECAY_FACTOR * 10) / 10,
+      scope_bias_score: Math.round(p.scope_bias_score * DECAY_FACTOR * 10) / 10,
+      updated_at: new Date().toISOString()
+    };
+
+    await (supabase as any)
+      .from("user_cognitive_profile_current")
+      .update(updates)
+      .eq("user_id", userId);
+
+  } catch (e) {
+    console.error("[COGNITIVE] Decay failed:", e);
+  }
+}
+
+/**
  * Returns a natural language summary of the user cognitive profile for prompt injection
  */
 export async function getCognitiveProfileSummary(userId: string): Promise<string> {
@@ -162,14 +196,21 @@ export async function getCognitiveProfileSummary(userId: string): Promise<string
 }
 
 /**
- * PHASE 2: Global Meta-Analysis Job
- * Runs aggregation over all project_edits to detect product-wide behaviors
+ * PHASE 2/4: Global Meta-Analysis Job
+ * Refined with atomicity and analytics.
  */
 export async function runGlobalMetaAnalysis() {
+  const analysisId = Math.random().toString(36).substring(7);
+  console.log(`[COGNITIVE] Starting global analysis ${analysisId}...`);
+
   try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const { data: edits, error } = await (supabase as any)
       .from("project_edits")
-      .select("field, original_value, edited_value");
+      .select("field, original_value, edited_value, project_id")
+      .gt("created_at", thirtyDaysAgo.toISOString());
 
     if (error || !edits) return;
 
@@ -191,28 +232,42 @@ export async function runGlobalMetaAnalysis() {
       }
     }
 
-    // Upsert patterns if frequency > threshold
+    const uniqueProjects = new Set((edits as any[]).map(e => e.project_id)).size;
+    const avgEditsPerProject = uniqueProjects > 0 ? edits.length / uniqueProjects : 0;
+
+    // Upsert patterns if frequency > threshold (60%)
     for (const [field, data] of Object.entries(stats)) {
-      if (data.total < 10) continue; // Minimum sample size
+      if (data.total < 10) continue; 
 
       const frequency = data.reductions / data.total;
       const patternName = `REDUCE_${field.toUpperCase()}`;
 
-      await (supabase as any)
-        .from("global_patterns")
-        .upsert({
-          pattern: patternName,
-          frequency,
-          confidence_score: Math.min(1.0, data.total / 100),
-          sample_size: data.total,
-          last_updated: new Date().toISOString()
-        }, { onConflict: 'pattern' });
+      if (frequency > 0.6 || frequency < 0.2) {
+        await (supabase as any)
+          .from("global_patterns")
+          .upsert({
+            pattern: patternName,
+            frequency,
+            confidence_score: Math.min(1.0, data.total / 100),
+            sample_size: data.total,
+            last_updated: new Date().toISOString()
+          }, { onConflict: 'pattern' });
+      }
     }
 
-    console.log("[COGNITIVE] Global meta-analysis completed.");
+    // Record Analytics
+    await (supabase as any)
+      .from("adaptive_analytics")
+      .upsert({
+        date: new Date().toISOString().split('T')[0],
+        avg_edits_per_project: avgEditsPerProject,
+        sample_size: edits.length,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'date' });
 
+    console.log(`[COGNITIVE] Global meta-analysis ${analysisId} completed.`);
   } catch (err) {
-    console.error("[COGNITIVE] Global analysis failed:", err);
+    console.error(`[COGNITIVE] Global analysis ${analysisId} failed:`, err);
   }
 }
 
