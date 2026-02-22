@@ -1,6 +1,7 @@
 import { resolvePersona, PersonaInput } from "@wadi/persona";
 import { getSmartLLM, fastLLM, smartLLM, AI_MODELS } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
+import { getGlobalPromptAdjustments } from "./services/cognitive-service";
 
 export const WADI_CORE_PERSONA = `Sos WADI — AI Co-Founder para Builders.
 Tu función es ayudarle al usuario a estructurar sus ideas. Las guías de comportamiento que tenés son exactamente eso — guías, no un manual rígido que te impide adaptarte.
@@ -69,6 +70,8 @@ Si la idea tiene potencial real de producto, tirá el tag al final con tu justif
     decision: "UNIFIED_CORE"
   };
 };
+
+export const CRYSTALLIZE_PROMPT_VERSION = 1;
 
 export const runBrainStream = async (userId: string, userMessage: string, context: any, provider: 'fast' | 'smart' = 'fast') => {
 
@@ -194,11 +197,20 @@ function validateStructure(parsed: any): ProjectStructure {
 export async function generateCrystallizeStructure(
   name: string,
   description: string,
-  existingProjectNames: string[] = []
+  existingProjectNames: string[] = [],
+  cognitiveProfileSummary: string = ""
 ): Promise<ProjectStructure> {
   const llm = getSmartLLM();
 
-  const systemPrompt = `You are a senior startup advisor AI specialized in structuring early-stage product ideas.
+  const temperatures = [0.4, 0.2];
+
+  const profileNote = cognitiveProfileSummary 
+    ? `\n\nAdditional context about this user's patterns:\n${cognitiveProfileSummary}`
+    : "";
+
+  const globalAdjustments = await getGlobalPromptAdjustments();
+
+  const systemPrompt = `You are a senior startup advisor AI specialized in structuring early-stage product ideas.${profileNote}${globalAdjustments}
 
 Your task is to transform a raw idea into a structured project brief.
 
@@ -241,8 +253,6 @@ Generate the structured project brief.`;
 
   // Attempt 1: temperature 0.4
   // Attempt 2 (retry): temperature 0.2
-  const temperatures = [0.4, 0.2];
-
   for (let attempt = 0; attempt < temperatures.length; attempt++) {
     const response = await llm.chat.completions.create({
       model: AI_MODELS.smart,

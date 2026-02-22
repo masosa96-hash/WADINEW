@@ -3,7 +3,8 @@ import { Request, Response, NextFunction } from "express";
 import { supabase } from "../supabase";
 import { AppError } from "../middleware/error.middleware";
 import { AuthenticatedRequest } from "../middleware/auth";
-import { generateCrystallizeStructure } from "../wadi-brain";
+import { generateCrystallizeStructure, CRYSTALLIZE_PROMPT_VERSION } from "../wadi-brain";
+import { logProjectEdit, updateCognitiveProfile, getCognitiveProfileSummary } from "../services/cognitive-service";
 
 // Helper: Generate Technical Project Name
 export function generateProjectName(description: string): string {
@@ -116,7 +117,17 @@ export const crystallizeProject = async (
 
       const existingNames = (existing || []).map((p: any) => p.name);
 
-      const structure = await generateCrystallizeStructure(name, description, existingNames);
+      // Fetch cognitive profile for individual adaptation
+      const cognitiveSummary = await getCognitiveProfileSummary(userId);
+      const { data: userProfile } = await (supabase as any)
+        .from("user_cognitive_profile_current")
+        .select("profile_version")
+        .eq("user_id", userId)
+        .single();
+      
+      const currentProfileVersion = userProfile?.profile_version ?? 1;
+
+      const structure = await generateCrystallizeStructure(name, description, existingNames, cognitiveSummary);
       const duration = Date.now() - startedAt;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,6 +136,8 @@ export const crystallizeProject = async (
         .update({
           structure,
           structure_version: 1,
+          profile_version: currentProfileVersion,
+          prompt_version: CRYSTALLIZE_PROMPT_VERSION,
           status: "READY",
           updated_at: new Date().toISOString(),
         })
@@ -230,6 +243,26 @@ export const updateProjectStructure = async (
 
   console.log(`[STRUCTURE EDIT] Project ${id} — version ${nextVersion}`);
   res.json({ project: data });
+
+  // Post-update analysis (fire & forget)
+  (async () => {
+    try {
+      const oldStructure = current.structure || {};
+      const newStructure = structure;
+
+      const fieldsToCheck = ["problem", "solution", "target_icp", "value_proposition", "recommended_stack", "milestones", "risks", "validation_steps"];
+      
+      for (const field of fieldsToCheck) {
+        if (JSON.stringify(oldStructure[field]) !== JSON.stringify(newStructure[field])) {
+          await logProjectEdit(userId, id, field, oldStructure[field], newStructure[field]);
+        }
+      }
+
+      await updateCognitiveProfile(userId);
+    } catch (e) {
+      console.error("[COGNITIVE] Error in post-update hook:", e);
+    }
+  })();
 };
 
 export const bulkDeleteProjects = async (

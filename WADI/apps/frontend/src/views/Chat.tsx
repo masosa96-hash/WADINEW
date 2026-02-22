@@ -49,31 +49,37 @@ export default function Chat() {
   }, [streamingContent, runs, guestMessages, isStreaming]);
 
   // ─── Crystal candidate detection ──────────────────────────────────────────
+  // Matches [CRYSTAL_CANDIDATE: {...}] even if the model adds trailing text
+  // after the closing bracket or before the opening brace.
+  const extractCrystalCandidate = (text: string) => {
+    const CRYSTAL_REGEX = /\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})(?:\s*\]|$)/m;
+    const match = text.match(CRYSTAL_REGEX);
+    if (!match?.[1]) return null;
+    try {
+      const data = JSON.parse(match[1]);
+      if (!data?.name || !data?.description) return null;
+      return data;
+    } catch {
+      return null; // Incomplete JSON mid-stream — ignore
+    }
+  };
+
   useEffect(() => {
     if (!streamingContent || isGuest) return;
-    const CRYSTAL_REGEX = /\[CRYSTAL_CANDIDATE:\s*({[\s\S]*?})\]/m;
-    const match = streamingContent.match(CRYSTAL_REGEX);
-    if (match?.[1]) {
-      try {
-        const candidateData = JSON.parse(match[1]);
-        setSuggestion((prev) => {
-          const currentContent = prev ? JSON.parse(prev.content).content : '';
-          if (currentContent !== candidateData.description) {
-            return {
-              id: 'temp-' + Date.now(),
-              content: JSON.stringify({
-                content: candidateData.description,
-                name: candidateData.name,
-                tags: candidateData.tags,
-              }),
-            };
-          }
-          return prev;
-        });
-      } catch {
-        // Ignore incomplete JSON during stream
-      }
-    }
+    const candidateData = extractCrystalCandidate(streamingContent);
+    if (!candidateData) return;
+    setSuggestion((prev) => {
+      const prevDescription = prev ? JSON.parse(prev.content).content : '';
+      if (prevDescription === candidateData.description) return prev;
+      return {
+        id: 'temp-' + Date.now(),
+        content: JSON.stringify({
+          content: candidateData.description,
+          name: candidateData.name,
+          tags: candidateData.tags ?? [],
+        }),
+      };
+    });
   }, [streamingContent, isGuest]);
 
   // ─── Suggestions polling (authenticated only) ─────────────────────────────
@@ -205,9 +211,9 @@ export default function Chat() {
   };
 
   // ─── Message display ──────────────────────────────────────────────────────
-  // Strip [CRYSTAL_CANDIDATE:...] in all forms — JSON or freetext
+  // Strip [CRYSTAL_CANDIDATE:...] in all forms — handles unclosed tags at end of stream
   const cleanContent = (text: string) =>
-    text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*?\]/gm, '').trim();
+    text.replace(/\[CRYSTAL_CANDIDATE:[\s\S]*/gm, '').trim();
 
   const storeMessages = runs
     .slice()

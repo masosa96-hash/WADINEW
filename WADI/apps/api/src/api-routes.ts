@@ -20,6 +20,7 @@ import { handleChatStream } from "./controllers/ai.controller";
 import { listRuns } from "./controllers/runsController"; // Existing controller
 
 const router = Router();
+import { runGlobalMetaAnalysis } from "./services/cognitive-service";
 
 // Helper: Async Wrapper
 const asyncHandler = (
@@ -127,6 +128,17 @@ router.patch(
     if (error) throw new Error(error.message);
 
     res.json({ message: "Preferences updated", naturalness_level, active_persona });
+  })
+);
+
+// Maintenance: Trigger Global Meta-Analysis
+router.post(
+  "/system/meta-analysis",
+  authenticate(),
+  requireScope("admin:*"), // Correct scope from wadi-core/auth/types.ts
+  asyncHandler(async (req, res) => {
+    await runGlobalMetaAnalysis();
+    res.json({ message: "Global meta-analysis completed" });
   })
 );
 
