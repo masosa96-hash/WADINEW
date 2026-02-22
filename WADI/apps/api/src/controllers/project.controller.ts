@@ -63,6 +63,7 @@ const CrystallizeSchema = z.object({
   name: z.string().max(100).optional(),
   description: z.string().max(5000).min(10),
   suggestionContent: z.any().optional(),
+  firstMessageAt: z.string().datetime().optional(),
 }).strict(); // Reject unknown fields to prevent metadata manipulation
 
 export const crystallizeProject = async (
@@ -83,7 +84,7 @@ export const crystallizeProject = async (
     return res.status(400).json({ error: "Invalid input", details: validated.error.format() });
   }
 
-  let { name, description, suggestionContent } = validated.data;
+  let { name, description, suggestionContent, firstMessageAt } = validated.data;
 
   // Support legacy suggestionContent JSON (sanitized)
   if (!name && suggestionContent) {
@@ -114,6 +115,7 @@ export const crystallizeProject = async (
       name,
       description,
       status: "GENERATING_STRUCTURE",
+      first_message_at: firstMessageAt || null,
     }] as any)
     .select()
     .single();
@@ -159,6 +161,7 @@ export const crystallizeProject = async (
 
       const structure = await generateCrystallizeStructure(name, description, existingNames, cognitiveSummary);
       const duration = Date.now() - startedAt;
+      const ttv_ms = firstMessageAt ? Date.now() - new Date(firstMessageAt).getTime() : null;
 
       await (supabase as any)
         .from("projects")
@@ -167,13 +170,14 @@ export const crystallizeProject = async (
           structure_version: 1,
           profile_version: currentProfileVersion,
           prompt_version: CRYSTALLIZE_PROMPT_VERSION,
+          ttv_ms,
           status: "READY",
           updated_at: new Date().toISOString(),
         })
         .eq("id", project.id)
         .eq("user_id", userId); // Critical: Security check even in async update
 
-      console.log(`[DASHBOARD_SIGNAL] event=CRYSTALLIZE_READY user_id=${userId} project_id=${project.id} job_duration=${duration}ms`);
+      console.log(`[DASHBOARD_SIGNAL] event=CRYSTALLIZE_READY user_id=${userId} project_id=${project.id} job_duration=${duration}ms ttv_ms=${ttv_ms}`);
       console.log(`[CRYSTALLIZE] Project ${project.id} — OK — ${duration}ms`);
     } catch (err) {
       const duration = Date.now() - startedAt;

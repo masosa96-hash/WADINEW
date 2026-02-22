@@ -4,6 +4,7 @@ import { useRunsStore } from "../store/runsStore";
 import RunHistoryList from "../components/RunHistoryList";
 import RunInputForm from "../components/RunInputForm";
 import { useAuthStore } from "../store/useAuthStore";
+import { Copy, Check } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -222,7 +223,31 @@ function StructureView({
   onStructureChange: (updated: ProjectStructure) => void;
 }) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const convertToMarkdown = (p: Project) => {
+    if (!p.structure) return "";
+    const s = p.structure;
+    return `# ${p.name}\n\n` +
+      `> ${p.description}\n\n` +
+      `## Problema\n${s.problem}\n\n` +
+      `## Solución\n${s.solution}\n\n` +
+      `## Target ICP\n${s.target_icp}\n\n` +
+      `## Propuesta de Valor\n${s.value_proposition}\n\n` +
+      `## Stack Recomendado\n${s.recommended_stack}\n\n` +
+      `## Milestones\n${s.milestones.map(m => `- ${m}`).join("\n")}\n\n` +
+      `## Riesgos\n${s.risks.map(r => `- ${r}`).join("\n")}\n\n` +
+      `## Pasos de Validación\n${s.validation_steps.map(v => `- ${v}`).join("\n")}\n\n` +
+      `--- \nGenerado por WADI (v${p.structure_version ?? 1})`;
+  };
+
+  const handleCopy = () => {
+    const md = convertToMarkdown(project);
+    navigator.clipboard.writeText(md);
+    setCopyStatus("copied");
+    setTimeout(() => setCopyStatus("idle"), 2000);
+  };
 
   const save = useCallback(
     (updated: ProjectStructure) => {
@@ -269,13 +294,25 @@ function StructureView({
             Este es un borrador inicial. Ajustalo hasta que sientas que es tuyo.
           </p>
         </div>
-        <span className={`text-[9px] font-mono uppercase tracking-widest transition-colors ${
-          saveStatus === "saving" ? "text-wadi-muted animate-pulse" :
-          saveStatus === "saved"  ? "text-wadi-accent" :
-          saveStatus === "error"  ? "text-wadi-error" : "text-transparent"
-        }`}>
-          {saveStatus === "saving" ? "guardando…" : saveStatus === "saved" ? "✓ guardado" : saveStatus === "error" ? "error al guardar" : "·"}
-        </span>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-wadi-accent/20 bg-wadi-accent/5 text-wadi-accent hover:bg-wadi-accent/10 transition-all group"
+            title="Copiar plan en formato Markdown"
+          >
+            {copyStatus === "copied" ? <Check size={14} /> : <Copy size={13} />}
+            <span className="text-[10px] font-mono uppercase tracking-widest">
+              {copyStatus === "copied" ? "Copiado" : "Copiar MD"}
+            </span>
+          </button>
+          <span className={`text-[9px] font-mono uppercase tracking-widest transition-colors ${
+            saveStatus === "saving" ? "text-wadi-muted animate-pulse" :
+            saveStatus === "saved"  ? "text-wadi-accent" :
+            saveStatus === "error"  ? "text-wadi-error" : "text-transparent"
+          }`}>
+            {saveStatus === "saving" ? "guardando…" : saveStatus === "saved" ? "✓ guardado" : saveStatus === "error" ? "error al guardar" : "·"}
+          </span>
+        </div>
       </div>
 
       {/* Text fields */}

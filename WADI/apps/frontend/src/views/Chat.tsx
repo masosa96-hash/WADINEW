@@ -33,6 +33,7 @@ export default function Chat() {
   const [isCrystallizing, setIsCrystallizing] = useState(false);
   // In-memory history for guests (lost on page reload — intentional ephemeral behavior)
   const [guestMessages, setGuestMessages] = useState<LocalMessage[]>([]);
+  const [firstMessageAt, setFirstMessageAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ─── Load history (authenticated users only) ──────────────────────────────
@@ -123,7 +124,10 @@ export default function Chat() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ suggestionContent: suggestion.content }),
+        body: JSON.stringify({ 
+          suggestionContent: suggestion.content,
+          firstMessageAt
+        }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -144,6 +148,11 @@ export default function Chat() {
 
     const currentInput = input;
     setInput('');
+    
+    if (!firstMessageAt) {
+      setFirstMessageAt(new Date().toISOString());
+    }
+
     setOptimisticUserMessage(currentInput);
     setIsStreaming(true);
     setStreamingContent('');
