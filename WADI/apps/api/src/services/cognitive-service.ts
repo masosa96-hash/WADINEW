@@ -299,13 +299,16 @@ export async function runDailySnapshot() {
       .select("*", { count: "exact", head: true })
       .gt("created_at", startOfDay.toISOString());
 
-    // 2. Crystallized Count (status changes to success today)
-    // Note: status log table would be better, but we heuristic via projects.updated_at
-    const { count: crystallizeCount } = await supabase
+    const { count: crystallizeCount, data: successfulProjects } = await supabase
       .from("projects")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "SUCCESS")
+      .select("ttv_ms", { count: "exact" })
+      .eq("status", "READY")
       .gt("updated_at", startOfDay.toISOString());
+
+    // 2.2 Calculate Avg Job Duration (Job duration logic in project controller logs, but let's use ttv_ms as proxy or job_duration if added)
+    // Actually, v14 has avg_llm_duration_ms. Let's calculate avg ttv_ms from successful projects today.
+    const validTtv = (successfulProjects || []).filter(p => (p as any).ttv_ms).map(p => (p as any).ttv_ms);
+    const avgTtv = validTtv.length > 0 ? validTtv.reduce((a, b) => a + b, 0) / validTtv.length : 0;
 
     // 3. Edit Count (project_edits today)
     const { count: editCount } = await supabase
@@ -328,6 +331,7 @@ export async function runDailySnapshot() {
         crystallize_count: crystallizeCount || 0,
         edit_count: editCount || 0,
         structure_failed_count: failedCount || 0,
+        avg_llm_duration_ms: avgTtv, // Using avg TTV as proxy for value delivery speed
         created_at: new Date().toISOString()
       }, { onConflict: 'date' });
 
