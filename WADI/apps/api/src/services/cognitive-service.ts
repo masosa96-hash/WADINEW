@@ -24,7 +24,15 @@ export async function logProjectEdit(
   oldVal: any,
   newVal: any
 ) {
-  const diffSummary = `Changed ${field} from length ${JSON.stringify(oldVal).length} to ${JSON.stringify(newVal).length}`;
+  const oldLen = JSON.stringify(oldVal).length;
+  const newLen = JSON.stringify(newVal).length;
+  
+  let editDirection = "OVERWRITE";
+  if (newLen > oldLen * 1.5) editDirection = "EXPAND";
+  if (newLen < oldLen * 0.5) editDirection = "DELETE_HEAVY";
+
+  const diffSummary = `${editDirection}: Changed ${field} from length ${oldLen} to ${newLen}`;
+  console.log(`[DASHBOARD_SIGNAL] event=PROJECT_EDIT user_id=${userId} project_id=${projectId} field=${field} direction=${editDirection}`);
 
   const { error } = await supabase
     .from("project_edits")

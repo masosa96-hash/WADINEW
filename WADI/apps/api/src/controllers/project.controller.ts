@@ -122,6 +122,9 @@ export const crystallizeProject = async (
   
   // Track global budget usage
   incrementGlobalBudget();
+
+  // DASHBOARD SIGNAL: Input Length
+  const inputLength = description.length;
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = projectRaw as any;
@@ -133,6 +136,7 @@ export const crystallizeProject = async (
   (async () => {
     const startedAt = Date.now();
     try {
+      console.log(`[DASHBOARD_SIGNAL] event=CRYSTALLIZE_START user_id=${userId} project_id=${project.id} input_length=${inputLength}`);
       // Abort controller or simple timeout logic in LLM service (assumed present or handled by AI provider)
       // Here we just wrap in try/catch to ensure status is updated if it fails
       
