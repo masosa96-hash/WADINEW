@@ -1,13 +1,14 @@
 
 import { Request, Response, NextFunction } from "express";
+import * as crypto from "crypto";
 import { runBrainStream } from "../wadi-brain";
 import { logger } from "../core/logger";
 
 // In-memory cache for persona stability per conversation
-// Structure: { [conversationId]: { personaId: string; remainingTurns: number } }
+// Structure: { [conversationId]: { personaId: string; turnsActive: number; messageCount: number } }
 export const personaCache: Record<
   string,
-  { personaId: string; remainingTurns: number }
+  { personaId: string; turnsActive: number; messageCount: number }
 > = {};
 
 // Helper to decide if a new persona is stronger than the cached one
@@ -34,13 +35,31 @@ export const handleChatStream = async (req: Request, res: Response) => {
   const { input } = req.body;
 
   try {
-    // Solo los 4 argumentos que espera la función
-    const stream = await runBrainStream(
+    const cached = personaCache[id] || { personaId: "SOCIO_IRONICO", turnsActive: 0, messageCount: 0 };
+    
+    // Increment message count
+    cached.messageCount++;
+
+    const { stream, personaId: selectedPersonaId } = await runBrainStream(
       userId,
       input,
-      { projectId: id },
+      { 
+        projectId: id,
+        lastPersona: cached.personaId,
+        turnsActive: cached.turnsActive,
+        messageCount: cached.messageCount
+      },
       "fast"
     );
+
+    // Update Cache for stability logic
+    if (selectedPersonaId === cached.personaId) {
+        cached.turnsActive++;
+    } else {
+        cached.personaId = selectedPersonaId;
+        cached.turnsActive = 1;
+    }
+    personaCache[id] = cached;
 
     let hasSentContent = false;
 

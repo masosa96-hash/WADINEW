@@ -1,7 +1,7 @@
 import { resolvePersona, PersonaInput } from "@wadi/persona";
 import { getSmartLLM, fastLLM, smartLLM, AI_MODELS } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
-import { getGlobalPromptAdjustments } from "./services/cognitive-service";
+import { getGlobalPromptAdjustments, runDailySnapshot } from "./services/cognitive-service";
 import * as crypto from "crypto";
 
 // ─── Prompt Layers ──────────────────────────────────────────────────────────
@@ -63,20 +63,33 @@ Si la idea tiene potencial real, tirá el tag al final (invisible en UI):
 export const CRYSTALLIZE_PROMPT_VERSION = 1;
 
 export const runBrainStream = async (userId: string, userMessage: string, context: any, provider: 'fast' | 'smart' = 'fast') => {
+  const { projectId, lastPersona, turnsActive, messageCount } = context;
 
-  const now = new Date();
-  const fechaActual = now.toLocaleDateString("es-AR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "America/Argentina/Buenos_Aires",
-  });
+  // 1. Resolve Dynamic Persona
+  const personaInput: PersonaInput = {
+    userId,
+    messageCount: messageCount || 1,
+    recentUserMsgLength: userMessage.length,
+    lastPersona: lastPersona,
+    turnsActive: turnsActive,
+    projectContext: {
+      description: context.projectDescription || ""
+    }
+  };
 
+  const persona = resolvePersona(personaInput);
+
+  // 2. Build full system prompt
+  const globalAdjustments = await getGlobalPromptAdjustments();
+  
   const systemContent = `
 ${SYSTEM_CORE}
 
+${persona.systemPrompt}
+
 ${PERSONALIDAD_VISIBLE}
+
+${globalAdjustments}
 
 CRISTALIZACIÓN:
 Si la idea tiene potencial real, tirá el tag al final:
@@ -103,7 +116,7 @@ Si la idea tiene potencial real, tirá el tag al final:
       signal: controller.signal as any
     });
 
-    return stream;
+    return { stream, personaId: persona.personaId };
   } catch (err) {
     clearTimeout(timeoutId);
     throw err;
