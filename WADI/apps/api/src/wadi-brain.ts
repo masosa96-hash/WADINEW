@@ -4,6 +4,7 @@ import { getRelevantKnowledge } from "./services/knowledge-service";
 import { getGlobalPromptAdjustments, runDailySnapshot } from "./services/cognitive-service";
 import { metricsService, MetricEvent } from "./services/metrics.service";
 import { toolRegistry } from "./services/tool-registry";
+export { toolRegistry };
 import { memoryService } from "./services/memory-service";
 import { logger } from "./core/logger";
 import "./services/tools/file-tools";
@@ -118,11 +119,18 @@ Si la idea tiene potencial real, tirá el tag al final:
   ];
 
   let toolIterations = 0;
-  const MAX_TOOL_ITERATIONS = 3;
+  const MAX_TOOL_ITERATIONS = 10; // Safety cap
+  let totalTokensUsed = 0;
+  const MAX_TOKENS_PER_RUN = 50000;
 
   while (toolIterations < MAX_TOOL_ITERATIONS) {
+    if (totalTokensUsed > MAX_TOKENS_PER_RUN) {
+      logger.warn({ msg: "safety_limit_reached_tokens", userId, totalTokensUsed });
+      break;
+    }
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for safety
 
     try {
       const breaker = provider === "fast" ? fastBreaker : smartBreaker;
@@ -142,6 +150,7 @@ Si la idea tiene potencial real, tirá el tag al final:
 
       for await (const chunk of stream) {
         if (chunk.usage) {
+          totalTokensUsed += chunk.usage.total_tokens;
           metricsService.emitMetric(MetricEvent.TOKEN_USAGE, { provider, model, tokens: chunk.usage });
         }
 

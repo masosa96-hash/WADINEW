@@ -13,14 +13,14 @@ export class MaterializerService {
   /**
    * Translates a crystallized project structure into real files on disk
    */
-  async materialize(projectId: string): Promise<{ success: boolean; filesCreated: number }> {
-    const runId = await this.startRun(projectId, "MATERIALIZATION");
+  async materialize(projectId: string, options: { dryRun?: boolean } = {}): Promise<{ success: boolean; filesCreated: number; blueprint?: any }> {
+    const runId = await this.startRun(projectId, options.dryRun ? "PREVIEW_BLUEPRINT" : "MATERIALIZATION");
 
     try {
       // 1. Fetch project structure
       const { data: project, error } = await (supabase as any)
         .from("projects")
-        .select("structure")
+        .select("structure, user_id")
         .eq("id", projectId)
         .single();
 
@@ -32,9 +32,17 @@ export class MaterializerService {
       const files = structure.files || [];
 
       if (files.length === 0) {
-        // If no explicit files, we should probably generate a basic skeleton
-        // based on the stack. For now, we assume structure has files.
         throw new Error("No files defined in project structure to materialize");
+      }
+
+      // 2. Safety Limit: Max files to prevent disk saturation
+      if (files.length > 50) {
+        throw new Error("Safety limit exceeded: Project has too many files (max 50).");
+      }
+
+      if (options.dryRun) {
+        await this.endRun(runId, "SUCCESS", { blueprint: files.map((f: any) => f.path) });
+        return { success: true, filesCreated: 0, blueprint: files };
       }
 
       logger.info({ msg: "materialization_start", projectId, fileCount: files.length });
@@ -42,11 +50,17 @@ export class MaterializerService {
       let createdCount = 0;
       for (const file of files) {
         await toolRegistry.callTool("write_file", {
-          path: `projects/${projectId}/${file.path}`,
+          path: `${projectId}/${file.path}`, // Use project subfolder
           content: file.content
         });
         createdCount++;
       }
+
+      // 3. Automatic Git Isolation Commit
+      await toolRegistry.callTool("git_commit", {
+        projectId,
+        message: `[WADI] Initial Materialization - ${new Date().toISOString()}`
+      });
 
       await this.endRun(runId, "SUCCESS", { filesCreated: createdCount });
       return { success: true, filesCreated: createdCount };

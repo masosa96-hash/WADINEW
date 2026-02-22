@@ -3,13 +3,24 @@ import { promisify } from "util";
 import { logger } from "../../core/logger";
 import { toolRegistry } from "../tool-registry";
 
+import * as path from "path";
+
 const execAsync = promisify(exec);
 
 /**
  * Security safeguard: only run allowed commands
  */
-const ALLOWED_COMMANDS = ["npm run build", "npm run lint", "npx tsc --noEmit"];
-const WORKSPACE_ROOT = "e:\\WADINEW";
+const ALLOWED_COMMANDS = ["npm run build", "npm run lint", "npx tsc --noEmit", "npm install --no-save"];
+const WORKSPACE_ROOT = path.resolve("e:\\WADINEW");
+const PROJECTS_ROOT = path.resolve(WORKSPACE_ROOT, "projects");
+
+function validateProjectPath(projectId: string) {
+  const absolutePath = path.resolve(PROJECTS_ROOT, projectId);
+  if (!absolutePath.startsWith(PROJECTS_ROOT)) {
+    throw new Error("Access denied: Invalid project ID");
+  }
+  return absolutePath;
+}
 
 toolRegistry.registerTool(
   {
@@ -18,20 +29,22 @@ toolRegistry.registerTool(
     parameters: {
       type: "object",
       properties: {
+        projectId: { type: "string", description: "ID del proyecto" },
         command: { 
           type: "string", 
           enum: ALLOWED_COMMANDS,
           description: "El comando de validación a ejecutar" 
         }
       },
-      required: ["command"]
+      required: ["projectId", "command"]
     }
   },
-  async ({ command }) => {
+  async ({ projectId, command }) => {
     try {
-      logger.info({ msg: "executing_validation", command });
+      const projectRoot = validateProjectPath(projectId);
+      logger.info({ msg: "executing_validation", projectId, command });
       
-      const { stdout, stderr } = await execAsync(command, { cwd: WORKSPACE_ROOT });
+      const { stdout, stderr } = await execAsync(command, { cwd: projectRoot });
       
       return {
         success: true,

@@ -30,14 +30,19 @@ export const materializeProject = async (
     throw new AppError("UNAUTHORIZED", "Access denied");
   }
 
-  // 2. Trigger Materialization (can be async but for now we follow up)
-  const result = await materializer.materialize(id);
+  // 2. Trigger Materialization
+  const dryRun = req.query.dryRun === "true" || req.body.dryRun === true;
+  const result = await materializer.materialize(id, { dryRun });
 
   if (!result.success) {
     return res.status(500).json({ success: false, error: "MATERIALIZATION_FAILED" });
   }
 
-  res.json({ success: true, filesCreated: result.filesCreated });
+  res.json({ 
+    success: true, 
+    filesCreated: result.filesCreated,
+    blueprint: result.blueprint
+  });
 };
 
 /**
