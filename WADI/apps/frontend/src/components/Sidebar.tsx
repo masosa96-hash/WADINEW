@@ -7,7 +7,8 @@ import {
   Settings, 
   PlusCircle, 
   Zap,
-  UserCircle
+  UserCircle,
+  BarChart3
 } from 'lucide-react';
 
 import { useChatStore } from '../store/chatStore';
@@ -27,8 +28,11 @@ const menuItems = [
 export const Sidebar = () => {
   const navigate = useNavigate();
   const { id: projectId } = useParams<{ id: string }>();
-  const { session } = useAuthStore();
+  const { session, user } = useAuthStore();
   const isGuest = projectId === GUEST_PROJECT_ID || !session;
+
+  const scopes = (user?.user_metadata?.scopes as string[]) || [];
+  const isAdmin = scopes.includes("admin:*");
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -104,6 +108,25 @@ export const Sidebar = () => {
             )}
           </NavLink>
         ))}
+
+        {isAdmin && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `
+              flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+              ${isActive 
+                ? 'bg-blue-50 text-blue-700 border border-blue-100' 
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
+            `}
+          >
+            {({ isActive }) => (
+              <>
+                <BarChart3 size={18} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
+                Panel Admin
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
 
       {/* Historial de Conversaciones — solo usuarios autenticados */}

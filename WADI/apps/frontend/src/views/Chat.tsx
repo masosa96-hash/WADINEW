@@ -68,7 +68,7 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    if (!streamingContent || isGuest) return;
+    if (!streamingContent) return;
     const candidateData = extractCrystalCandidate(streamingContent);
     if (!candidateData) return;
     setSuggestion((prev) => {
@@ -83,7 +83,7 @@ export default function Chat() {
         }),
       };
     });
-  }, [streamingContent, isGuest]);
+  }, [streamingContent]);
 
   // ─── Suggestions polling (authenticated only) ─────────────────────────────
   useEffect(() => {
@@ -113,16 +113,28 @@ export default function Chat() {
     return () => clearInterval(interval);
   }, [isGuest, session?.access_token]);
 
-  // ─── Crystallize (authenticated only) ─────────────────────────────────────
+  // ─── Crystallize ────────────────────────────────────────────────────────
   const handleCrystallize = async () => {
-    if (!suggestion || !session?.access_token) return;
+    if (!suggestion) return;
+    
+    let currentSession = session;
+    
+    if (!currentSession) {
+      // Create anon session on the fly if needed
+      const res = await useAuthStore.getState().loginAsGuest();
+      if (res.error) return;
+      currentSession = useAuthStore.getState().session;
+    }
+
+    if (!currentSession?.access_token) return;
+
     setIsCrystallizing(true);
     try {
       const res = await fetch(`${API_URL}/api/projects/crystallize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${currentSession.access_token}`,
         },
         body: JSON.stringify({ 
           suggestionContent: suggestion.content,
@@ -318,17 +330,22 @@ export default function Chat() {
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
 
-                  {/* Crystal suggestion — authenticated only */}
-                  {!isGuest && msg.role === 'assistant' && suggestion && index === displayMessages.length - 1 && (
-                    <div className="mt-4 p-4 border border-blue-200 bg-blue-50/50 rounded-xl animate-in fade-in slide-in-from-bottom-2">
+                  {/* Crystal suggestion */}
+                  {msg.role === 'assistant' && suggestion && index === displayMessages.length - 1 && (
+                    <div className="mt-4 p-4 border border-blue-200 bg-blue-50/50 rounded-xl animate-in fade-in slide-in-from-bottom-2 shadow-sm">
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <h4 className="text-sm font-bold text-blue-900">🚀 Idea Detectada: {JSON.parse(suggestion.content).name}</h4>
                           <p className="text-xs text-blue-700 mt-1">{JSON.parse(suggestion.content).content}</p>
+                          {isGuest && (
+                             <p className="text-[10px] text-blue-500/70 mt-2 italic font-medium">
+                               Esta idea se guardará en tu sesión efímera.
+                             </p>
+                          )}
                         </div>
                         <button
                           onClick={handleCrystallize}
-                          className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                          className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 whitespace-nowrap"
                           title="Convertir esta idea en un proyecto estructurado"
                         >
                           {isCrystallizing ? 'Creating...' : 'Crystallize Project'}

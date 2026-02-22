@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Views
 import Projects from "./views/Projects";
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
       {
         path: "register",
         element: <Register />,
+      },
+      {
+        path: "admin",
+        element: <AdminDashboard />,
       },
       // All routes are public — guest-first mode (like ChatGPT)
       // Auth is optional: logged-in users get persistence, guests get ephemeral sessions

@@ -18,6 +18,7 @@ import {
 } from "./controllers/conversation.controller";
 import { handleChatStream } from "./controllers/ai.controller";
 import { listRuns } from "./controllers/runsController";
+import { getSnapshots } from "./controllers/system.controller";
 import { rateLimiter, expensiveRateLimiter, adminRateLimiter, globalBudgetGuard } from "./middleware/rateLimiter";
 const router = Router();
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
@@ -143,6 +144,15 @@ router.post(
     await runGlobalMetaAnalysis();
     res.json({ message: "Global meta-analysis completed" });
   })
+);
+
+// Get Daily Snapshots (Metrics)
+router.get(
+  "/system/snapshots",
+  authenticate(),
+  requireScope("admin:*"),
+  adminRateLimiter,
+  asyncHandler(getSnapshots)
 );
 
 export default router;

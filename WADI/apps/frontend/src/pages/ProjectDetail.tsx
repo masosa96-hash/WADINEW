@@ -4,7 +4,9 @@ import { useRunsStore } from "../store/runsStore";
 import RunHistoryList from "../components/RunHistoryList";
 import RunInputForm from "../components/RunInputForm";
 import { useAuthStore } from "../store/useAuthStore";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Circle, ShieldCheck, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ClaimProjectModal } from "../components/ClaimProjectModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -200,6 +202,91 @@ function EditableList({
   );
 }
 
+// ─── Visual Roadmap Component ────────────────────────────────────────────────
+
+function VisualRoadmap({ 
+  milestones, 
+  onSave 
+}: { 
+  milestones: string[]; 
+  onSave: (items: string[]) => void 
+}) {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+
+  return (
+    <div className="relative pl-8 space-y-8 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-wadi-accent before:via-wadi-accent/40 before:to-transparent">
+      {milestones.map((m, i) => (
+        <motion.div 
+          key={i}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.1 }}
+          className="relative group"
+        >
+          {/* Dot */}
+          <div className="absolute -left-[30px] top-1.5 w-6 h-6 bg-wadi-base border-2 border-wadi-accent rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+            <div className="w-2 h-2 bg-wadi-accent rounded-full" />
+          </div>
+
+          <div className="bg-white/40 backdrop-blur-sm border border-wadi-border/30 rounded-xl p-4 hover:border-wadi-accent/30 transition-all shadow-sm">
+            <div className="flex justify-between items-start gap-4">
+              {editingIndex === i ? (
+                <input
+                  className="flex-1 bg-transparent border-none p-0 text-sm font-mono text-wadi-text focus:ring-0"
+                  value={draft}
+                  autoFocus
+                  onChange={(e) => setDraft(e.target.value)}
+                  onBlur={() => {
+                    const updated = [...milestones];
+                    updated[i] = draft;
+                    onSave(updated);
+                    setEditingIndex(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                  }}
+                />
+              ) : (
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => {
+                    setDraft(m);
+                    setEditingIndex(i);
+                  }}
+                >
+                  <p className="text-[10px] font-mono text-wadi-accent uppercase tracking-widest mb-1">Fase 0{i+1}</p>
+                  <p className="text-sm font-medium text-gray-800 leading-relaxed">{m}</p>
+                </div>
+              )}
+              
+              <button 
+                onClick={() => {
+                  const updated = milestones.filter((_, idx) => idx !== i);
+                  onSave(updated);
+                }}
+                className="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-opacity p-1"
+              >
+                <Circle size={12} className="fill-current" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+
+      <button
+        onClick={() => {
+          const updated = [...milestones, "Nuevo Milestone"];
+          onSave(updated);
+        }}
+        className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-[10px] font-mono text-gray-400 uppercase tracking-widest hover:border-wadi-accent/30 hover:text-wadi-accent transition-all bg-white/20"
+      >
+        + Expandir Roadmap
+      </button>
+    </div>
+  );
+}
+
 // ─── Structure Card ───────────────────────────────────────────────────────────
 
 function StructureCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -224,6 +311,10 @@ function StructureView({
 }) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const { user } = useAuthStore();
+  const isAnonymous = user?.is_anonymous;
+
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const convertToMarkdown = (p: Project) => {
@@ -282,7 +373,39 @@ function StructureView({
     save({ ...s, ...patch });
 
   return (
-    <div className="w-full max-w-3xl mx-auto py-6 px-4 space-y-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-3xl mx-auto py-6 px-4 space-y-8"
+    >
+      <ClaimProjectModal 
+        isOpen={isClaimModalOpen} 
+        onClose={() => setIsClaimModalOpen(false)} 
+        onSuccess={() => window.location.reload()} 
+      />
+
+      {isAnonymous && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-400/30 overflow-hidden relative">
+           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Sparkles size={120} />
+           </div>
+           <div className="flex-1 space-y-1 z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck size={18} className="text-blue-200" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100">Sesión Temporal</span>
+              </div>
+              <h3 className="text-xl font-bold">No pierdas este Roadmap</h3>
+              <p className="text-sm text-blue-100/80 leading-relaxed max-w-md">WADI ha estructurado un plan premium para vos. Registrate ahora para guardarlo permanentemente y empezar a ejecutar.</p>
+           </div>
+           <button 
+             onClick={() => setIsClaimModalOpen(true)}
+             className="px-8 py-3 bg-white text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg active:scale-95 whitespace-nowrap z-10"
+           >
+             Guardar Proyecto
+           </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-4 border-b border-wadi-border/30 pb-4 flex items-end justify-between">
         <div>
@@ -335,13 +458,13 @@ function StructureView({
       </div>
 
       {/* Milestones */}
-      <StructureCard title="Milestones">
-        <EditableList
-          items={s.milestones}
-          label="Milestone"
+      <div className="space-y-4">
+        <h3 className="text-[10px] font-mono text-wadi-accent uppercase tracking-widest pl-2">Timeline Estratégico</h3>
+        <VisualRoadmap
+          milestones={s.milestones}
           onSave={(items) => update({ milestones: items })}
         />
-      </StructureCard>
+      </div>
 
       {/* Risks + Validation */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,7 +490,7 @@ function StructureView({
           Crystallize v{project.structure_version ?? 1} · Click en cualquier campo para editar
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
