@@ -20,8 +20,10 @@ import { handleChatStream } from "./controllers/ai.controller";
 import { listRuns } from "./controllers/runsController";
 import { getSnapshots } from "./controllers/system.controller";
 import { updatePreferences } from "./controllers/user.controller";
+import { getAdminMetrics } from "./controllers/metrics.controller";
 import { rateLimiter, expensiveRateLimiter, adminRateLimiter, globalBudgetGuard } from "./middleware/rateLimiter";
 const router = Router();
+import { materializeProject, listProjectRuns } from "./controllers/execution.controller";
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
 
 // Helper: Async Wrapper
@@ -63,6 +65,18 @@ router.patch(
   "/projects/:id/structure",
   authenticate(),
   asyncHandler(updateProjectStructure)
+);
+
+router.post(
+  "/projects/:id/materialize",
+  authenticate(),
+  asyncHandler(materializeProject)
+);
+
+router.get(
+  "/projects/:id/runs",
+  authenticate(),
+  asyncHandler(listProjectRuns)
 );
 
 /* =========================================
@@ -147,6 +161,18 @@ router.get(
   requireScope("admin:*"),
   adminRateLimiter,
   asyncHandler(getSnapshots)
+);
+
+/* =========================================
+   SYSTEM / ADMIN ROUTES
+   ========================================= */
+
+router.get(
+  "/admin/metrics",
+  authenticate(),
+  requireScope("admin:*"),
+  adminRateLimiter,
+  asyncHandler(getAdminMetrics)
 );
 
 export default router;

@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as crypto from "crypto";
 import { runBrainStream } from "../wadi-brain";
+import { metricsService, MetricEvent } from "../services/metrics.service";
 import { logger } from "../core/logger";
 
 // In-memory cache for persona stability per conversation
@@ -81,7 +82,16 @@ export const handleChatStream = async (req: Request, res: Response) => {
     let hasSentContent = false;
 
     // Stream the chunks to the client
-    for await (const chunk of stream) {
+    for await (const chunk of stream as any) {
+      if (chunk.usage) {
+        metricsService.emitMetric(MetricEvent.TOKEN_USAGE, {
+          projectId: id,
+          userId,
+          provider: "fast", // handleChatStream defaults to 'fast'
+          tokens: chunk.usage
+        });
+      }
+
       if (!chunk.choices?.[0]?.delta?.content) continue;
 
       const content = chunk.choices[0].delta.content;

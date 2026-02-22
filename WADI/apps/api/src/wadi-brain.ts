@@ -2,6 +2,13 @@ import { resolvePersona, PersonaInput } from "@wadi/persona";
 import { getSmartLLM, fastLLM, smartLLM, AI_MODELS, smartBreaker, fastBreaker } from "./services/ai-service";
 import { getRelevantKnowledge } from "./services/knowledge-service";
 import { getGlobalPromptAdjustments, runDailySnapshot } from "./services/cognitive-service";
+import { metricsService, MetricEvent } from "./services/metrics.service";
+import { toolRegistry } from "./services/tool-registry";
+import { memoryService } from "./services/memory-service";
+import { logger } from "./core/logger";
+import "./services/tools/file-tools";
+import "./services/tools/build-checker";
+import "./services/tools/git-tools";
 import * as crypto from "crypto";
 
 // ─── Prompt Layers ──────────────────────────────────────────────────────────
@@ -82,8 +89,15 @@ export const runBrainStream = async (userId: string, userMessage: string, contex
   // 2. Build full system prompt
   const globalAdjustments = await getGlobalPromptAdjustments();
   
+  // Semantic Memory Retrieval
+  const memories = await memoryService.searchMemories(userId, userMessage);
+  const memoryContext = memories.length > 0 
+    ? `\nRECUERDOS RELEVANTES:\n${memories.map((m: any) => `- ${m.content}`).join("\n")}\n`
+    : "";
+  
   const systemContent = `
 ${SYSTEM_CORE}
+${memoryContext}
 
 ${persona.systemPrompt}
 
@@ -98,30 +112,118 @@ Si la idea tiene potencial real, tirá el tag al final:
   const client = provider === 'fast' ? fastLLM : smartLLM;
   const model = provider === 'fast' ? AI_MODELS.fast : AI_MODELS.smart;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const messages: any[] = [
+    { role: "system", content: systemContent },
+    { role: "user", content: userMessage }
+  ];
 
-  try {
-    const breaker = provider === "fast" ? fastBreaker : smartBreaker;
-    const stream = await breaker.execute(() => client.chat.completions.create({
-      model: model,
-      stream: true,
-      stream_options: { include_usage: true },
-      temperature: 0.95,
-      messages: [
-        { role: "system", content: systemContent },
-        { role: "user", content: userMessage }
-      ]
-    }, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      signal: controller.signal as any
-    }));
+  let toolIterations = 0;
+  const MAX_TOOL_ITERATIONS = 3;
 
-    return { stream, personaId: persona.personaId };
-  } catch (err) {
-    clearTimeout(timeoutId);
-    throw err;
+  while (toolIterations < MAX_TOOL_ITERATIONS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const breaker = provider === "fast" ? fastBreaker : smartBreaker;
+      const stream = await breaker.execute(() => client.chat.completions.create({
+        model: model,
+        stream: true,
+        stream_options: { include_usage: true },
+        temperature: 0.9,
+        messages: messages,
+        tools: toolRegistry.getToolDefinitions()
+      }, {
+        signal: controller.signal as any
+      }));
+
+      let fullContent = "";
+      const toolCalls: any[] = [];
+
+      for await (const chunk of stream) {
+        if (chunk.usage) {
+          metricsService.emitMetric(MetricEvent.TOKEN_USAGE, { provider, model, tokens: chunk.usage });
+        }
+
+        const delta = chunk.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.content) {
+          return {
+            stream: (async function* () {
+              fullContent += delta.content;
+              yield chunk; 
+              
+              for await (const remainingChunk of stream) {
+                if (remainingChunk.choices?.[0]?.delta?.content) {
+                  fullContent += remainingChunk.choices[0].delta.content;
+                }
+                yield remainingChunk;
+              }
+
+              // Background Memory Saving
+              if (fullContent.length > 50) {
+                memoryService.saveMemory(userId, `User: ${userMessage}\nAssistant: ${fullContent}`, { type: "chat_interaction" })
+                  .catch(e => logger.error({ msg: "background_memory_save_failed", error: e.message }));
+              }
+            })(),
+            personaId: persona.personaId
+          };
+        }
+
+        if (delta.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            if (!toolCalls[tc.index]) {
+              toolCalls[tc.index] = { id: tc.id, function: { name: "", arguments: "" } };
+            }
+            if (tc.function?.name) toolCalls[tc.index].function.name += tc.function.name;
+            if (tc.function?.arguments) toolCalls[tc.index].function.arguments += tc.function.arguments;
+          }
+        }
+      }
+
+      if (toolCalls.length > 0) {
+        toolIterations++;
+        messages.push({
+          role: "assistant",
+          tool_calls: toolCalls.map(tc => ({
+            id: tc.id,
+            type: "function",
+            function: tc.function
+          }))
+        });
+
+        for (const tc of toolCalls) {
+          const result = await toolRegistry.callTool(tc.function.name, tc.function.arguments);
+          messages.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: JSON.stringify(result)
+          });
+        }
+        continue;
+      }
+
+      return { 
+        stream: (async function* () { 
+          yield { 
+            id: "mock", 
+            object: "chat.completion.chunk", 
+            created: Date.now(), 
+            model: model, 
+            choices: [{ delta: { content: "" }, index: 0, finish_reason: null }] 
+          } as any; 
+        })(), 
+        personaId: persona.personaId 
+      };
+
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   }
+
+  throw new Error("Max tool iterations reached");
 };
 
 // ─── Crystallize: Structured Project Brief Generation ─────────────────────────

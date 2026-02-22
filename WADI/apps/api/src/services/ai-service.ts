@@ -75,12 +75,26 @@ export const fastLLM = new Proxy({} as OpenAI, {
 });
 
 // ─── Circuit Breakers ─────────────────────────────────────────────────────────
+import { metricsService, MetricEvent } from './metrics.service';
+
+// ... (clients initialization stays same)
+
+const onBreakerTransition = (name: string, from: any, to: any) => {
+  metricsService.emitMetric(MetricEvent.BREAKER_TRANSITION, {
+    name,
+    from,
+    to
+  });
+};
+
 export const smartBreaker = new CircuitBreaker("SmartAI", { 
   failureThreshold: 3, 
-  recoveryTimeout: 60000 // 1 minute
+  recoveryTimeout: 60000, // 1 minute
+  onTransition: onBreakerTransition
 });
 
 export const fastBreaker = new CircuitBreaker("FastAI", { 
   failureThreshold: 5, 
-  recoveryTimeout: 30000 // 30 seconds
+  recoveryTimeout: 30000, // 30 seconds
+  onTransition: onBreakerTransition
 });

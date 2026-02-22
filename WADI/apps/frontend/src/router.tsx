@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Projects from "./views/Projects";
 import Chat from "./views/Chat";
 import Knowledge from "./views/Knowledge";
+import ProjectBuilder from "./views/ProjectBuilder";
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
           {
             path: "projects/:id",
             element: <Chat />,
+          },
+          {
+            path: "projects/:id/builder",
+            element: <ProjectBuilder />,
           },
           {
             path: "knowledge",

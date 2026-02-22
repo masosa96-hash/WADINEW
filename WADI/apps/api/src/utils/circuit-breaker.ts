@@ -16,6 +16,7 @@ export class CircuitBreaker {
   private readonly successThreshold: number;
   private readonly recoveryTimeout: number;
   private readonly name: string;
+  private readonly transitionCallback?: (name: string, from: CircuitState, to: CircuitState) => void;
 
   constructor(
     name: string,
@@ -23,12 +24,14 @@ export class CircuitBreaker {
       failureThreshold?: number;
       successThreshold?: number;
       recoveryTimeout?: number;
+      onTransition?: (name: string, from: CircuitState, to: CircuitState) => void;
     } = {}
   ) {
     this.name = name;
     this.failureThreshold = options.failureThreshold || 5;
     this.successThreshold = options.successThreshold || 2;
     this.recoveryTimeout = options.recoveryTimeout || 30000; // 30 seconds
+    this.transitionCallback = options.onTransition;
   }
 
   async execute<T>(action: () => Promise<T>): Promise<T> {
@@ -71,16 +74,21 @@ export class CircuitBreaker {
   }
 
   private transitionTo(newState: CircuitState) {
+    const oldState = this.state;
     logger.warn({
       msg: "circuit_breaker_transition",
       name: this.name,
-      from: this.state,
+      from: oldState,
       to: newState,
-    }, `Circuit Breaker [${this.name}] transitioned from ${this.state} to ${newState}`);
+    }, `Circuit Breaker [${this.name}] transitioned from ${oldState} to ${newState}`);
     
     this.state = newState;
     this.failureCount = 0;
     this.successCount = 0;
+
+    if (this.transitionCallback) {
+      this.transitionCallback(this.name, oldState, newState);
+    }
   }
 
   getState(): CircuitState {

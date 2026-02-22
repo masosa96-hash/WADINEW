@@ -173,9 +173,20 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-full bg-white text-gray-800 font-sans relative">
       <header className="px-6 py-3 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">WADI Online</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">WADI Online</span>
+          </div>
+          
+          {!isGuest && (
+            <button 
+              onClick={() => navigate(`/projects/${id}/builder`)}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors border border-blue-100 px-3 py-1 rounded-full bg-blue-50/50"
+            >
+              🔨 ABRIR CONSTRUCTOR
+            </button>
+          )}
         </div>
         {isGuest && (
           <div className="text-[10px] text-gray-400 italic">
