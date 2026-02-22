@@ -1,10 +1,10 @@
-
 import { Request, Response, NextFunction } from "express";
 import { supabase } from "../supabase";
 import { AppError } from "../middleware/error.middleware";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { generateCrystallizeStructure, CRYSTALLIZE_PROMPT_VERSION } from "../wadi-brain";
 import { logProjectEdit, updateCognitiveProfile, getCognitiveProfileSummary } from "../services/cognitive-service";
+import { z } from "zod";
 
 // Helper: Generate Technical Project Name
 export function generateProjectName(description: string): string {
@@ -58,32 +58,46 @@ export const getProject = async (
   res.json(data);
 };
 
+const CrystallizeSchema = z.object({
+  name: z.string().max(100).optional(),
+  description: z.string().max(5000).min(10),
+  suggestionContent: z.any().optional(),
+});
+
 export const crystallizeProject = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   const userId = req.user!.id as any;
-  let { name, description, suggestionContent } = req.body as any;
+  const validated = CrystallizeSchema.safeParse(req.body);
+  
+  if (!validated.success) {
+    return res.status(400).json({ error: "Invalid input", details: validated.error.format() });
+  }
 
-  // Support both direct name/description and legacy suggestionContent JSON
+  let { name, description, suggestionContent } = validated.data;
+
+  // Support legacy suggestionContent JSON (sanitized)
   if (!name && suggestionContent) {
     try {
       const parsed = typeof suggestionContent === "string"
         ? JSON.parse(suggestionContent)
         : suggestionContent;
-      name = parsed.name || "Idea Sin Nombre";
-      description = parsed.content || parsed.description || "";
+      name = String(parsed.name || "").slice(0, 100) || "Idea Sin Nombre";
+      const descPart = String(parsed.content || parsed.description || "").slice(0, 5000);
+      if (descPart) description = descPart;
     } catch {
       name = "Idea Sin Nombre";
-      description = typeof suggestionContent === "string" ? suggestionContent : "";
     }
   }
 
   if (!name) {
-    name = description ? generateProjectName(description) : `project-${Date.now()}`;
+    name = generateProjectName(description);
   }
-  if (!description) description = "Generado por WADI";
+
+  // Double check description after legacy parsing
+  if (description.length > 5000) description = description.slice(0, 5000);
 
   // Step 1: INSERT inmediato con status GENERATING_STRUCTURE
   const { data: projectRaw, error: insertError } = await supabase
@@ -108,7 +122,9 @@ export const crystallizeProject = async (
   (async () => {
     const startedAt = Date.now();
     try {
-      // Fetch existing project names for deduplication context
+      // Abort controller or simple timeout logic in LLM service (assumed present or handled by AI provider)
+      // Here we just wrap in try/catch to ensure status is updated if it fails
+      
       const { data: existing } = await supabase
         .from("projects")
         .select("name")
@@ -117,7 +133,6 @@ export const crystallizeProject = async (
 
       const existingNames = (existing || []).map((p: any) => p.name);
 
-      // Fetch cognitive profile for individual adaptation
       const cognitiveSummary = await getCognitiveProfileSummary(userId);
       const { data: userProfile } = await (supabase as any)
         .from("user_cognitive_profile_current")
@@ -130,7 +145,6 @@ export const crystallizeProject = async (
       const structure = await generateCrystallizeStructure(name, description, existingNames, cognitiveSummary);
       const duration = Date.now() - startedAt;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any)
         .from("projects")
         .update({
@@ -141,63 +155,34 @@ export const crystallizeProject = async (
           status: "READY",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", project.id);
+        .eq("id", project.id)
+        .eq("user_id", userId); // Critical: Security check even in async update
 
       console.log(`[CRYSTALLIZE] Project ${project.id} — OK — ${duration}ms`);
     } catch (err) {
       const duration = Date.now() - startedAt;
       console.error(`[CRYSTALLIZE] Project ${project.id} — FAILED — ${duration}ms —`, (err as Error).message);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any)
         .from("projects")
         .update({ status: "STRUCTURE_FAILED", updated_at: new Date().toISOString() })
-        .eq("id", project.id);
+        .eq("id", project.id)
+        .eq("user_id", userId);
     }
   })();
 };
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Zod Schemas ───────────────────────────────────────────────────────────
 
-type ProjectUpdate = {
-  structure: Record<string, unknown>;
-  structure_version: number;
-  updated_at: string;
-};
-
-const STRUCTURE_REQUIRED_KEYS = [
-  "problem",
-  "solution",
-  "target_icp",
-  "value_proposition",
-  "recommended_stack",
-  "milestones",
-  "risks",
-  "validation_steps",
-] as const;
-
-const STRUCTURE_ARRAY_KEYS = ["milestones", "risks", "validation_steps"] as const;
-
-function validateStructurePayload(s: any): string | null {
-  if (!s || typeof s !== "object" || Array.isArray(s)) return "structure must be a plain object";
-  for (const key of STRUCTURE_REQUIRED_KEYS) {
-    if (s[key] === undefined || s[key] === null) return `Missing required field: ${key}`;
-  }
-  for (const key of STRUCTURE_ARRAY_KEYS) {
-    if (!Array.isArray(s[key]) || s[key].length < 1) {
-      return `Field "${key}" must be a non-empty array`;
-    }
-    if (s[key].some((item: any) => typeof item !== "string" || item.trim() === "")) {
-      return `All items in "${key}" must be non-empty strings`;
-    }
-  }
-  const textKeys = ["problem", "solution", "target_icp", "value_proposition", "recommended_stack"] as const;
-  for (const key of textKeys) {
-    if (typeof s[key] !== "string" || s[key].trim().length < 3) {
-      return `Field "${key}" must be a string with at least 3 characters`;
-    }
-  }
-  return null; // valid
-}
+const ProjectStructureSchema = z.object({
+  problem: z.string().min(3).max(2000),
+  solution: z.string().min(3).max(2000),
+  target_icp: z.string().min(3).max(1000),
+  value_proposition: z.string().min(3).max(1000),
+  recommended_stack: z.string().min(3).max(1000),
+  milestones: z.array(z.string().min(1).max(500)).min(1).max(30),
+  risks: z.array(z.string().min(1).max(500)).min(1).max(20),
+  validation_steps: z.array(z.string().min(1).max(500)).min(1).max(20),
+});
 
 export const updateProjectStructure = async (
   req: AuthenticatedRequest,
@@ -208,25 +193,28 @@ export const updateProjectStructure = async (
   const userId = req.user!.id as any;
   const { structure } = req.body;
 
-  const validationError = validateStructurePayload(structure);
-  if (validationError) {
-    return res.status(400).json({ error: validationError });
+  const validated = ProjectStructureSchema.safeParse(structure);
+  if (!validated.success) {
+    return res.status(400).json({ error: "Invalid structure data", details: validated.error.format() });
   }
 
-  // Fetch current version to increment
+  // 1. Fetch current (also serves as ownership check)
   const { data: current, error: fetchError } = await (supabase as any)
     .from("projects")
-    .select("structure_version")
+    .select("*")
     .eq("id", id)
     .eq("user_id", userId)
     .single();
 
-  if (fetchError) throw new AppError("NOT_FOUND", "Proyecto no encontrado");
+  if (fetchError || !current) throw new AppError("NOT_FOUND", "Proyecto no encontrado o acceso denegado");
+
+  // Verify ownership again explicitly just in case PGRST116 is handled differently
+  if (current.user_id !== userId) throw new AppError("NOT_AUTHORIZED", "No tenés permiso para editar este proyecto");
 
   const nextVersion = (current?.structure_version ?? 1) + 1;
 
-  const updatePayload: ProjectUpdate = {
-    structure,
+  const updatePayload = {
+    structure: validated.data,
     structure_version: nextVersion,
     updated_at: new Date().toISOString(),
   };
@@ -247,8 +235,8 @@ export const updateProjectStructure = async (
   // Post-update analysis (fire & forget)
   (async () => {
     try {
-      const oldStructure = current.structure || {};
-      const newStructure = structure;
+      const oldStructure = (current.structure || {}) as Record<string, any>;
+      const newStructure = validated.data as Record<string, any>;
 
       const fieldsToCheck = ["problem", "solution", "target_icp", "value_proposition", "recommended_stack", "milestones", "risks", "validation_steps"];
       

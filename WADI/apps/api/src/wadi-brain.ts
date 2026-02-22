@@ -258,12 +258,12 @@ Generate the structured project brief.`;
       model: AI_MODELS.smart,
       temperature: temperatures[attempt],
       top_p: 0.9,
-      max_tokens: 800,
+      max_tokens: 1500, // Balanced limit for structured project brief
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPrompt.slice(0, 6000) }, // Input truncation for safety
       ],
-    });
+    }, { timeout: 45000 }); // 45s Timeout to avoid zombie requests
 
     const raw = response.choices[0]?.message?.content ?? "";
 

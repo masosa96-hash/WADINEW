@@ -17,8 +17,8 @@ import {
   bulkDeleteConversations,
 } from "./controllers/conversation.controller";
 import { handleChatStream } from "./controllers/ai.controller";
-import { listRuns } from "./controllers/runsController"; // Existing controller
-
+import { listRuns } from "./controllers/runsController";
+import { rateLimiter, expensiveRateLimiter, adminRateLimiter } from "./middleware/rateLimiter";
 const router = Router();
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
 
@@ -46,6 +46,7 @@ router.get("/projects/:id", authenticate(), asyncHandler(getProject));
 router.post(
   "/projects/crystallize",
   authenticate(),
+  expensiveRateLimiter,
   asyncHandler(crystallizeProject)
 );
 
@@ -135,7 +136,8 @@ router.patch(
 router.post(
   "/system/meta-analysis",
   authenticate(),
-  requireScope("admin:*"), // Correct scope from wadi-core/auth/types.ts
+  requireScope("admin:*"),
+  adminRateLimiter,
   asyncHandler(async (req, res) => {
     await runGlobalMetaAnalysis();
     res.json({ message: "Global meta-analysis completed" });
