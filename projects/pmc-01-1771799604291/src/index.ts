@@ -1,0 +1,1 @@
+console.log('WADI materialization test OK');
