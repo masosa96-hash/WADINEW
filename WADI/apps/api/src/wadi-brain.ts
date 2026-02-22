@@ -10,6 +10,9 @@ import { logger } from "./core/logger";
 import "./services/tools/file-tools";
 import "./services/tools/build-checker";
 import "./services/tools/git-tools";
+import "./services/tools/project-scaffolding";
+import "./services/tools/feature-orchestrator";
+import "./services/tools/deploy-tool";
 import * as crypto from "crypto";
 
 // ─── Prompt Layers ──────────────────────────────────────────────────────────
@@ -42,8 +45,12 @@ Provide:
 - Clear problem definition.
 - Specific ICP (Ideal Customer Profile).
 - 3 concrete milestones (max 5).
-- 3 realistic risks.
 - 1 critical assumption that could break the project.
+- **templateId**: Optional stack selection ("nextjs-tailwind", "vite-react-ts") if applicable.
+- **features**: Optional list of feature objects {id, params?} to implement ("basic-auth", "drizzle-postgres", "basic-crud").
+  - Example for CRUD: {"id": "basic-crud", "params": {"entityLow": "product", "entityCap": "Product"}}.
+- **shouldDeploy**: Set to true if the user wants an immediate cloud deployment after materialization.
+- **deployProvider**: Optional cloud target ("render" or "vercel", default "render").
 
 Avoid generic advice, motivational language, or filler content.`;
 
@@ -63,7 +70,7 @@ PROJECT CONTEXT: ${topic}
 
 CRISTALIZACIÓN:
 Si la idea tiene potencial real, tirá el tag al final (invisible en UI):
-[CRYSTAL_CANDIDATE: {"name": "...", "description": "...", "tags": [...]}]`,
+[CRYSTAL_CANDIDATE: {"name": "...", "description": "...", "tags": [...], "templateId": "...", "features": [{"id": "...", "params": {...}}], "shouldDeploy": false, "deployProvider": "render"}]`,
     decision: "UNIFIED_CORE"
   };
 };
@@ -119,7 +126,7 @@ Si la idea tiene potencial real, tirá el tag al final:
   ];
 
   let toolIterations = 0;
-  const MAX_TOOL_ITERATIONS = 10; // Safety cap
+  const MAX_TOOL_ITERATIONS = 5; // Safety cap as per PMC-01 requirements
   let totalTokensUsed = 0;
   const MAX_TOKENS_PER_RUN = 50000;
 

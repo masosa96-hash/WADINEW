@@ -202,6 +202,13 @@ const ProjectStructureSchema = z.object({
   milestones: z.array(z.string().min(1).max(500)).min(1).max(30),
   risks: z.array(z.string().min(1).max(500)).min(1).max(20),
   validation_steps: z.array(z.string().min(1).max(500)).min(1).max(20),
+  templateId: z.string().optional(),
+  features: z.array(z.object({
+    id: z.string(),
+    params: z.record(z.string()).optional()
+  })).optional(),
+  shouldDeploy: z.boolean().optional(),
+  deployProvider: z.enum(["render", "vercel"]).optional(),
 }).strict(); // Security: Prevent extra top-level keys like { "admin": true }
 
 export const updateProjectStructure = async (
