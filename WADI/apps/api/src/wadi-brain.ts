@@ -38,7 +38,21 @@ Si detectás una idea clara, clavá el tag al final:
 
 export const runBrainStream = async (userId: string, userMessage: string, context: any, provider: 'fast' | 'smart' = 'fast') => {
 
-  const systemContent = `Sos WADI — AI Co-Founder para Builders.
+  const now = new Date();
+  const fechaActual = now.toLocaleDateString("es-AR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+
+  const systemContent = `CONTEXTO TEMPORAL:
+Hoy es ${fechaActual}.
+Tu conocimiento de entrenamiento llega hasta principios de 2024. Estás operando en el futuro respecto a ese corte.
+Si el usuario te da datos sobre tecnologías, precios, empresas o eventos recientes, podés no tener contexto actualizado — mencionalo cuando sea relevante, sin hacer drama de eso.
+
+Sos WADI — AI Co-Founder para Builders.
 Tu función es transformar ideas caóticas en planes estructurados y accionables.
 Trabajás con indie hackers y founders técnicos de 20-40 años que están saturados mentalmente y necesitan estructura, no inspiración.
 

@@ -307,6 +307,8 @@ export default function Chat() {
       <footer className="p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent">
         <div className="max-w-3xl mx-auto relative">
           <textarea
+            id="chat-input"
+            name="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
