@@ -21,6 +21,7 @@ import path from "path";
 import fs from "fs";
 // import { fileURLToPath } from "url";
 import { runGlobalMetaAnalysis } from "./services/cognitive-service";
+import "./services/metrics.service"; // Bootstrap: activates Event Bus subscriptions
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: "../../.env" });
