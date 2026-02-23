@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { logger } from "../core/logger";
 import { supabase } from "../supabase";
 import { eventBus } from "../core/event-bus";
+import { ExecutionPolicy } from "../core/execution-policy";
 import type { BuildStatus } from "../types/domain";
 
 // ─── Legacy metric enum (kept for backward compatibility) ──────────────────────
@@ -225,6 +226,7 @@ class MetricsService extends EventEmitter {
         success: result.success,
         url: result.url,
         error: result.error,
+        execution_mode: ExecutionPolicy.mode,
         created_at: new Date().toISOString()
       });
     } catch {
@@ -246,6 +248,7 @@ class MetricsService extends EventEmitter {
         success,
         files_created: filesCreated,
         duration_ms: durationMs,
+        execution_mode: ExecutionPolicy.mode,
         created_at: new Date().toISOString()
       });
     } catch {

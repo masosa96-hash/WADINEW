@@ -1,49 +1,98 @@
 /**
- * WADI ExecutionPolicy — Phase 15A
+ * WADI ExecutionPolicy — Phase 17: SAFE MODE
  *
- * Single authority for all operational limits and feature flags.
- * The Brain proposes. The Policy permits.
+ * Three execution modes control what WADI is allowed to do:
  *
- * NEVER let an LLM output override these values.
+ *   SAFE     → Staging. Preview only. Never touches cloud or remote git.
+ *   STANDARD → Default. Gated deploy, full materialization.
+ *   FULL     → Maximum autonomy. Explicit opt-in only.
+ *
+ * Controlled by WADI_MODE env var. Defaults to STANDARD.
+ * The Brain never decides this. The operator does.
  */
 
+export type ExecutionMode = "SAFE" | "STANDARD" | "FULL";
+
+// ─── Mode Profiles ─────────────────────────────────────────────────────────────
+
+const MODE_PROFILES: Record<ExecutionMode, ModeProfile> = {
+  SAFE: {
+    allowDeploy:        false,
+    allowGitPush:       false,
+    allowGitCommit:     false,
+    maxFilesPerProject: 20,
+    maxToolIterations:  5,
+    maxTokensPerRun:    2_000,
+    logPrefix:          "[PREVIEW]",
+  },
+  STANDARD: {
+    allowDeploy:        false,   // Requires ENABLE_AUTODEPLOY=true on top
+    allowGitPush:       false,
+    allowGitCommit:     true,
+    maxFilesPerProject: 50,
+    maxToolIterations:  10,
+    maxTokensPerRun:    4_000,
+    logPrefix:          "",
+  },
+  FULL: {
+    allowDeploy:        true,
+    allowGitPush:       true,
+    allowGitCommit:     true,
+    maxFilesPerProject: 100,
+    maxToolIterations:  20,
+    maxTokensPerRun:    8_000,
+    logPrefix:          "",
+  },
+};
+
+interface ModeProfile {
+  allowDeploy:        boolean;
+  allowGitPush:       boolean;
+  allowGitCommit:     boolean;
+  maxFilesPerProject: number;
+  maxToolIterations:  number;
+  maxTokensPerRun:    number;
+  logPrefix:          string;
+}
+
+// ─── Active Mode ───────────────────────────────────────────────────────────────
+
+function resolveMode(): ExecutionMode {
+  const raw = process.env.WADI_MODE?.toUpperCase();
+  if (raw === "SAFE" || raw === "FULL") return raw;
+  return "STANDARD";
+}
+
+const activeMode: ExecutionMode = resolveMode();
+const activeProfile: ModeProfile = MODE_PROFILES[activeMode];
+
+// ─── ExecutionPolicy  ──────────────────────────────────────────────────────────
+
 export const ExecutionPolicy = {
-  // ─── Deploy Gate ────────────────────────────────────────────────────────────
-  /** Master switch: cloud deploy is OFF by default. Set ENABLE_AUTODEPLOY=true in .env to activate. */
-  enableAutoDeploy: process.env.ENABLE_AUTODEPLOY === "true",
+  // ── Active mode (read-only at runtime) ──────────────────────────────────────
+  mode: activeMode,
 
-  /** Allowed cloud providers. Any other value is rejected at the service layer. */
-  allowedProviders: ["render", "vercel"] as const,
+  // ── Derived from mode profile ────────────────────────────────────────────────
+  /** Whether the current mode permits cloud deployment. Also requires ENABLE_AUTODEPLOY=true. */
+  get enableAutoDeploy(): boolean {
+    return activeProfile.allowDeploy && process.env.ENABLE_AUTODEPLOY === "true";
+  },
 
-  // ─── Material Limits ────────────────────────────────────────────────────────
-  /** Max files a single project materialization can produce. */
-  maxFilesPerProject: 50,
+  allowGitCommit:     activeProfile.allowGitCommit,
+  allowGitPush:       activeProfile.allowGitPush,
+  maxFilesPerProject: activeProfile.maxFilesPerProject,
+  maxToolIterations:  activeProfile.maxToolIterations,
+  maxTokensPerRun:    activeProfile.maxTokensPerRun,
 
-  /** Max LLM tool iterations per Brain session. Prevents runaway planning loops. */
-  maxToolIterations: 10,
+  /** Prefix prepended to all structured log messages in SAFE mode. */
+  logPrefix:          activeProfile.logPrefix,
 
-  /** Max tokens the Brain can use per crystallization request. */
-  maxTokensPerCrystallization: 4000,
-
-  // ─── Execution Permissions ──────────────────────────────────────────────────
-  /** Whether git commit is allowed during materialization. */
-  allowGitCommit: true,
-
-  /** Filesystem roots the execution engine may write to. Anything outside is rejected. */
-  allowedWritePaths: ["e:\\WADINEW\\projects"],
-
-  // ─── Build Policy ───────────────────────────────────────────────────────────
-  /**
-   * BLOCKING: build errors abort the deploy (not the scaffold).
-   * NON_BLOCKING: log warning, continue.
-   */
-  buildFailureMode: "NON_BLOCKING" as "BLOCKING" | "NON_BLOCKING",
-
-  /** If true, a WARN-level build result still allows deployment. */
-  deployOnBuildWarn: true,
-
-  /** If true, abort deploy when build status is ERROR. Always true in safe mode. */
+  // ── Inherited fixed policy (independent of mode) ─────────────────────────────
+  allowedProviders:        ["render", "vercel"] as const,
   blockDeployOnBuildError: true,
+  deployOnBuildWarn:       true,
+  allowedWritePaths:       ["e:\\WADINEW\\projects"],
+  buildFailureMode:        "NON_BLOCKING" as "BLOCKING" | "NON_BLOCKING",
 } as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -57,4 +106,14 @@ export function isPathAllowed(absolutePath: string): boolean {
   return ExecutionPolicy.allowedWritePaths.some(root =>
     absolutePath.startsWith(root)
   );
+}
+
+/** Returns true if the current mode is SAFE (preview/staging). */
+export function isSafeMode(): boolean {
+  return ExecutionPolicy.mode === "SAFE";
+}
+
+/** Returns the log prefix for SAFE mode context tagging. */
+export function modeTag(): string {
+  return ExecutionPolicy.logPrefix;
 }
