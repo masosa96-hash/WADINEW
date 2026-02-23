@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { logger } from "../../core/logger";
 import { toolRegistry } from "../tool-registry";
+import type { BuildResult } from "../../types/domain";
 
 import * as path from "path";
 
@@ -25,7 +26,7 @@ function validateProjectPath(projectId: string) {
 toolRegistry.registerTool(
   {
     name: "validate_build",
-    description: "Ejecuta un comando de validación (build o lint) para verificar la calidad del código generado.",
+    description: "Ejecuta un comando de validación y retorna un resultado clasificado (OK/WARN/ERROR/RISK).",
     parameters: {
       type: "object",
       properties: {
@@ -39,7 +40,7 @@ toolRegistry.registerTool(
       required: ["projectId", "command"]
     }
   },
-  async ({ projectId, command }) => {
+  async ({ projectId, command }): Promise<BuildResult> => {
     try {
       const projectRoot = validateProjectPath(projectId);
       logger.info({ msg: "executing_validation", projectId, command });
@@ -47,16 +48,52 @@ toolRegistry.registerTool(
       const { stdout, stderr } = await execAsync(command, { cwd: projectRoot });
       
       return {
-        success: true,
-        output: stdout,
-        errors: stderr
+        status: "OK",
+        output: stdout
       };
     } catch (error: any) {
-      logger.warn({ msg: "validation_failed", command, error: error.message });
+      const stderr: string = error.stderr || error.message || "";
+      const stdout: string = error.stdout || "";
+
+      // Classify the failure
+      const isDependencyMissing = 
+        stderr.includes("Cannot find module") || 
+        stderr.includes("MODULE_NOT_FOUND") ||
+        stderr.includes("not found") ||
+        stderr.includes("not installed");
+
+      const isTypeScriptError = 
+        stderr.includes("error TS") || 
+        stdout.includes("error TS") ||
+        stderr.includes("TypeScript");
+
+      if (isDependencyMissing && !isTypeScriptError) {
+        logger.warn({ msg: "build_warn_dependencies", projectId });
+        return {
+          status: "WARN",
+          reason: "dependencies_missing",
+          details: stderr,
+          output: stdout
+        };
+      }
+
+      if (isTypeScriptError) {
+        logger.warn({ msg: "build_error_typescript", projectId, details: stderr });
+        return {
+          status: "ERROR",
+          reason: "typescript_errors",
+          details: stderr,
+          output: stdout
+        };
+      }
+
+      // Default: generic risk
+      logger.warn({ msg: "build_risk_generic", projectId });
       return {
-        success: false,
-        output: error.stdout,
-        errors: error.stderr || error.message
+        status: "RISK",
+        reason: "tests_failed",
+        details: stderr,
+        output: stdout
       };
     }
   }
