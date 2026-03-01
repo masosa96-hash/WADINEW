@@ -1,42 +1,22 @@
-import { useEffect, useState } from "react";
-import { API_URL } from "./config/api";
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
 import { KeepAlive } from "./components/KeepAlive";
+import { useBackendHealth } from "./hooks/useBackendHealth";
 
 function App() {
   const { initializeAuth, setLoadingFalse } = useAuthStore();
-
-  const [systemStatus, setSystemStatus] = useState<
-    "checking" | "ok" | "error"
-  >("checking");
+  const systemStatus = useBackendHealth();
 
   useEffect(() => {
-    const runHealthCheck = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/health`);
-
-        if (!res.ok) {
-          throw new Error(`Health failed: ${res.status}`);
-        }
-
-        setSystemStatus("ok");
-
-        // Inicializar auth pero SIN bloquear render
-        await initializeAuth().catch(() => {
-          console.error("Auth failed but continuing");
-          setLoadingFalse();
-        });
-
-      } catch (err) {
-        console.error("Health check error:", err);
-        setSystemStatus("error");
-      }
-    };
-
-    runHealthCheck();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (systemStatus === "ok") {
+      // Inicializar auth pero SIN bloquear render
+      initializeAuth().catch(() => {
+        console.error("Auth failed but continuing");
+        setLoadingFalse();
+      });
+    }
+  }, [systemStatus, initializeAuth, setLoadingFalse]);
 
   if (systemStatus === "checking") {
     return (
