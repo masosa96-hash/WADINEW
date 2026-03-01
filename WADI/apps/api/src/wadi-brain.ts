@@ -48,9 +48,8 @@ Provide:
 - 1 critical assumption that could break the project.
 - **templateId**: Optional stack selection ("nextjs-tailwind", "vite-react-ts") if applicable.
 - **features**: Optional list of feature objects {id, params?} to implement ("basic-auth", "drizzle-postgres", "basic-crud").
-  - Example for CRUD: {"id": "basic-crud", "params": {"entityLow": "product", "entityCap": "Product"}}.
-- **shouldDeploy**: Set to true if the user wants an immediate cloud deployment after materialization.
-- **deployProvider**: Optional cloud target ("render" or "vercel", default "render").
+- **terminal_commands**: Array of 3 key terminal commands (e.g., ["pnpm install", "pnpm dev", "pnpm build"]) to get started. 
+- **orientation**: Either "technical" or "business" based on user intent.
 
 Avoid generic advice, motivational language, or filler content.`;
 
@@ -253,6 +252,8 @@ export interface ProjectStructure {
   milestones: string[];
   risks: string[];
   validation_steps: string[];
+  terminal_commands?: string[];
+  orientation?: "technical" | "business";
 }
 
 const REQUIRED_KEYS: (keyof ProjectStructure)[] = [
@@ -328,7 +329,9 @@ JSON Schema:
   "recommended_stack": "string",
   "milestones": ["string x 3"],
   "risks": ["string x 3"],
-  "validation_steps": ["string x 3"]
+  "validation_steps": ["string x 3"],
+  "terminal_commands": ["string x 3"],
+  "orientation": "technical | business"
 }`;
 
   const existingProjectsNote = existingProjectNames.length > 0
@@ -380,6 +383,51 @@ Generate the structured project brief.`;
 
   // Unreachable but TypeScript needs it
   throw new Error("Crystallize structure generation failed");
+}
+
+export async function generateProjectPRD(
+  name: string,
+  description: string,
+  structure: any
+): Promise<string> {
+  const llm = getSmartLLM();
+  const globalAdjustments = await getGlobalPromptAdjustments();
+
+  const systemPrompt = `
+${SYSTEM_CORE}
+
+${PERSONALIDAD_VISIBLE}
+
+${globalAdjustments}
+
+Your task is to generate a high-impact, direct, and technically dense PRD (Product Requirements Document) for a project.
+Avoid corporate bloat. Focus on:
+1. Executive Summary (The "Based" take on why this exists).
+2. technical Architecture (Proposed stack and data flow).
+3. Core Features Spec (Markdown tables or clear lists).
+4. Success Metrics (What actually matters, not vanity metrics).
+5. Roadmap (Phase 1, 2, 3).
+
+Tone: Socio Operacional (Rioplatense, Based, Direct).
+Language: Spanish.
+Output: Markdown.`;
+
+  const userPrompt = `Project Name: ${name}
+Project Description: ${description}
+Current Structure: ${JSON.stringify(structure)}
+
+Generate the PRD.`;
+
+  const response = await smartBreaker.execute(() => llm.chat.completions.create({
+    model: AI_MODELS.smart,
+    temperature: 0.7,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  })) as any;
+
+  return response.choices[0]?.message?.content ?? "Error al generar el PRD.";
 }
 
 export function generateAuditPrompt() {

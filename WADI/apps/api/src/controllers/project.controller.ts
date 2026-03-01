@@ -202,6 +202,8 @@ const ProjectStructureSchema = z.object({
   milestones: z.array(z.string().min(1).max(500)).min(1).max(30),
   risks: z.array(z.string().min(1).max(500)).min(1).max(20),
   validation_steps: z.array(z.string().min(1).max(500)).min(1).max(20),
+  terminal_commands: z.array(z.string()).optional(),
+  orientation: z.enum(["technical", "business"]).optional(),
   templateId: z.string().optional(),
   features: z.array(z.object({
     id: z.string(),
@@ -306,4 +308,43 @@ export const bulkDeleteProjects = async (
   if (error) throw new AppError("DB_ERROR", error.message);
 
   res.json({ message: "Projects deleted successfully" });
+};
+
+import { generateProjectPRD } from "../wadi-brain";
+
+export const generatePRD = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+  const userId = req.user!.id as any;
+
+  // 1. Fetch project structure
+  const { data: project, error: fetchError } = await (supabase as any)
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !project) throw new AppError("NOT_FOUND", "Proyecto no encontrado");
+
+  if (project.prd && !req.query.force) {
+    return res.json({ prd: project.prd });
+  }
+
+  try {
+    const prd = await generateProjectPRD(project.name, project.description, project.structure);
+    
+    await (supabase as any)
+      .from("projects")
+      .update({ prd, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    res.json({ prd });
+  } catch (err) {
+    next(err);
+  }
 };

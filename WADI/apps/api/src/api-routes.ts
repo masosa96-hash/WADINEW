@@ -79,6 +79,21 @@ router.get(
   asyncHandler(listProjectRuns)
 );
 
+import { generatePRD } from "./controllers/project.controller";
+import { exportProject } from "./controllers/export.controller";
+
+router.post(
+  "/projects/:id/prd",
+  authenticate(),
+  asyncHandler(generatePRD)
+);
+
+router.get(
+  "/projects/:id/export",
+  authenticate(),
+  asyncHandler(exportProject)
+);
+
 /* =========================================
    RUNS / CHAT ROUTES
    ========================================= */
