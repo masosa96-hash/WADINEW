@@ -10,10 +10,16 @@ const WORKSPACE_ROOT = path.resolve("e:\\WADINEW");
 const PROJECTS_ROOT = path.resolve(WORKSPACE_ROOT, "projects");
 
 export function validatePath(targetPath: string) {
-  // 1. Normalize and resolve to absolute
+  // 1. Security check: No null bytes or suspicious characters
+  if (targetPath.includes('\0') || targetPath.includes('..')) {
+    logger.error({ msg: "security_violation_invalid_characters", path: targetPath });
+    throw new Error(`Access denied: invalid characters in path ${targetPath}`);
+  }
+
+  // 2. Normalize and resolve to absolute
   const absolutePath = path.resolve(PROJECTS_ROOT, targetPath);
   
-  // 2. Security check: Must be inside PROJECTS_ROOT and NOT WORKSPACE_ROOT (api itself)
+  // 3. Security check: Must be inside PROJECTS_ROOT and NOT WORKSPACE_ROOT (api itself)
   if (!absolutePath.startsWith(PROJECTS_ROOT)) {
     logger.error({ msg: "security_violation_path_traversal", path: targetPath, resolved: absolutePath });
     throw new Error(`Access denied: path ${targetPath} is outside the allowed projects directory.`);
