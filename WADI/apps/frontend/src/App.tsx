@@ -5,7 +5,8 @@ import { KeepAlive } from "./components/KeepAlive";
 import { useBackendHealth } from "./hooks/useBackendHealth";
 
 function App() {
-  const { initializeAuth, setLoadingFalse } = useAuthStore();
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const setLoadingFalse = useAuthStore((state) => state.setLoadingFalse);
   const systemStatus = useBackendHealth();
 
   useEffect(() => {

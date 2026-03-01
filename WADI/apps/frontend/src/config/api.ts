@@ -1,4 +1,4 @@
-const PROD_API = "https://wadi-api-u2vx.onrender.com";
+const PROD_API = ""; // Relative proxy logic in prod since frontend/backend share domain
 
 export const API_URL =
   import.meta.env.VITE_API_URL?.trim() || PROD_API;
