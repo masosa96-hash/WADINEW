@@ -47,7 +47,10 @@ toolRegistry.registerTool(
 
       // 2. Add and commit
       await execAsync("git add .", { cwd: projectRoot });
-      const { stdout } = await execAsync(`git commit -m "${message}"`, { cwd: projectRoot });
+      
+      // Security: use backticks and escape message to prevent injection
+      const escapedMessage = message.replace(/"/g, '\\"');
+      const { stdout } = await execAsync(`git commit -m "${escapedMessage}"`, { cwd: projectRoot });
       
       logger.info({ msg: "git_commit_success", projectId });
       return { success: true, output: stdout };
@@ -67,14 +70,19 @@ toolRegistry.registerTool(
     description: "Muestra el estado actual del repositorio (archivos modificados, nuevos, etc).",
     parameters: {
       type: "object",
-      properties: {}
+      properties: {
+        projectId: { type: "string", description: "ID del proyecto" }
+      },
+      required: ["projectId"]
     }
   },
-  async () => {
+  async ({ projectId }) => {
     try {
-      const { stdout } = await execAsync("git status --porcelain", { cwd: WORKSPACE_ROOT });
+      const projectRoot = getProjectGitRoot(projectId);
+      const { stdout } = await execAsync("git status --porcelain", { cwd: projectRoot });
       return { status: stdout || "Clean" };
     } catch (error: any) {
+
       logger.error({ msg: "git_status_failed", error: error.message });
       throw error;
     }
