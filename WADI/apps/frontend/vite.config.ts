@@ -16,6 +16,14 @@ export default defineConfig(({ mode }) => {
         env.VITE_SUPABASE_KEY || env.SUPABASE_KEY
       ),
     },
+    server: {
+      proxy: {
+        "/api": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+        },
+      },
+    },
     build: {
       outDir: "dist",
       assetsDir: "assets",

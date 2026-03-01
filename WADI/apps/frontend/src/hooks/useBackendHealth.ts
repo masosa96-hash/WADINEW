@@ -1,24 +1,12 @@
-import { useState, useEffect } from "react";
+import { useContext } from "react";
+import { BackendHealthContext } from "./BackendHealthContext";
 
-export function useBackendHealth() {
-  const [healthStatus, setHealthStatus] = useState<"checking" | "ok" | "error">("checking");
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const res = await fetch("/api/health");
-        if (res.ok) {
-          setHealthStatus("ok");
-        } else {
-          setHealthStatus("error");
-        }
-      } catch {
-        setHealthStatus("error");
-      }
-    };
-
-    checkHealth();
-  }, []);
-
-  return healthStatus;
-}
+export const useBackendHealth = () => {
+  const context = useContext(BackendHealthContext);
+  if (context === undefined) {
+    throw new Error(
+      "useBackendHealth must be used within a BackendHealthProvider"
+    );
+  }
+  return context;
+};
