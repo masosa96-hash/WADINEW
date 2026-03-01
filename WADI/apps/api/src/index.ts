@@ -139,10 +139,18 @@ app.all(/\/api\/.*/, (req, res, next) => {
 });
 
 // --------------------------------------------------
-// PRIORITY 3: Fallback (404)
+// PRIORITY 3: Fallback SPA / 404
 // --------------------------------------------------
-app.use((req, res, next) => {
-  next(new AppError("NOT_FOUND", `Ruta no encontrada: ${req.method} ${req.path}`, 404));
+// Serve static frontend files
+app.use(express.static(frontendPath));
+
+// Fallback all other GET requests to the React index.html
+app.get("*", (req, res) => {
+  if (fs.existsSync(path.join(frontendPath, "index.html"))) {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  } else {
+    res.status(404).json({ error: "Frontend build not found" });
+  }
 });
 
 // Error Handler

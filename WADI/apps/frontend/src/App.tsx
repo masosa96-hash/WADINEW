@@ -35,7 +35,8 @@ function App() {
     };
 
     runHealthCheck();
-  }, [initializeAuth, setLoadingFalse]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (systemStatus === "checking") {
     return (
