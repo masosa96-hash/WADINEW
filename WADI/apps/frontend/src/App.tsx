@@ -7,7 +7,7 @@ import { useBackendHealth } from "./hooks/useBackendHealth";
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const setLoadingFalse = useAuthStore((state) => state.setLoadingFalse);
-  const systemStatus = useBackendHealth();
+  const { status: systemStatus } = useBackendHealth();
 
   useEffect(() => {
     if (systemStatus === "ok") {

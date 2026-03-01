@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { BackendHealthContext } from "./BackendHealthContext";
+import { BackendHealthContext } from "../providers/BackendHealthContext";
 
 export const useBackendHealth = () => {
   const context = useContext(BackendHealthContext);
