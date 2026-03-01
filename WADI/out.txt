@@ -1,0 +1,54 @@
+﻿
+> wadi-api@5.1.0 test E:\WADINEW\WADI\apps\api
+> vitest "run" "src/__tests__/contract/project.test.ts"
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mE:/WADINEW/WADI/apps/api[39m
+
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "get_market_trends"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "validate_tech_stack"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "write_file"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "create_directory"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "list_project_files"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "validate_build"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "git_commit"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "git_status"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "initialize_scaffolding"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "implement_feature"
+[16:32:48 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "deploy_project"
+[90mstdout[2m | src/__tests__/contract/project.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (7) from .env -- tip: ÔÜÖ´©Å  load multiple .env files with { path: ['.env.local', '.env'] }
+­ƒöî Supabase Context: smkbiguvgiscojwxgbae.supabase.co
+
+[90mstdout[2m | src/__tests__/contract/project.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (0) from .env -- tip: ÔÜÖ´©Å  write to custom object with { processEnv: myObject }
+
+[90mstdout[2m | src/__tests__/contract/project.test.ts
+[22m[39m[dotenv@17.2.3] injecting env (0) from ..\..\.env -- tip: ÔÜÖ´©Å  enable debug logging with { debug: true }
+
+ [31mÔØ»[39m src/__tests__/contract/project.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 36[2mms[22m[39m
+[31m       [31m├ù[31m should export project as markdown by default[39m[32m 23[2mms[22m[39m
+[31m       [31m├ù[31m should export project as JSON when format=json[39m[32m 4[2mms[22m[39m
+       [32mÔ£ô[39m should return 401 without auth[32m 3[2mms[22m[39m
+[31m       [31m├ù[31m should return existing PRD if available[39m[32m 3[2mms[22m[39m
+[31m       [31m├ù[31m should force generate new PRD if ?force=true[39m[32m 3[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 13:32:48
+[2m   Duration [22m 829ms[2m (transform 310ms, setup 0ms, import 654ms, tests 36ms, environment 0ms)[22m
+
+E:\WADINEW\WADI\apps\api:
+ÔÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILÔÇë wadi-api@5.1.0 test: `vitest "run" "src/__tests__/contract/project.test.ts"`
+Exit status 1
