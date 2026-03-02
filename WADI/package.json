@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "build": "pnpm install && pnpm -r build",
+    "build:prod": "pnpm install --frozen-lockfile && pnpm --filter frontend exec tsc --noEmit && pnpm --filter wadi-api exec tsc --noEmit && pnpm --filter wadi-api test run && pnpm -r build",
     "smoke:api": "node apps/api/dist/index.js",
     "start": "pnpm --filter wadi-api run start",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > packages/wadi-db-types/src/database.ts"

@@ -1,15 +1,20 @@
 import request from "supertest";
 import { describe, it, expect } from "vitest";
-import { app } from "../../index";
 import { vi } from "vitest";
 
-vi.mock("../../config/supabase", () => ({
-    supabase: {
-        auth: {
-            getUser: vi.fn().mockResolvedValue({ data: { user: { id: "test-user" } }, error: null })
-        }
+// MOCKS MUST BE DEFINED BEFORE IMPORTING APP
+vi.mock("../../middleware/auth", () => ({
+  authenticate: () => (req: any, res: any, next: any) => {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith("Bearer ")) {
+      req.user = { id: "test-user-id" };
+      return next();
     }
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 }));
+
+import { app } from "../../index";
 
 describe("API Security Audit", () => {
     it("should have security headers (Helmet)", async () => {

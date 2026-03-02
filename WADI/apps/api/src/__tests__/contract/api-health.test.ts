@@ -2,7 +2,7 @@ import request from "supertest";
 import { describe, it, expect, vi, beforeAll } from "vitest";
 
 // MOCKS MUST BE DEFINED BEFORE IMPORTING APP
-vi.mock("../../middleware/auth-beta", () => ({
+vi.mock("../../middleware/auth", () => ({
   authenticate: () => (req: any, res: any, next: any) => {
     const auth = req.headers.authorization;
     if (auth === "Bearer valid_token") {

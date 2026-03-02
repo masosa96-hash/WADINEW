@@ -35,6 +35,9 @@ import helmet from "helmet";
 
 export const app = express();
 
+// Apply security headers
+app.use(helmet());
+
 // 1. EL "FIX" TOTAL: Configuración manual y estricta
 app.use((req, res, next) => {
   const allowedOrigins = [
@@ -134,7 +137,7 @@ app.use("/api", rateLimiter as any);
 app.use("/api", routes);
 
 // Explicit 404 for API to prevent falling through to SPA
-app.all(/\/api\/.*/, (req, res, next) => {
+app.all("/api/*splat", (req, res, next) => {
   next(new AppError("API_ROUTE_NOT_FOUND", `Ruta de API no encontrada: ${req.method} ${req.path}`, 404));
 });
 
@@ -145,7 +148,7 @@ app.all(/\/api\/.*/, (req, res, next) => {
 app.use(express.static(frontendPath));
 
 // Fallback all other GET requests to the React index.html
-app.get("*", (req, res) => {
+app.get("*splat", (req, res) => {
   if (fs.existsSync(path.join(frontendPath, "index.html"))) {
     res.sendFile(path.join(frontendPath, "index.html"));
   } else {
