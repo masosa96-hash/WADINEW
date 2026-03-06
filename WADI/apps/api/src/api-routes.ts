@@ -17,6 +17,7 @@ import {
   bulkDeleteConversations,
 } from "./controllers/conversation.controller";
 import { handleChatStream } from "./controllers/ai.controller";
+import { handleWadiInterpret, handleWadiReset } from "./controllers/wadi.controller";
 import { listRuns } from "./controllers/runsController";
 import { getSnapshots } from "./controllers/system.controller";
 import { updatePreferences } from "./controllers/user.controller";
@@ -92,6 +93,25 @@ router.get(
   "/projects/:id/export",
   authenticate(),
   asyncHandler(exportProject)
+);
+
+/* =========================================
+   WADI PIPELINE ROUTES
+   ========================================= */
+
+// Procesar mensaje del usuario → AI Engine → Supabase
+router.post(
+  "/wadi/interpret",
+  authenticate(),
+  rateLimiter,
+  asyncHandler(handleWadiInterpret)
+);
+
+// Reiniciar estado conversacional del usuario
+router.post(
+  "/wadi/reset",
+  authenticate(),
+  asyncHandler(handleWadiReset)
 );
 
 /* =========================================
