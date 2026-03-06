@@ -9,11 +9,13 @@ from engines.pipeline import process_message # pyre-ignore # type: ignore
 
 app = FastAPI()
 
-@app.post("/process")
+@app.post("/wadi/interpret")
 async def process(data: dict):
-    message = data["message"]
-    user_id = data["user_id"]
+    message = data.get("message", "")
+    user_id = data.get("user_id", "anonymous")
+    state = data.get("state", None)
 
-    result = process_message(message, user_id)
+    # Inyección de estado al pipeline
+    result = process_message(message, user_id, state)
 
     return result
