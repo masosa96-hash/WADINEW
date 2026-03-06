@@ -13,7 +13,7 @@ El LLM solo produce JSON. La máquina de estados controla el flujo.
 import json
 from typing import Optional, Any
 
-from ..llm.router import call_llm  # type: ignore
+from llm.router import call_llm  # type: ignore
 
 # ---------------------------------------------------------------------------
 # Prompt central del agente Wadi

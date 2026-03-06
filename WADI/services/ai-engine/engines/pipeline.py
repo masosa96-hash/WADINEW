@@ -1,14 +1,14 @@
 from typing import Optional, Any
 
-from .idea_engine import extract_idea  # type: ignore
-from .ambiguity_detector import detect_missing  # type: ignore
-from .clarification_engine import generate_questions  # type: ignore
-from .intent_builder import build_intent  # type: ignore
-from .project_generator import generate_project  # type: ignore
+from engines.idea_engine import extract_idea  # type: ignore
+from engines.ambiguity_detector import detect_missing  # type: ignore
+from engines.clarification_engine import generate_questions  # type: ignore
+from engines.intent_builder import build_intent  # type: ignore
+from engines.project_generator import generate_project  # type: ignore
 
-from ..memory.user_memory import get_user_memory, update_user_memory  # type: ignore
-from ..memory.pattern_memory import get_pattern_memory, update_pattern_memory  # type: ignore
-from ..memory.idea_graph import search_idea_graph, update_idea_graph  # type: ignore
+from memory.user_memory import get_user_memory, update_user_memory  # type: ignore
+from memory.pattern_memory import get_pattern_memory, update_pattern_memory  # type: ignore
+from memory.idea_graph import search_idea_graph, update_idea_graph  # type: ignore
 
 def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """

@@ -4,9 +4,9 @@ Decide qué modelo usar en base a la tarea.
 Soporta Groq (por defecto) y OpenAI como respaldo.
 """
 import os
-from openai import OpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential
-from dotenv import load_dotenv
+from openai import OpenAI  # type: ignore
+from tenacity import retry, stop_after_attempt, wait_exponential  # type: ignore
+from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
@@ -39,13 +39,16 @@ def _get_openai() -> OpenAI:
 
 # ---------------------------------------------------------------------------
 # Router: Elige modelo según la tarea
+# Lee GROQ_DEFAULT_MODEL del entorno para facilitar swaps sin tocar código
 # ---------------------------------------------------------------------------
+_GROQ_MODEL = os.environ.get("GROQ_DEFAULT_MODEL", "llama-3.1-8b-instant")
+
 MODEL_MAP = {
-    # Tarea              → (provider,  model)
-    "clarification":     ("groq",    "llama-3.1-70b-versatile"),
-    "intent_detection":  ("groq",    "llama-3.1-70b-versatile"),
-    "project_generation":("openai",  "gpt-4o-mini"),
-    "default":           ("groq",    "llama-3.1-70b-versatile"),
+    # Tarea               → (provider,  model)
+    "clarification":      ("groq",   _GROQ_MODEL),
+    "intent_detection":   ("groq",   _GROQ_MODEL),
+    "project_generation": ("groq",   _GROQ_MODEL),
+    "default":            ("groq",   _GROQ_MODEL),
 }
 
 def get_client_and_model(task: str) -> tuple[OpenAI, str]:
