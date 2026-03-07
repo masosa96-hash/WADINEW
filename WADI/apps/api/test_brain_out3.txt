@@ -1,0 +1,40 @@
+﻿[dotenv@17.2.3] injecting env (3) from ..\..\.env -- tip: ­ƒùé´©Å backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (5) from .env -- tip: ÔÜÖ´©Å  load multiple .env files with { path: ['.env.local', '.env'] }
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "get_market_trends"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "validate_tech_stack"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "write_file"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "create_directory"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "list_project_files"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "validate_build"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "git_commit"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "git_status"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "initialize_scaffolding"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "implement_feature"
+[13:16:05 UTC] [32mINFO[39m: [36mtool_registered[39m
+    [35mtool[39m: "deploy_project"
+[13:16:05 UTC] [33mWARN[39m: [36m[MEMORY] OpenAI key not found, using mock embedding[39m
+[13:16:05 UTC] [31mERROR[39m: [36msearch_memory_failed[39m
+    error: "TypeError: fetch failed"
+No puedo trabajar en la vac├¡o. Necesito algo concreto. ┬┐Qu├® es exactamente lo que quieres hacer? Ten├®s un par de ideas de por d├│nde ir, pero decime qu├® ten├®s en mente primero y le damos forma.
+
+Si no sab├®s por d├│nde empezar, te propongo tres opciones:
+
+1. Crear una aplicaci├│n web para gestionar proyectos.
+2. Desarrollar un juego de mesa online.
+3. Implementar un sistema de chatbot para asistentes virtuales.
+
+Asumir├® la primera opci├│n y estructuro sobre eso. ┬┐Te parece bien?
+--- FIN ---
+[13:16:05 UTC] [33mWARN[39m: [36m[MEMORY] OpenAI key not found, using mock embedding[39m
+[13:16:05 UTC] [31mERROR[39m: [36msave_memory_failed[39m
+    error: "TypeError: fetch failed"
