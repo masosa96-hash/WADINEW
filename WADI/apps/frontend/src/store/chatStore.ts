@@ -16,7 +16,7 @@ export interface Attachment {
 export interface Message {
   id: string;
   role: "user" | "assistant" | "system";
-  content: string;
+  content: string | Record<string, unknown>;
   attachments?: Attachment[];
   created_at?: string;
 }
@@ -249,101 +249,44 @@ export const useChatStore = create<ChatState>()(
           } = await supabase.auth.getSession();
           const token = session?.access_token;
 
-          const response = await fetch(`${API_URL}/api/projects/${projectId}/runs`, {
+          const response = await fetch(`${API_URL}/api/wadi/interpret`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ input: content }),
+            body: JSON.stringify({ message: content }),
             signal: controller.signal,
           });
 
           if (!response.ok) {
             const errData = await response.json().catch(() => ({ error: "UNKNOWN_ERROR" }));
             set({ chatStatus: "error", streamingContent: "" });
-            useLogStore.getState().addLog(`WADI está ocupado o falló: ${errData.error}`, "error");
+            useLogStore.getState().addLog(`WADI está ocupado o falló: ${errData.error || errData.message}`, "error");
             return;
           }
 
-          if (!response.body) throw new Error("No response body");
+          const data = await response.json();
+          const now = new Date().toISOString();
 
-          set({ chatStatus: "streaming" });
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let fullResponse = "";
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split("\n");
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.replace("data: ", "").trim();
-                if (dataStr === "[DONE]") continue;
-
-                try {
-                  const data = JSON.parse(dataStr);
-                  if (data.content) {
-                    fullResponse += data.content;
-                    set({ streamingContent: fullResponse });
-                  }
-                  if (data.error) {
-                    useLogStore.getState().addLog(`Error en stream: ${data.error}`, "error");
-                    set({ chatStatus: "error" });
-                  }
-                } catch {
-                  // Ignore partial JSON
-                }
-              }
-            }
-          }
-
-          // Finalize
-          set({ chatStatus: "idle", streamingContent: "", abortController: null });
-
-          // Re-sync messages or buffer if guest
-          if (projectId === "guest") {
-              const now = new Date().toISOString();
-              const cleanResponse = fullResponse.replace(/\[CRYSTAL_CANDIDATE:.*?\]/g, "").trim();
-
-              set((state) => ({
-                guestMessages: [
-                  ...state.guestMessages,
-                  { id: `guest-user-${Date.now()}`, role: "user" as const, content: content, created_at: now },
-                  ...(cleanResponse
-                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: cleanResponse, created_at: now }]
-                    : []),
-                ],
-                messages: [
-                  ...state.messages,
-                  { id: `guest-user-${Date.now()}`, role: "user" as const, content: content, created_at: now },
-                  ...(cleanResponse
-                    ? [{ id: `guest-assistant-${Date.now()}`, role: "assistant" as const, content: cleanResponse, created_at: now }]
-                    : []),
-              ],
-              }));
-          } else {
-            const { data: msgs } = await supabase
-              .from("messages")
-              .select("*")
-              .eq("conversation_id", projectId)
-              .order("created_at", { ascending: true });
-            if (msgs) set({ messages: msgs as Message[] });
-          }
+          set((state) => ({
+             chatStatus: "idle",
+             abortController: null,
+             messages: [
+               ...state.messages,
+               { id: `user-${Date.now()}`, role: "user", content: content, created_at: now },
+               { id: `assistant-${Date.now()}`, role: "assistant", content: data, created_at: now }
+             ]
+          }));
 
         } catch (error: unknown) {
           if (error instanceof Error && error.name === "AbortError") {
-            console.log("[WADI_CHAT]: Stream cancelado por el usuario.");
+            console.log("[WADI_CHAT]: Request cancelado por el usuario.");
             return;
           }
           console.error("Error in sendMessageStream:", error);
           set({ chatStatus: "error", streamingContent: "", abortController: null });
-          useLogStore.getState().addLog("Fallo crítico en el stream neural.", "error");
+          useLogStore.getState().addLog("Fallo crítico en Wadi Interpret.", "error");
         }
       },
 

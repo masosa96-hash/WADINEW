@@ -47,11 +47,12 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             questions = generate_questions(missing, user_context, pattern_context, similar_ideas)
             state["questions_asked"] += len(questions)
             
-            return {
-                "stage": "clarification",
-                "questions": questions,
-                "state": state
-            }
+            return build_response(
+                stage="clarification",
+                message="Necesito entender mejor tu idea.",
+                questions=questions,
+                state=state
+            )
         
         else:
             # Idea rara vez es tan clara de entrada, pero existe la remota posibilidad
@@ -89,11 +90,12 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             q = questions[0] if questions else "¿Me podés contar un poco más cómo lo imaginás?"
             state["questions_asked"] += 1
             
-            return {
-                "stage": "clarification",
-                "questions": [q],
-                "state": state
-            }
+            return build_response(
+                stage="clarification",
+                message="Sigamos afinando detalles.",
+                questions=[q],
+                state=state
+            )
 
     # ----- ESTADO: CONFIRMACION -----
     elif stage == "confirmation":
@@ -109,25 +111,46 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             update_pattern_memory(intent)
             update_idea_graph(intent)
             
-            return {
-                "stage": "project_creation",
-                "intent": intent,
-                "project": project,
-                "first_step": project.get("phase_1", [""])[0],
-                "state": state
-            }
+            return build_response(
+                stage="project_creation",
+                message="¡Proyecto generado exitosamente!",
+                state=state,
+                intent=intent,
+                project=project,
+                first_step=project.get("phase_1", [""])[0]
+            )
         else:
             # Usuario rechazó o quiso cambiar detalles -> Volver a clarificación
             state["stage"] = "clarification"
             state["intent_confidence"] -= 0.3 # Baja confianza lógica
-            return {
-                "stage": "clarification",
-                "questions": ["¿Qué parte te gustaría cambiar o ajustar específicamente?"],
-                "state": state
-            }
+            return build_response(
+                stage="clarification",
+                message="Entendido. Revisemos de nuevo.",
+                questions=["¿Qué parte te gustaría cambiar o ajustar específicamente?"],
+                state=state
+            )
             
-    return {"stage": "error", "message": "Estado desconocido en máquina de estados."}
+    return build_response("error", message="Estado desconocido en máquina de estados.", state=state)
 
+def build_response(stage: str, questions: Optional[list] = None, message: Optional[str] = None, state: Optional[dict] = None, intent: Optional[dict] = None, project: Optional[dict] = None, first_step: Optional[str] = None) -> dict[str, Any]:
+    ui_map = {
+        "clarification": "clarification_cards",
+        "confirmation": "confirmation_panel",
+        "project_creation": "execution_status"
+    }
+    
+    res: dict[str, Any] = {
+        "stage": stage,
+        "ui_hint": ui_map.get(stage, "chat"),
+        "state": state
+    }
+    if message: res["message"] = message
+    if questions is not None: res["questions"] = questions
+    if intent is not None: res["intent"] = intent
+    if project is not None: res["project"] = project
+    if first_step is not None: res["first_step"] = first_step
+    
+    return res
 
 def build_confirmation_response(intent: dict, state: dict):
     """Arma el texto del Modo A: Confirmando antes de ejecutar la acción DB."""
@@ -144,9 +167,9 @@ def build_confirmation_response(intent: dict, state: dict):
         f"¿Querés que lo convierta en un proyecto y te dé el primer paso?"
     )
     
-    return {
-        "stage": "confirmation",
-        "message": confirmation_message,
-        "intent": intent,
-        "state": state
-    }
+    return build_response(
+        stage="confirmation",
+        message=confirmation_message,
+        state=state,
+        intent=intent
+    )
