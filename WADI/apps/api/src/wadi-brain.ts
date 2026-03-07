@@ -154,7 +154,12 @@ Si la idea tiene potencial real, tirá el tag al final:
       let fullContent = "";
       const toolCalls: any[] = [];
 
-      for await (const chunk of stream) {
+      const iterator = stream[Symbol.asyncIterator]();
+
+      while (true) {
+        const { value: chunk, done } = await iterator.next();
+        if (done) break;
+
         if (chunk.usage) {
           totalTokensUsed += chunk.usage.total_tokens;
           metricsService.emitMetric(MetricEvent.TOKEN_USAGE, { provider, model, tokens: chunk.usage });
@@ -169,7 +174,10 @@ Si la idea tiene potencial real, tirá el tag al final:
               fullContent += delta.content;
               yield chunk; 
               
-              for await (const remainingChunk of stream) {
+              while (true) {
+                const { value: remainingChunk, done } = await iterator.next();
+                if (done) break;
+
                 if (remainingChunk.choices?.[0]?.delta?.content) {
                   fullContent += remainingChunk.choices[0].delta.content;
                 }
