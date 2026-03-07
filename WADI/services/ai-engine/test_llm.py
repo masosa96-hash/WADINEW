@@ -1,7 +1,7 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 
-from llm.router import call_llm
+from llm.router import call_llm  # type: ignore
 
 result = call_llm(
     system_prompt='Responde SOLO con JSON valido. Ejemplo: {"ok": true, "model": "nombre"}',

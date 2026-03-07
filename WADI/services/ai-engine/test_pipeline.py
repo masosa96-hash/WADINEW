@@ -2,10 +2,10 @@ import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 
-from engines.pipeline import process_message
+from engines.pipeline import process_message  # type: ignore
 import json
 
 print("=== TEST 1: mensaje vago ===")
