@@ -82,6 +82,27 @@ router.get(
 
 import { generatePRD } from "./controllers/project.controller";
 import { exportProject } from "./controllers/export.controller";
+import { analyzeIdea, generateProject } from "./services/aiEngine"; // New AI Engine integrations
+
+router.post(
+  "/projects/analyze",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const { ideaId, description } = req.body;
+    const result = await analyzeIdea(ideaId, description);
+    res.json(result);
+  })
+);
+
+router.post(
+  "/projects/generate",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const { playbook } = req.body;
+    const result = await generateProject(playbook);
+    res.json(result);
+  })
+);
 
 router.post(
   "/projects/:id/prd",
