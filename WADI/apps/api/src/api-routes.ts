@@ -2,6 +2,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
+import { supabase } from "./supabase";
 
 import {
   listProjects,
@@ -101,6 +102,47 @@ router.post(
     const { playbook } = req.body;
     const result = await generateProject(playbook);
     res.json(result);
+  })
+);
+
+import { createRepo } from "./services/githubRepo";
+import { pushRepo } from "./services/gitPush";
+
+router.post(
+  "/projects/publish",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const { ideaId, playbook } = req.body;
+    const userId = req.user!.id;
+    
+    // We already generated the project locally with the previous endpoint, or we do it here. 
+    // The user flow describes: project = await generateProject(ideaId/playbook). So we assume generation happens here or we get the path from the client.
+    // For now we'll match the user's pseudo-code workflow explicitly.
+    const project = await generateProject(playbook);
+    
+    // Attempting to fetch their github token from DB
+    const { data: ghAccount } = await (supabase as any)
+      .from("github_accounts")
+      .select("access_token")
+      .eq("user_id", userId)
+      .single();
+
+    if (!ghAccount || !ghAccount.access_token) {
+      return res.status(400).json({ error: "No GitHub token mapped to this user. Please connect GitHub first." });
+    }
+
+    // Creating the repo using the idea title or a fallback naming convention
+    const repoName = `wadi-project-${Date.now().toString().slice(-4)}`;
+    const repo = await createRepo(ghAccount.access_token, repoName);
+
+    // Initial Push generated code to that repo
+    const authUrl = repo.clone_url.replace("https://", `https://x-access-token:${ghAccount.access_token}@`);
+    await pushRepo(project.path, authUrl);
+
+    res.json({
+      status: "published",
+      repoUrl: repo.html_url
+    });
   })
 );
 
@@ -230,5 +272,8 @@ router.get(
   adminRateLimiter,
   asyncHandler(getAdminMetrics)
 );
+
+import githubRoutes from "./routes/github";
+router.use("/auth/github", githubRoutes);
 
 export default router;
