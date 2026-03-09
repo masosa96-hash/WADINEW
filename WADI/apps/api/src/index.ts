@@ -152,7 +152,7 @@ app.get("*splat", (req, res) => {
   if (fs.existsSync(path.join(frontendPath, "index.html"))) {
     res.sendFile(path.join(frontendPath, "index.html"));
   } else {
-    res.status(404).json({ error: "Frontend build not found" });
+    res.status(200).json({ status: "WADI API ONLINE", message: "API is running. Frontend build not found or this is an API-only environment." });
   }
 });
 
