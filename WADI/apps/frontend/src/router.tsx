@@ -11,6 +11,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Projects from "./views/Projects";
 import Chat from "./views/Chat";
 import Knowledge from "./views/Knowledge";
+import ProjectGenome from "./views/ProjectGenome";
+import ProjectInsights from "./views/ProjectInsights";
+// import ProjectPRs from "./views/ProjectPRs";
 import ProjectBuilder from "./views/ProjectBuilder";
 
 export const router = createBrowserRouter([
@@ -40,11 +43,23 @@ export const router = createBrowserRouter([
             element: <ChatRedirect />,
           },
           {
+            path: "dashboard",
+            element: <Projects />,
+          },
+          {
             path: "projects",
             element: <Projects />,
           },
           {
             path: "projects/:id",
+            element: <ProjectGenome />,
+          },
+          {
+            path: "projects/:id/insights",
+            element: <ProjectInsights />,
+          },
+          {
+            path: "projects/:id/chat",
             element: <Chat />,
           },
           {
