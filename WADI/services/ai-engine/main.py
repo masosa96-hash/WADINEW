@@ -49,3 +49,19 @@ def generate(req: dict):
         "status": "generated",
         "path": project_path
     }
+
+from evolution.evolution_worker import run_evolution_for_project # pyre-ignore
+
+class EvolveRequest(BaseModel):
+    project_id: str
+    repo_url: str
+    github_token: str
+    dna: dict = {}
+
+@app.post("/evolve")
+def evolve(req: EvolveRequest):
+    """
+    Triggering AI Product Manager manually or scheduled via API Call
+    """
+    result = run_evolution_for_project(req.project_id, req.repo_url, req.dna, req.github_token)
+    return result
