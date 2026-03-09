@@ -241,6 +241,20 @@ router.get(
   asyncHandler(exportProject)
 );
 
+import {
+  getProjectGenome,
+  getProjectFeed,
+  getProjectInsights,
+  getProjectPRs,
+  triggerEvolution,
+} from "./controllers/evolution.controller";
+
+router.get("/projects/:id/genome", authenticate(), asyncHandler(getProjectGenome));
+router.get("/projects/:id/feed", authenticate(), asyncHandler(getProjectFeed));
+router.get("/projects/:id/insights", authenticate(), asyncHandler(getProjectInsights));
+router.get("/projects/:id/prs", authenticate(), asyncHandler(getProjectPRs));
+router.post("/projects/:id/evolve", authenticate(), asyncHandler(triggerEvolution));
+
 /* =========================================
    WADI PIPELINE ROUTES
    ========================================= */
