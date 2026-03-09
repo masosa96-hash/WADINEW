@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-def run_build(project_path: str) -> bool:
+def run_build(project_path: str) -> tuple[bool, str]:
     """
     Intenta buildear el repositorio. O en nuestro caso, correr checks tipados.
     Ejemplo `npm run build` o `pytest`.
