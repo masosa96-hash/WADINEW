@@ -13,7 +13,7 @@ import Chat from "./views/Chat";
 import Knowledge from "./views/Knowledge";
 import ProjectGenome from "./views/ProjectGenome";
 import ProjectInsights from "./views/ProjectInsights";
-// import ProjectPRs from "./views/ProjectPRs";
+import ProjectPRs from "./views/ProjectPRs";
 import ProjectBuilder from "./views/ProjectBuilder";
 
 export const router = createBrowserRouter([
@@ -57,6 +57,10 @@ export const router = createBrowserRouter([
           {
             path: "projects/:id/insights",
             element: <ProjectInsights />,
+          },
+          {
+            path: "projects/:id/prs",
+            element: <ProjectPRs />,
           },
           {
             path: "projects/:id/chat",
