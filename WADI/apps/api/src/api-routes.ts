@@ -141,8 +141,91 @@ router.post(
 
     res.json({
       status: "published",
-      repoUrl: repo.html_url
+      repoUrl: repo.html_url,
+      repoName: repoName,
+      projectPath: project.path // Pass path so client knows it
     });
+  })
+);
+
+import { setupVercelProject, deployToVercel, getVercelDeploymentStatus } from "./services/vercelDeploy";
+import { deployToRailway } from "./services/railwayDeploy";
+
+router.post(
+  "/projects/deploy",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+    const { projectId, repoUrl, repoName, playbook } = req.body;
+    let fallbackDeployUrl = "";
+
+    // Parse stack requirements from playbook
+    const stackInfo = playbook?.tech_stack || {};
+    let providerUsed = "unknown";
+
+    if (stackInfo.frontend === "nextjs" || stackInfo.frontend?.includes("react")) {
+       // Auto-deploy to Vercel
+       providerUsed = "vercel";
+       const vercelProject = await setupVercelProject(repoName, "nextjs");
+       
+       // Force trigger production deployment
+       const deployment = await deployToVercel(vercelProject?.name || repoName);
+       if (deployment?.url) {
+           fallbackDeployUrl = `https://${deployment.url}`;
+       }
+    } else if (stackInfo.backend === "fastapi" || stackInfo.backend?.includes("python")) {
+       // Auto-deploy Railway
+       providerUsed = "railway";
+       const deployment = await deployToRailway(repoUrl);
+       if (deployment?.url) {
+           fallbackDeployUrl = deployment.url;
+       }
+    } else {
+       // Default fallback
+       providerUsed = "vercel";
+       await setupVercelProject(repoName, "other");
+       const deployment = await deployToVercel(repoName);
+       if (deployment?.url) {
+           fallbackDeployUrl = `https://${deployment.url}`;
+       }
+    }
+
+    // Save Deployment Record
+    const { data: deploymentRecord } = await (supabase as any)
+      .from("deployments")
+      .insert({
+         project_id: projectId, // Project ID from internal Wadi Tracking
+         provider: providerUsed,
+         deploy_url: fallbackDeployUrl,
+      })
+      .select()
+      .single();
+
+    res.json({
+      status: "deploying",
+      provider: providerUsed,
+      url: fallbackDeployUrl,
+      deploymentId: deploymentRecord?.id
+    });
+  })
+);
+
+router.get(
+  "/deployments/:id/status",
+  authenticate(),
+  asyncHandler(async (req, res) => {
+     // Optional endpoint to poll Vercel API internally, or just return existing DB state.
+     const { id } = req.params;
+     const { data: deployment } = await (supabase as any)
+        .from("deployments")
+        .select("*")
+        .eq("id", id)
+        .single();
+        
+     if (!deployment) return res.status(404).json({ error: "Deploy not found" });
+
+     // Basic pass-through (if vercel is the provider, we could fetch from VERCEL directly if we saved the Vercel internal ID)
+     // Right now just returning our DB snapshot.
+     res.json(deployment);
   })
 );
 
