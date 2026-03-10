@@ -112,7 +112,7 @@ router.post(
   "/projects/publish",
   authenticate(),
   asyncHandler(async (req, res) => {
-    const { ideaId, playbook } = req.body;
+    const { playbook } = req.body;
     const userId = req.user!.id;
     
     // We already generated the project locally with the previous endpoint, or we do it here. 
@@ -121,6 +121,7 @@ router.post(
     const project = await generateProject(playbook);
     
     // Attempting to fetch their github token from DB
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ghAccount } = await (supabase as any)
       .from("github_accounts")
       .select("access_token")
@@ -148,7 +149,7 @@ router.post(
   })
 );
 
-import { setupVercelProject, deployToVercel, getVercelDeploymentStatus } from "./services/vercelDeploy";
+import { setupVercelProject, deployToVercel } from "./services/vercelDeploy";
 import { deployToRailway } from "./services/railwayDeploy";
 
 router.post(
@@ -190,6 +191,7 @@ router.post(
     }
 
     // Save Deployment Record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: deploymentRecord } = await (supabase as any)
       .from("deployments")
       .insert({
@@ -215,6 +217,7 @@ router.get(
   asyncHandler(async (req, res) => {
      // Optional endpoint to poll Vercel API internally, or just return existing DB state.
      const { id } = req.params;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
      const { data: deployment } = await (supabase as any)
         .from("deployments")
         .select("*")

@@ -1,0 +1,10 @@
+
+E:\WADINEW\WADI\apps\api\src\api-routes.ts
+  115:13  error  'ideaId' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  124:52  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  151:46  error  'getVercelDeploymentStatus' is defined but never used  @typescript-eslint/no-unused-vars
+  193:59  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  218:54  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+✖ 5 problems (5 errors, 0 warnings)
+
