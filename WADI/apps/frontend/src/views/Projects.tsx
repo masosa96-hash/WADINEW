@@ -175,10 +175,20 @@ export default function Projects() {
                                     <span className="font-medium text-gray-700">Score:</span> {project.score ? project.score.toFixed(1) : 'N/A'}
                                 </div>
                                 
-                                <div className="mt-auto pt-4 flex gap-2">
+                                <div className="mt-auto pt-4 flex items-center justify-between">
                                      <span className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-400">
                                         {new Date(project.created_at).toLocaleDateString()}
                                      </span>
+                                     {project.status === "STRUCTURE_FAILED" && (
+                                         <span className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded font-bold uppercase">
+                                             Failed
+                                         </span>
+                                     )}
+                                     {project.status === "GENERATING_STRUCTURE" && (
+                                         <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-1 rounded font-bold uppercase animate-pulse">
+                                             Generating...
+                                         </span>
+                                     )}
                                 </div>
                             </Link>
                         ))}
@@ -201,6 +211,8 @@ export default function Projects() {
                                         </div>
                                      </div>
                                      <div className="flex items-center gap-6">
+                                         {project.status === "STRUCTURE_FAILED" && <span className="text-[10px] font-bold text-red-500 uppercase bg-red-50 px-2 py-0.5 rounded">Failed</span>}
+                                         {project.status === "GENERATING_STRUCTURE" && <span className="text-[10px] font-bold text-yellow-500 uppercase bg-yellow-50 px-2 py-0.5 rounded animate-pulse">Generating</span>}
                                          <span className="text-xs text-gray-400">{new Date(project.created_at).toLocaleDateString()}</span>
                                          <ArrowRight size={14} className="text-gray-300" />
                                      </div>

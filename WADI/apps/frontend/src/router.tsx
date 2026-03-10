@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import ChatRedirect from "./pages/ChatRedirect";
+import Landing from "./pages/Landing";
 import AdminDashboard from "./pages/AdminDashboard";
 
 // Views
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <Landing />,
+          },
+          {
+            path: "chat",
             element: <ChatRedirect />,
           },
           {

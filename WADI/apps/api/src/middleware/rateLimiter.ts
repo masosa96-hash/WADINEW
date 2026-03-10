@@ -21,7 +21,7 @@ export const expensiveRateLimiter = rateLimit({
 let dailyGlobalCount = 0;
 let lastReset = Date.now();
 
-const GLOBAL_DAILY_LIMIT = 200;
+const GLOBAL_DAILY_LIMIT = 10;
 
 export const globalBudgetGuard = (req: Request, res: Response, next: any) => {
   const now = Date.now();

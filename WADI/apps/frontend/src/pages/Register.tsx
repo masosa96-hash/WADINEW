@@ -6,6 +6,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -15,6 +16,21 @@ export default function Register() {
     setLoading(true);
     setError(null);
 
+    // 1. Verify Invite Code
+    const { data: invite, error: inviteError } = await supabase
+      .from("beta_invites")
+      .select("*")
+      .eq("code", inviteCode)
+      .eq("used", false)
+      .single();
+
+    if (inviteError || !invite) {
+      setLoading(false);
+      setError("CÓDIGO DE INVITACIÓN INVÁLIDO O USADO.");
+      return;
+    }
+
+    // 2. Auth SignUp
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -27,6 +43,12 @@ export default function Register() {
     }
 
     if (data.user) {
+      // 3. Update Invite
+      await supabase
+        .from("beta_invites")
+        .update({ used: true, used_by: data.user.id })
+        .eq("code", inviteCode);
+
       const { error: profileError } = await supabase
         .from("profiles")
         .insert([{ user_id: data.user.id, display_name: displayName }]);
@@ -104,6 +126,18 @@ export default function Register() {
               className="wadi-input w-full"
               required
               autoComplete="new-password"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
+              Beta Invite Code
+            </label>
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              className="wadi-input w-full"
+              required
             />
           </div>
 
