@@ -168,7 +168,12 @@ export default function Projects() {
                                 </div>
                                 
                                 <h3 className="font-bold text-lg truncate mb-1">{project.name}</h3>
-                                <p className="text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                                <div className="text-sm text-gray-500 mb-1">
+                                    <span className="font-medium text-gray-700">DNA:</span> {project.dna || 'Unknown'}
+                                </div>
+                                <div className="text-sm text-gray-500 line-clamp-1">
+                                    <span className="font-medium text-gray-700">Score:</span> {project.score ? project.score.toFixed(1) : 'N/A'}
+                                </div>
                                 
                                 <div className="mt-auto pt-4 flex gap-2">
                                      <span className="text-[10px] bg-gray-50 px-2 py-1 rounded text-gray-400">
@@ -189,7 +194,10 @@ export default function Projects() {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                                            <p className="text-xs text-gray-500 max-w-md truncate">{project.description}</p>
+                                            <div className="flex gap-4">
+                                                <p className="text-xs text-gray-500"><span className="font-medium text-gray-700">DNA:</span> {project.dna || 'Unknown'}</p>
+                                                <p className="text-xs text-gray-500"><span className="font-medium text-gray-700">Score:</span> {project.score ? project.score.toFixed(1) : 'N/A'}</p>
+                                            </div>
                                         </div>
                                      </div>
                                      <div className="flex items-center gap-6">

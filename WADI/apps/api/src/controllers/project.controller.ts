@@ -27,7 +27,7 @@ export const listProjects = async (
 
   const { data, error } = await supabase
     .from("projects")
-    .select("*")
+    .select("id, name, dna, score, created_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 

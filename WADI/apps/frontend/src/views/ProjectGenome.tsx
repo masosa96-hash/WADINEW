@@ -12,12 +12,12 @@ export default function ProjectGenomeDashboard() {
 
   if (loadingGenome) return <div className="p-12 text-center text-gray-500 animate-pulse">Cargando Genome del Proyecto...</div>;
 
-  if (!genomeData?.project) return <div className="p-12 text-center text-red-500">Error: Proyecto no encontrado</div>;
+  if (!genomeData?.name) return <div className="p-12 text-center text-red-500">Error: Proyecto no encontrado</div>;
 
-  const { project, activeDeployment, genome } = genomeData;
+  const { name, dna, score, business_model, repo_url, live_url } = genomeData;
 
-  const getDnaName = () => genome?.dna?.[0]?.archetype || "Custom Build";
-  const getMarketScore = () => genome?.scores?.[0]?.overall_score || "N/A";
+  const getDnaName = () => dna || "Custom Build";
+  const getMarketScore = () => score ? score.toFixed(1) : "N/A";
   
   return (
     <div className="max-w-6xl mx-auto py-8 text-wadi-text animate-in fade-in">
@@ -25,7 +25,7 @@ export default function ProjectGenomeDashboard() {
         <div>
           <h1 className="text-3xl font-extrabold flex items-center gap-3">
             <Activity className="text-blue-600" size={28} />
-            {project.name}
+            {name}
           </h1>
           <p className="text-gray-500 mt-1 flex items-center gap-2">
             AI Founder Interface <span className="text-xs bg-black text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Live</span>
@@ -63,15 +63,11 @@ export default function ProjectGenomeDashboard() {
                   <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">DNA Archetype</span>
                   <div className="font-semibold text-gray-900 bg-gray-100 inline-block px-3 py-1 rounded-md">{getDnaName()}</div>
                </div>
-               {genome?.dimensions?.[0] && (
+               {business_model && (
                  <>
                    <div>
                       <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">Business Model</span>
-                      <div className="font-medium">{genome.dimensions[0].business_model}</div>
-                   </div>
-                   <div>
-                      <span className="text-gray-500 block text-xs uppercase font-bold tracking-wider mb-1">Growth Strategy</span>
-                      <div className="font-medium text-blue-700">{genome.dimensions[0].growth_channel}</div>
+                      <div className="font-medium">{business_model}</div>
                    </div>
                  </>
                )}
@@ -89,20 +85,20 @@ export default function ProjectGenomeDashboard() {
                      <Github size={16} />
                  </div>
                  <div className="flex-1 overflow-hidden">
-                     <p className="font-bold text-sm truncate">github.com/.../{project.name}</p>
+                     <p className="font-bold text-sm truncate">{repo_url}</p>
                      <p className="text-xs text-gray-500 flex items-center gap-1">Source Code <ExternalLink size={10} /></p>
                  </div>
              </a>
 
-             <a href={activeDeployment?.deploy_url || "#"} target="_blank" className="flex items-center gap-3 p-3 border rounded-lg hover:border-blue-400 transition-colors group">
+             <a href={live_url || "#"} target="_blank" className="flex items-center gap-3 p-3 border rounded-lg hover:border-blue-400 transition-colors group">
                  <div className="bg-blue-50 text-blue-600 p-2 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-colors">
                      <Zap size={16} />
                  </div>
                  <div className="flex-1 overflow-hidden">
                      <p className="font-bold text-sm truncate text-blue-700">
-                        {activeDeployment ? activeDeployment.deploy_url.replace("https://", "") : "Not deployed yet"}
+                        {live_url ? live_url.replace("https://", "") : "Not deployed yet"}
                      </p>
-                     <p className="text-xs text-blue-500 flex items-center gap-1">Status: {activeDeployment?.status || "PENDING"} <ExternalLink size={10} /></p>
+                     <p className="text-xs text-blue-500 flex items-center gap-1">Status: {live_url ? "LIVE" : "PENDING"} <ExternalLink size={10} /></p>
                  </div>
              </a>
           </section>

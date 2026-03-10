@@ -38,13 +38,13 @@ export const getProjectGenome = async (
   const activeDeployment = deployments && deployments.length > 0 ? deployments[0] : null;
 
   res.json({
-    project,
-    activeDeployment,
-    genome: {
-      dna: project.idea?.dna,
-      scores: project.idea?.scores,
-      dimensions: project.idea?.dimensions,
-    }
+    id: project.id,
+    name: project.name,
+    dna: project.dna || "Unknown",
+    score: project.score || 0,
+    business_model: project.business_model || "SaaS",
+    repo_url: `https://github.com/wadi-ai/${project.name}`,
+    live_url: activeDeployment?.deploy_url || null
   });
 };
 
@@ -109,7 +109,13 @@ export const getProjectPRs = async (
     if (pError || !project) throw new AppError("NOT_FOUND", "Project not found");
 
     res.json([
-        { id: 1, title: "AI PM: Improve onboarding_wizard based on analytics", state: "open", url: "#" }
+        { 
+          id: "1", 
+          title: "Add Google OAuth login", 
+          status: "open", 
+          pr_url: "https://github.com/user/repo/pull/3",
+          created_at: new Date().toISOString()
+        }
     ]);
 };
 

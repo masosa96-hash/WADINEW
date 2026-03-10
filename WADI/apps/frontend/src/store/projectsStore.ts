@@ -7,6 +7,8 @@ interface Project {
   name: string;
   description: string;
   status: string;
+  dna?: string;
+  score?: number;
   created_at: string;
 }
 
