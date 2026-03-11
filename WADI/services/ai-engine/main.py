@@ -14,6 +14,18 @@ from generator.project_generator import generate_project # pyre-ignore
 
 app = FastAPI()
 
+from typing import List, Optional
+
+class GenomeInsight(BaseModel):
+    id: str
+    label: str
+    confidence: float
+    tags: List[str]
+
+class AIResponse(BaseModel):
+    content: str
+    insights: Optional[List[GenomeInsight]] = None
+
 class InterpretRequest(BaseModel):
     message: str
     user_id: str = "anonymous"

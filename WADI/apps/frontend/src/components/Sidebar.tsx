@@ -1,34 +1,34 @@
-
-import { NavLink, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, 
   LayoutGrid, 
   Database, 
   Settings, 
-  PlusCircle, 
-  Zap,
-  UserCircle,
+  User, 
+  Plus, 
+  LogOut,
+  Trash2,
+  CheckSquare,
   BarChart3
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import { SettingsModal } from './SettingsModal';
-import { Trash2, CheckSquare } from 'lucide-react';
 import { GUEST_PROJECT_ID } from '../views/Chat';
 
 const menuItems = [
-  { icon: MessageSquare, label: 'Chat Principal', path: '/' },
+  { icon: MessageSquare, label: 'Chat Principal', path: '/chat' },
   { icon: LayoutGrid, label: 'Mis Proyectos', path: '/projects' },
   { icon: Database, label: 'Knowledge Base', path: '/knowledge' },
 ];
 
-export const Sidebar = () => {
+export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { id: projectId } = useParams<{ id: string }>();
-  const { session, user } = useAuthStore();
+  const { session, user, signOut } = useAuthStore();
   const isGuest = projectId === GUEST_PROJECT_ID || !session;
 
   const scopes = (user?.user_metadata?.scopes as string[]) || [];
@@ -50,120 +50,135 @@ export const Sidebar = () => {
   } = useChatStore();
 
   useEffect(() => {
-    // Never touch chatStore state for guests — it would interfere with ephemeral messages
     if (isGuest) return;
     fetchConversations();
   }, [isGuest, fetchConversations]);
 
   const handleOpenChat = (id: string) => {
      openConversation(id);
-     navigate('/');
+     navigate('/chat');
   };
 
   const handleNewChat = () => {
      startNewConversation();
-     navigate('/');
+     navigate('/chat');
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
   };
 
   return (
-    <aside className="w-64 h-screen bg-[#F9FAFB] border-r border-gray-100 flex flex-col transition-all duration-300">
+    <aside className="w-64 h-screen bg-[#F8F9FA] border-r border-wadi-gray-100 flex flex-col p-4 font-wadi-sans transition-all duration-300 relative">
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      {/* Logo / Branding */}
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg italic">W</span>
+      
+      {/* 1. Header & Logo */}
+      <div className="flex items-center gap-2 px-2 mb-8 cursor-pointer" onClick={() => navigate('/')}>
+        <div className="w-8 h-8 bg-wadi-black rounded-lg flex items-center justify-center text-white font-bold text-xl">
+          W
         </div>
-        <span className="font-bold text-gray-800 tracking-tight text-xl">WADI</span>
+        <span className="font-bold text-xl tracking-tight text-wadi-gray-900">WADI</span>
       </div>
 
-      {/* Botón de Acción Principal */}
-      <div className="px-4 mb-6">
-        <button 
-            onClick={handleNewChat}
-            className="w-full py-2.5 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2 shadow-sm"
-        >
-          <PlusCircle size={16} />
-          Nuevo Chat
-        </button>
-      </div>
+      {/* 2. Botón Acción Principal */}
+      <button 
+        onClick={handleNewChat}
+        className="flex items-center justify-center gap-2 w-full py-3 mb-8 bg-white border border-wadi-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all text-sm font-semibold text-wadi-gray-700"
+      >
+        <Plus size={16} />
+        Nuevo Chat
+      </button>
 
-      {/* Navegación Principal */}
-      <nav className="px-3 space-y-1 mb-4">
+      {/* 3. Navegación Principal */}
+      <nav className="space-y-1 mb-6">
+        <p className="px-3 text-[10px] font-bold text-wadi-gray-400 uppercase tracking-widest mb-2">Workspace</p>
+        
         {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-              ${isActive 
-                ? 'bg-white text-gray-900 shadow-sm border border-gray-100' 
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
-            `}
-          >
+          <NavLink key={item.path} to={item.path} className="block">
             {({ isActive }) => (
-              <>
-                <item.icon size={18} className={isActive ? 'text-blue-500' : ''} />
-                {item.label}
-              </>
+              <motion.div
+                whileHover={{ x: 4 }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                  isActive 
+                    ? 'bg-wadi-gray-900 text-white shadow-sm' 
+                    : 'text-wadi-gray-500 hover:bg-wadi-gray-100 hover:text-wadi-gray-900'
+                }`}
+              >
+                <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-sm font-medium">{item.label}</span>
+              </motion.div>
             )}
           </NavLink>
         ))}
 
         {isAdmin && (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-              ${isActive 
-                ? 'bg-blue-50 text-blue-700 border border-blue-100' 
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
-            `}
-          >
+          <NavLink to="/admin" className="block mt-2">
             {({ isActive }) => (
-              <>
-                <BarChart3 size={18} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
-                Panel Admin
-              </>
+              <motion.div
+                whileHover={{ x: 4 }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                  isActive 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                    : 'text-wadi-gray-500 hover:bg-wadi-gray-100 hover:text-wadi-gray-900'
+                }`}
+              >
+                <BarChart3 size={18} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-sm font-medium">Panel Admin</span>
+              </motion.div>
             )}
           </NavLink>
         )}
       </nav>
 
-      {/* Historial de Conversaciones — solo usuarios autenticados */}
-      <div className="px-4 py-2 mt-2 flex-1 overflow-hidden flex flex-col min-h-0 border-t border-gray-100 relative">
+      {/* Historial de Conversaciones */}
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0 relative">
+         {!isGuest && (
+             <div className="flex items-center justify-between mb-2 px-3">
+                <p className="text-[10px] font-bold text-wadi-gray-400 uppercase tracking-widest">Historial</p>
+                <button 
+                  onClick={() => {
+                      setIsSelectionMode(!isSelectionMode);
+                      if (isSelectionMode) useChatStore.getState().selectAll();
+                  }}
+                  className="px-2 py-0.5 text-[10px] font-medium text-wadi-gray-500 hover:text-wadi-gray-900 transition-colors"
+                >
+                   {isSelectionMode ? "Listo" : "Gestionar"}
+                </button>
+             </div>
+         )}
+
          {isGuest ? (
-           // Guest mode: no history, just a login prompt
-           <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
-             <p className="text-xs text-gray-400 mb-3">Sesión efímera</p>
+           <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+             <p className="text-xs text-wadi-gray-400 mb-3">Sesión efímera</p>
              <button
                onClick={() => navigate('/login')}
-               className="w-full py-2 px-3 bg-gray-900 text-white text-xs font-medium rounded-xl hover:bg-gray-800 transition-colors"
+               className="w-full py-2.5 px-3 bg-wadi-gray-900 text-white text-xs font-medium rounded-xl hover:bg-wadi-black transition-colors"
              >
                Iniciar sesión
              </button>
              <button
                onClick={() => navigate('/register')}
-               className="w-full mt-2 py-2 px-3 bg-white border border-gray-200 text-xs font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+               className="w-full mt-2 py-2.5 px-3 bg-white border border-wadi-gray-200 text-xs font-medium text-wadi-gray-600 rounded-xl hover:bg-wadi-gray-50 transition-colors"
              >
                Crear cuenta
              </button>
            </div>
          ) : (
            <>
-             {/* Safety Modal */}
              {showDeleteConfirm && (
-                 <div className="absolute inset-0 z-50 bg-white/90 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 rounded-xl">
+                 <div className="absolute inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center rounded-xl shadow-lg border border-red-100">
                      <div className="bg-red-50 p-3 rounded-full mb-2 text-red-500">
                          <Trash2 size={24} />
                      </div>
-                     <h4 className="text-sm font-bold text-gray-800 mb-1">¿Estás seguro?</h4>
-                     <p className="text-xs text-gray-500 mb-4 px-2">
+                     <h4 className="text-sm font-bold text-wadi-gray-900 mb-1">¿Estás seguro?</h4>
+                     <p className="text-xs text-wadi-gray-500 mb-4 px-2">
                         Vas a eliminar {selectedIds.length} chats. El caos se irá para siempre.
                      </p>
                      <div className="flex gap-2 w-full">
                          <button 
                             onClick={() => setShowDeleteConfirm(false)}
-                            className="flex-1 py-1.5 px-3 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200"
+                            className="flex-1 py-2 px-3 bg-wadi-gray-100 text-wadi-gray-600 text-xs font-bold rounded-lg hover:bg-wadi-gray-200"
                          >
                             Cancelar
                          </button>
@@ -173,32 +188,19 @@ export const Sidebar = () => {
                                 setShowDeleteConfirm(false);
                                 setIsSelectionMode(false);
                             }}
-                            className="flex-1 py-1.5 px-3 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
+                            className="flex-1 py-2 px-3 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"
                          >
                             Borrar Todo
                          </button>
                      </div>
                  </div>
              )}
-
-             <div className="flex items-center justify-between mb-2 px-1">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Historial</h3>
-                <button 
-                  onClick={() => {
-                      setIsSelectionMode(!isSelectionMode);
-                      if (isSelectionMode) useChatStore.getState().selectAll();
-                  }}
-                  className="px-2 py-0.5 text-[10px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                   {isSelectionMode ? "Listo" : "Gestionar"}
-                </button>
-             </div>
              
              {isSelectionMode && selectedIds.length > 0 && (
-                 <div className="absolute bottom-4 left-4 right-4 z-20 animate-in slide-in-from-bottom-2 fade-in">
+                 <div className="absolute bottom-2 left-2 right-2 z-20">
                     <button 
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition-transform active:scale-95"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-red-700 transition-transform active:scale-95"
                     >
                         <Trash2 size={16} />
                         Eliminar {selectedIds.length}
@@ -206,40 +208,45 @@ export const Sidebar = () => {
                  </div>
              )}
 
-             <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-gray-200 pb-16">
-                {conversations.map((conv) => (
-                   <div 
-                     key={conv.id}
-                     className={`
-                        group flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all cursor-pointer relative border border-transparent
-                        ${activeId === conv.id ? 'bg-white border-gray-200 shadow-sm text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-                     `}
-                     onClick={() => {
-                        if (isSelectionMode) {
-                            toggleSelection(conv.id);
-                        } else {
-                            handleOpenChat(conv.id);
-                        }
-                     }}
-                   >
-                     {isSelectionMode ? (
-                         <div className={`shrink-0 transition-colors ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-gray-300'}`}>
-                              <div className={`w-4 h-4 rounded border ${selectedIds.includes(conv.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'} flex items-center justify-center`}>
-                                   {selectedIds.includes(conv.id) && <CheckSquare size={12} className="text-white" />}
-                              </div>
-                         </div>
-                     ) : (
-                         <MessageSquare size={16} className={`shrink-0 ${activeId === conv.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                     )}
-                     
-                     <span className="truncate flex-1">
-                         {conv.title || "Nueva Conversación"}
-                     </span>
-                  </div>
-                ))}
+             <div className="overflow-y-auto flex-1 space-y-1 pr-1 scrollbar-thin scrollbar-thumb-wadi-gray-200 pb-16">
+                {conversations.map((conv) => {
+                   const isActive = activeId === conv.id;
+                   return (
+                     <motion.div
+                       key={conv.id}
+                       whileHover={{ x: 4 }}
+                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                         isActive 
+                           ? 'bg-wadi-gray-200 text-wadi-gray-900 font-medium' 
+                           : 'text-wadi-gray-500 hover:bg-wadi-gray-100 hover:text-wadi-gray-900'
+                       }`}
+                       onClick={() => {
+                          if (isSelectionMode) {
+                              toggleSelection(conv.id);
+                          } else {
+                              handleOpenChat(conv.id);
+                          }
+                       }}
+                     >
+                       {isSelectionMode ? (
+                           <div className={`shrink-0 transition-colors ${selectedIds.includes(conv.id) ? 'text-blue-600' : 'text-wadi-gray-300'}`}>
+                                <div className={`w-4 h-4 rounded border ${selectedIds.includes(conv.id) ? 'bg-blue-600 border-blue-600' : 'border-wadi-gray-300'} flex items-center justify-center`}>
+                                     {selectedIds.includes(conv.id) && <CheckSquare size={12} className="text-white" />}
+                                </div>
+                           </div>
+                       ) : (
+                           <MessageSquare size={16} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                       )}
+                       
+                       <span className="truncate text-sm flex-1">
+                           {conv.title || "Nueva Conversación"}
+                       </span>
+                     </motion.div>
+                   );
+                })}
                 
                 {conversations.length === 0 && (
-                    <div className="text-center py-6 text-xs text-gray-400 italic">
+                    <div className="text-center py-6 text-xs text-wadi-gray-400 italic">
                         Sin historial reciente.
                     </div>
                 )}
@@ -248,34 +255,39 @@ export const Sidebar = () => {
          )}
       </div>
 
-      {/* Sección Inferior / Status */}
-      <div className="p-4 border-t border-gray-100 space-y-4">
-        <div className="px-3 py-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
-          <div className="flex items-center gap-2 mb-1">
-            <Zap size={14} className="text-blue-600" />
-            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Plan Pro</span>
-          </div>
-          <p className="text-[10px] text-blue-600/70 leading-tight">
-            Acceso total a Personas Dinámicas y Memoria Infinita.
-          </p>
+      {/* 4. Sección de Usuario / Footer */}
+      <div className="mt-auto pt-6 border-t border-wadi-gray-100 space-y-1">
+        <div className="px-3 mb-4">
+            <div className="bg-gradient-to-br from-wadi-accent-start/10 to-wadi-accent-end/10 p-3 rounded-2xl border border-wadi-accent-start/20">
+                <p className="text-[10px] font-bold text-wadi-accent-start uppercase tracking-tighter">Plan Pro</p>
+                <p className="text-[11px] text-wadi-gray-600 leading-tight mt-1">Acceso total a Personas y Memoria Infinita.</p>
+            </div>
         </div>
-
-        <button 
+        
+        <motion.div
+          whileHover={{ x: 4 }}
           onClick={() => setIsSettingsOpen(true)}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 rounded-xl transition-all"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-wadi-gray-500 hover:bg-wadi-gray-100 hover:text-wadi-gray-900"
         >
-          <Settings size={18} />
-          Configuración
-        </button>
-
-        <div className="flex items-center gap-3 px-3 py-2 border-t border-gray-50 pt-4">
-          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-            <UserCircle size={20} />
-          </div>
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-bold text-gray-800 truncate">Usuario WADI</span>
-            <span className="text-[10px] text-gray-400 truncate">Socio de Negocios</span>
-          </div>
+          <Settings size={18} strokeWidth={2} />
+          <span className="text-sm font-medium">Configuración</span>
+        </motion.div>
+        
+        <div className="flex items-center gap-3 px-3 py-4 mt-2 border-t border-wadi-gray-50">
+            <div className="w-8 h-8 rounded-full bg-wadi-gray-200 flex items-center justify-center shrink-0">
+                <User size={16} className="text-wadi-gray-500" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+                <p className="text-xs font-bold text-wadi-gray-900 truncate">
+                  {user?.user_metadata?.display_name || user?.email?.split('@')[0] || "Usuario"}
+                </p>
+                <p className="text-[10px] text-wadi-gray-500 truncate">
+                  {isAdmin ? "Admin" : "Socio de Negocios"}
+                </p>
+            </div>
+            <button title="Cerrar sesión" onClick={handleLogout} className="shrink-0 p-1 rounded-md hover:bg-red-50 group transition-colors">
+              <LogOut size={16} className="text-wadi-gray-400 group-hover:text-red-500 transition-colors" />
+            </button>
         </div>
       </div>
     </aside>

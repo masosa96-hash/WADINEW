@@ -1,6 +1,23 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../config/supabase";
+import Button from "../components/Button";
+
+interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+const InputField: React.FC<InputFieldProps> = ({ label, ...props }) => (
+  <div className="mb-5">
+    <label className="block text-xs font-medium text-wadi-gray-500 mb-1.5 font-wadi-mono uppercase tracking-wider">
+      {label}
+    </label>
+    <input 
+      className="w-full px-4 py-3 bg-white border border-wadi-gray-300 rounded-xl text-wadi-gray-900 placeholder:text-wadi-gray-300 focus:ring-2 focus:ring-wadi-accent-end/30 focus:border-wadi-accent-end"
+      {...props} 
+    />
+  </div>
+);
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -69,101 +86,67 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-wadi-base text-wadi-text">
-
-      <div className="w-full max-w-sm p-8 border border-wadi-border rounded bg-wadi-surface/50">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-mono font-bold tracking-tighter text-wadi-text mb-2">
-            WADI<span className="text-wadi-accent">.SYS</span>
-          </h1>
-          <p className="text-xs font-mono text-wadi-muted uppercase tracking-widest">
-            New Identity Registration
-          </p>
+    <div className="min-h-screen bg-wadi-gray-50 flex items-center justify-center p-6 font-wadi-sans">
+      <div className="bg-white p-10 rounded-3xl border border-wadi-gray-100 shadow-sm w-full max-w-lg">
+        <div className="text-center mb-10">
+          <h2 className="text-sm font-wadi-mono text-wadi-gray-500 uppercase tracking-widest flex items-center justify-center gap-2">
+            wadi<span className="text-wadi-accent-start">.ai</span>
+          </h2>
+          <p className="text-3xl font-bold text-wadi-gray-900 mt-2">Create Identity</p>
         </div>
 
         {error && (
-          <div className="bg-wadi-error/10 border border-wadi-error text-wadi-error p-3 rounded mb-6 text-xs font-mono">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl mb-6 text-sm">
             ERROR: {error}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-5">
-          <div>
-            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
-              Display Name
-            </label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="wadi-input w-full"
-              required
-              autoFocus
-              autoComplete="username"
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
-              Identity
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="wadi-input w-full"
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
-              Access Key
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="wadi-input w-full"
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-xs font-mono text-wadi-muted uppercase">
-              Beta Invite Code
-            </label>
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-              className="wadi-input w-full"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary py-3 text-sm"
-          >
-            {loading ? "CREATING ID..." : "REGISTER IDENTITY"}
-          </button>
+        <form onSubmit={handleRegister}>
+          <InputField 
+            label="Display Name" 
+            placeholder="Your name or handle" 
+            type="text" 
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            autoFocus
+            autoComplete="username"
+          />
+          <InputField 
+            label="Identity (Email)" 
+            placeholder="you@domain.com" 
+            type="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <InputField 
+            label="Access Key (Password)" 
+            placeholder="••••••••" 
+            type="password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+          <InputField 
+            label="Beta Invite Code" 
+            placeholder="WADI-BETA-XXXX" 
+            type="text" 
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            required
+          />
+          
+          <Button type="submit" variant="primary" className="w-full mt-6 py-3 text-base" disabled={loading}>
+            {loading ? "Creating ID..." : "Register Identity"}
+          </Button>
         </form>
-
-        <div className="mt-8 text-center border-t border-wadi-border/50 pt-4">
-          <p className="text-[10px] text-wadi-muted font-mono">
-            ALREADY REGISTERED?{" "}
-            <Link to="/login" className="text-wadi-accent hover:underline">
-              INITIATE SESSION
-            </Link>
-          </p>
+        
+        <div className="mt-10 pt-6 border-t border-wadi-gray-100 text-center text-sm text-wadi-gray-500">
+          Already registered? <Link to="/login" className="font-semibold text-wadi-accent-end hover:underline">Initiate Session</Link>
         </div>
-      </div>
-
-      <div className="mt-8 text-center">
-        <p className="text-[9px] font-mono text-wadi-muted/30 uppercase tracking-[0.2em]">
-          System v5.0 // Deep Bunker Layout
-        </p>
       </div>
     </div>
   );

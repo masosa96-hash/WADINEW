@@ -3,10 +3,10 @@ import Sidebar from "./Sidebar";
 
 export default function Layout() {
   return (
-    <div className="flex w-full h-screen bg-wadi-base text-wadi-text overflow-hidden font-sans">
+    <div className="flex w-full h-screen font-wadi-sans overflow-hidden">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-transparent">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-white">
         {/* Invisible Context Header - Only shows essential status if busy */}
         <div className="absolute top-4 right-6 z-50 flex items-center pointer-events-none">
              {/* We can use this area for very subtle status indicators if needed, or leave empty for Zen */}
@@ -16,7 +16,7 @@ export default function Layout() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-black/5 hover:scrollbar-thumb-black/10">
+        <div className="flex-1 overflow-auto relative scrollbar-thin scrollbar-thumb-wadi-gray-100 hover:scrollbar-thumb-wadi-gray-200">
           <div className="max-w-3xl mx-auto h-full px-6 flex flex-col">
              <Outlet />
           </div>
