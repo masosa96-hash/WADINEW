@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { API_URL } from "../config/api";
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, User, Bot } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProjectsStore } from '../store/projectsStore';
 import { useChatStore } from '../store/chatStore';
+import ChatMessage from '../components/ChatMessage';
+import ChatInput from '../components/ChatInput';
 
 // Central constant — avoids magic string bugs
 export const GUEST_PROJECT_ID = "guest";
@@ -15,13 +17,13 @@ function AssistantMessage({ message, onAction }: { message: any, onAction: (t: s
   
   if (message.ui_hint === "clarification_cards") {
     return (
-      <div className="space-y-4">
-        <div className="bg-blue-50/80 p-4 rounded-xl border border-blue-100/50 shadow-sm">
-          <p className="font-medium text-blue-900">{message.message}</p>
+      <div className="space-y-4 font-wadi-sans text-sm">
+        <div className="bg-wadi-gray-50 p-4 rounded-xl border border-wadi-gray-100 shadow-sm">
+          <p className="font-medium text-wadi-gray-900">{message.message}</p>
         </div>
         <div className="flex flex-col gap-2">
           {message.questions?.map((q: string, i: number) => (
-            <button key={i} onClick={() => onAction(q)} className="text-left px-5 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 hover:shadow-sm transition-all text-gray-700 font-medium">
+            <button key={i} onClick={() => onAction(q)} className="text-left px-5 py-3 bg-white border border-wadi-gray-200 rounded-xl hover:border-wadi-accent-end hover:bg-wadi-gray-50 transition-all text-wadi-gray-700 font-medium shadow-sm">
               {q}
             </button>
           ))}
@@ -32,18 +34,18 @@ function AssistantMessage({ message, onAction }: { message: any, onAction: (t: s
 
   if (message.ui_hint === "confirmation_panel") {
     return (
-      <div className="space-y-4 max-w-sm">
-        <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
-          <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">✨ Resumen de tu Idea</h4>
-          <div className="space-y-3 text-sm text-indigo-800 bg-white p-4 rounded-xl border border-indigo-50/50">
-            <p><strong className="text-indigo-900">Proyecto:</strong> {message.intent?.idea}</p>
-            <p><strong className="text-indigo-900">Enfoque:</strong> {message.intent?.domain}</p>
-            <p><strong className="text-indigo-900">Usuarios:</strong> {message.intent?.target}</p>
+      <div className="space-y-4 max-w-sm font-wadi-sans text-sm">
+        <div className="bg-wadi-black text-white p-6 rounded-2xl shadow-xl">
+          <h4 className="font-bold mb-4 flex items-center gap-2 tracking-wide font-wadi-mono text-xs uppercase text-wadi-accent-start">✨ Resumen de tu Idea</h4>
+          <div className="space-y-3 text-wadi-gray-300 bg-wadi-gray-900/50 p-4 rounded-xl border border-wadi-gray-700">
+            <p><strong className="text-wadi-gray-100">Proyecto:</strong> {message.intent?.idea}</p>
+            <p><strong className="text-wadi-gray-100">Enfoque:</strong> {message.intent?.domain}</p>
+            <p><strong className="text-wadi-gray-100">Usuarios:</strong> {message.intent?.target}</p>
           </div>
-          <p className="mt-5 text-sm font-medium text-indigo-900 text-center">{message.message}</p>
+          <p className="mt-5 font-medium text-center">{message.message}</p>
           <div className="mt-4 flex gap-3">
-             <button onClick={() => onAction("Sí, confirmar y avanzar")} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 shadow-indigo-600/20">Confirmar</button>
-             <button onClick={() => onAction("Quiero ajustar algunos detalles")} className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-bold transition-colors active:scale-95">Editar</button>
+             <button onClick={() => onAction("Sí, confirmar y avanzar")} className="flex-1 bg-wadi-accent-start hover:bg-wadi-accent-start/90 text-white py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-xs">Confirmar</button>
+             <button onClick={() => onAction("Quiero ajustar algunos detalles")} className="flex-1 bg-wadi-gray-800 border-none hover:bg-wadi-gray-700 text-white py-2.5 rounded-xl font-bold transition-colors active:scale-95 text-xs">Editar</button>
           </div>
         </div>
       </div>
@@ -52,12 +54,12 @@ function AssistantMessage({ message, onAction }: { message: any, onAction: (t: s
   
   if (message.ui_hint === "execution_status") {
      return (
-       <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm max-w-sm">
-          <h4 className="font-black text-emerald-900 text-lg">✅ Proyecto Generado</h4>
-          <p className="text-emerald-800 text-sm mt-1">{message.message}</p>
+       <div className="bg-green-50 p-6 rounded-2xl border border-green-100 shadow-sm max-w-sm font-wadi-sans">
+          <h4 className="font-black text-green-900 text-lg">✅ Proyecto Generado</h4>
+          <p className="text-green-800 text-sm mt-1 mb-4">{message.message}</p>
           {message.first_step && (
-             <div className="mt-4 p-4 bg-white rounded-xl border border-emerald-100/50 text-sm text-gray-700 shadow-sm">
-               <strong className="block text-emerald-900 mb-2 uppercase text-xs tracking-wider">Primer paso recomendado</strong>
+             <div className="p-4 bg-white rounded-xl border border-green-100/50 text-sm text-wadi-gray-700 shadow-sm font-wadi-mono">
+               <strong className="block text-green-700 mb-2 uppercase text-[10px] tracking-wider">Primer paso recomendado</strong>
                {message.first_step}
              </div>
           )}
@@ -66,7 +68,7 @@ function AssistantMessage({ message, onAction }: { message: any, onAction: (t: s
   }
 
   // Fallback
-  return <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{message.message || (typeof message === "string" ? message : JSON.stringify(message))}</div>;
+  return <div className="whitespace-pre-wrap text-wadi-gray-800 leading-relaxed font-wadi-sans text-sm">{message.message || (typeof message === "string" ? message : JSON.stringify(message))}</div>;
 }
 
 export default function Chat() {
@@ -234,151 +236,117 @@ export default function Chat() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-white text-gray-800 font-sans relative">
-      <header className="px-6 py-3 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="flex flex-col h-full bg-white text-wadi-gray-900 relative pb-32">
+      <header className="px-6 py-4 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10 font-wadi-sans border-b border-wadi-gray-100">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">WADI Online</span>
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
+            <span className="text-[10px] font-bold text-wadi-gray-500 uppercase tracking-widest font-wadi-mono">WADI SECURE CONNECTION</span>
           </div>
           
           {!isGuest && (
             <button 
               onClick={() => navigate(`/projects/${id}/builder`)}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors border border-blue-100 px-3 py-1 rounded-full bg-blue-50/50"
+              className="text-[10px] font-bold text-wadi-accent-end border border-wadi-accent-end/20 px-3 py-1 rounded-full bg-wadi-accent-end/5 uppercase tracking-wider hover:bg-wadi-accent-end/10 transition-colors"
             >
-              🔨 ABRIR CONSTRUCTOR
+              Building Mode
             </button>
           )}
         </div>
         {isGuest && (
-          <div className="text-[10px] text-gray-400 italic">
-            Sesión efímera — <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">Iniciá sesión</button> para guardar historial
+          <div className="text-[10px] text-wadi-gray-400 font-wadi-mono uppercase tracking-wider">
+            Guest Session <span className="mx-2">•</span> <button onClick={() => navigate('/login')} className="text-wadi-accent-end hover:underline font-bold">Login to persist</button>
           </div>
         )}
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 scrollbar-thin scrollbar-thumb-gray-200">
-        <div className="max-w-3xl mx-auto space-y-12 pb-10">
+      <div className="flex-1 w-full">
+        <div className="w-full">
           {displayMessages.length === 0 && (
-            <div className="text-center py-20 px-6">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bot size={24} />
+            <div className="text-center py-32 px-6 font-wadi-sans">
+              <div className="w-16 h-16 bg-wadi-black text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <Bot size={32} />
               </div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">WADI: Socio Operacional</h2>
-              <div className="text-gray-500 max-w-sm mx-auto leading-relaxed space-y-4">
+              <h2 className="text-2xl font-bold text-wadi-gray-900 mb-4 tracking-tight">WADI Engine</h2>
+              <div className="text-wadi-gray-500 max-w-md mx-auto leading-relaxed space-y-4 font-medium text-sm">
                 {isGuest ? (
                   <p>
-                    Traé una idea, aunque esté desordenada. En segundos la convierto en un plan claro y accionable. No hace falta que esté perfecta. Arrancamos desde donde estés.
+                    Describe tu idea, sin filtros. WADI se encarga de convertirla en un sistema escalable y funcional. Empecemos ahora.
                   </p>
                 ) : projects.length > 0 ? (
                   <p>
-                    Tenés proyectos en marcha. ¿Querés mejorar uno o arrancar algo nuevo? Lo bajamos a tierra y lo hacemos avanzar. No acumulemos ideas, estructurémoslas.
+                    ¿Qué quieres construir hoy? Tienes proyectos en tu base de datos, modifícalos o genera un nuevo núcleo.
                   </p>
                 ) : (
                   <p>
-                    ¿Qué estamos construyendo ahora? Traé la próxima idea o mejoramos un proyecto existente. Vamos a hacerlo más claro y más ejecutable.
+                    Sistema operativo. Detalla el problema y nosotros diseñaremos e implementaremos la arquitectura completa.
                   </p>
                 )}
                 
                 {(!isGuest && projects.length === 0) && (
-                  <div className="pt-4 text-xs font-medium text-blue-600 uppercase tracking-widest animate-pulse">
-                    Listo para tu primer Crystallize
+                  <div className="pt-6 mt-6 border-t border-wadi-gray-100 text-[10px] font-bold text-wadi-accent-start uppercase tracking-widest animate-pulse font-wadi-mono">
+                    Aguardando input para iniciar Forge Engine
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {displayMessages.map((msg, index) => (
-            <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex gap-4 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === 'user' ? 'bg-gray-100' : 'bg-blue-50 text-blue-600'
-                }`}>
-                  {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                </div>
-
-                <div className="space-y-2">
-                  <div className={`text-sm leading-relaxed ${
-                    msg.role === 'user' ? 'bg-gray-50 p-4 rounded-2xl border border-gray-100' : 'pt-1'
-                  }`}>
-                    {msg.role === 'assistant' && typeof msg.content === 'object' ? (
-                       <AssistantMessage message={msg.content} onAction={(actionInput) => {
-                         setInput(actionInput);
-                         setTimeout(() => document.getElementById('chat-input')?.focus(), 50);
-                       }} />
-                    ) : (
-                       <div className="whitespace-pre-wrap text-gray-800">{msg.content}</div>
-                    )}
-                  </div>
+          {displayMessages.map((msg, index) => {
+             const isObject = msg.role === 'assistant' && typeof msg.content === 'object';
+             return (
+                <div key={msg.id} className="w-full relative">
+                  {isObject ? (
+                     <div className="w-full py-8 bg-wadi-gray-50/50">
+                        <div className="max-w-3xl mx-auto px-4 pl-[4.5rem]">
+                            <AssistantMessage message={msg.content} onAction={(actionInput) => {
+                              setInput(actionInput);
+                              setTimeout(() => document.getElementById('chat-input')?.focus(), 50);
+                            }} />
+                        </div>
+                     </div>
+                  ) : (
+                    <ChatMessage 
+                       role={msg.role as 'user' | 'assistant'} 
+                       content={msg.content as string} 
+                       insights={msg.id === 'streaming-assistant' ? undefined : undefined} 
+                    />
+                  )}
 
                   {/* Crystal suggestion */}
                   {msg.role === 'assistant' && suggestion && index === displayMessages.length - 1 && (
-                    <div className="mt-4 p-4 border border-blue-200 bg-blue-50/50 rounded-xl animate-in fade-in slide-in-from-bottom-2 shadow-sm">
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <h4 className="text-sm font-bold text-blue-900">🚀 Idea Detectada: {JSON.parse(suggestion.content).name}</h4>
-                          <p className="text-xs text-blue-700 mt-1">{JSON.parse(suggestion.content).content}</p>
-                          {isGuest && (
-                             <p className="text-[10px] text-blue-500/70 mt-2 italic font-medium">
-                               Esta idea se guardará en tu sesión efímera.
-                             </p>
-                          )}
+                    <div className="w-full bg-wadi-gray-50/30 border-y border-wadi-accent-start/20 py-8">
+                      <div className="max-w-3xl mx-auto px-4 pl-[4.5rem]">
+                        <div className="p-5 border border-wadi-accent-start/30 bg-wadi-accent-start/5 rounded-2xl shadow-sm">
+                          <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                            <div>
+                              <h4 className="text-sm font-bold text-wadi-gray-900 flex items-center gap-2">
+                                <span className="text-wadi-accent-start">⚡</span> {JSON.parse(suggestion.content).name}
+                              </h4>
+                              <p className="text-sm text-wadi-gray-600 mt-2 font-wadi-sans">{JSON.parse(suggestion.content).content}</p>
+                            </div>
+                            <button
+                              onClick={handleCrystallize}
+                              className="px-6 py-3 bg-wadi-black text-white text-xs font-bold rounded-xl hover:bg-wadi-gray-900 transition-all shadow-xl hover:-translate-y-0.5 whitespace-nowrap"
+                            >
+                              {isCrystallizing ? 'INITIALIZING...' : 'CRYSTALLIZE'}
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={handleCrystallize}
-                          className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 whitespace-nowrap"
-                          title="Convertir esta idea en un proyecto estructurado"
-                        >
-                          {isCrystallizing ? 'Creating...' : 'Crystallize Project'}
-                        </button>
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          ))}
+             );
+          })}
 
-          <div ref={scrollRef} />
+          <div ref={scrollRef} className="h-10" />
         </div>
       </div>
 
-      {/* Input */}
-      <footer className="p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent">
-        <div className="max-w-3xl mx-auto relative">
-          <textarea
-            id="chat-input"
-            name="chat-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Escribí tu idea desordenada acá..."
-            className="w-full p-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-gray-400 font-light"
-            rows={1}
-            style={{ minHeight: '60px' }}
-            disabled={isStreaming}
-            autoFocus
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isStreaming}
-            className="absolute right-3 bottom-3 p-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send size={18} />
-          </button>
-        </div>
-        <p className="text-center text-[10px] text-gray-400 mt-4">
-          WADI v0.1 | Basado en el sistema de Personas Dinámicas
-        </p>
-      </footer>
+      {/* Input Flotante */}
+      <ChatInput input={input} setInput={setInput} handleSend={handleSend} isStreaming={!!isStreaming} />
     </div>
   );
 }

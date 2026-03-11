@@ -47,10 +47,16 @@ export default function Register() {
       return;
     }
 
-    // 2. Auth SignUp
+    // 2. Auth SignUp con Metadata
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName,
+          invite_code: inviteCode,
+        },
+      },
     });
 
     if (authError) {
@@ -66,16 +72,8 @@ export default function Register() {
         .update({ used: true, used_by: data.user.id })
         .eq("code", inviteCode);
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert([{ user_id: data.user.id, display_name: displayName }]);
-
-      if (profileError) {
-        console.error("Profile creation failed:", profileError);
-        setError("Account created but profile setup failed: " + profileError.message);
-        setLoading(false);
-        return;
-      }
+      // El perfil ahora se crea automáticamente gracias al Trigger en la DB
+      console.log("Identidad creada y perfil aprovisionado automáticamente.");
 
       setLoading(false);
       navigate("/projects");
