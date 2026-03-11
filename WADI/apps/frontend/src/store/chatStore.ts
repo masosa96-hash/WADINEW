@@ -46,7 +46,7 @@ interface ChatState {
   openConversation: (id: string, initialTitle?: string) => Promise<void>;
   startNewConversation: (initialTitle?: string) => Promise<string | null>;
   sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
-  sendMessageStream: (projectId: string, content: string) => Promise<void>;
+  sendMessageStream: (content: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   deleteSelectedConversations: (ids?: string[]) => Promise<void>;
 
@@ -230,12 +230,10 @@ export const useChatStore = create<ChatState>()(
 
       sendMessage: async (content: string) => {
         // Legacy sendMessage refactored to use sendMessageStream if possible
-        const { activeId } = get();
-        if (!activeId) return;
-        await get().sendMessageStream(activeId, content);
+        await get().sendMessageStream(content);
       },
 
-      sendMessageStream: async (projectId: string, content: string) => {
+      sendMessageStream: async (content: string) => {
         get().cancelStream();
         const controller = new AbortController();
 

@@ -215,7 +215,7 @@ export default function Chat() {
     if (!firstMessageAt) {
       setFirstMessageAt(new Date().toISOString());
     }
-    await sendMessageStream(id, currentInput);
+    await sendMessageStream(currentInput);
   };
 
   // ─── Message display ──────────────────────────────────────────────────────
