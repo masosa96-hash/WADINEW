@@ -15,7 +15,7 @@ export default function ChatRedirect() {
 
     // Guest mode — skip projects entirely, go to ephemeral chat
     if (!user) {
-      navigate("/projects/guest", { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -29,7 +29,7 @@ export default function ChatRedirect() {
     if (error) return;
 
     if (projects.length > 0) {
-      navigate(`/projects/${projects[0].id}`, { replace: true });
+      navigate(`/projects/${projects[0].id}/chat`, { replace: true });
     } else if (!loading && !error && projects.length === 0 && initialized.current) {
       // Authenticated user with no projects — auto-create GENERAL
       createProject("GENERAL", "Default Operational Context").catch((e) =>

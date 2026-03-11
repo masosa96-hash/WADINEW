@@ -72,7 +72,7 @@ function AssistantMessage({ message, onAction }: { message: any, onAction: (t: s
 }
 
 export default function Chat() {
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { session } = useAuthStore();
   const { projects } = useProjectsStore();
@@ -84,6 +84,10 @@ export default function Chat() {
     openConversation 
   } = useChatStore();
 
+  // If no ID in URL, we are on the home route.
+  // If user is logged in, we COULD redirect to their first project or GENERAL.
+  // For now, let's just use "guest" if NO id is provided, to keep it consistent with the user's request.
+  const id = paramId || GUEST_PROJECT_ID;
   const isGuest = id === GUEST_PROJECT_ID;
 
   const [input, setInput] = useState('');
@@ -94,10 +98,10 @@ export default function Chat() {
 
   // ─── Load history (authenticated users only) ──────────────────────────────
   useEffect(() => {
-    if (!isGuest && id && session?.access_token) {
+    if (id) {
       openConversation(id);
     }
-  }, [id, isGuest, openConversation, session?.access_token]);
+  }, [id, openConversation]);
 
   // ─── Auto-scroll ──────────────────────────────────────────────────────────
   useEffect(() => {

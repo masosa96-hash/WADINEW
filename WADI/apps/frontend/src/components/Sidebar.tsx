@@ -20,7 +20,7 @@ import { SettingsModal } from './SettingsModal';
 import { GUEST_PROJECT_ID } from '../views/Chat';
 
 const menuItems = [
-  { icon: MessageSquare, label: 'Chat Principal', path: '/chat' },
+  { icon: MessageSquare, label: 'Chat Principal', path: '/' },
   { icon: LayoutGrid, label: 'Mis Proyectos', path: '/projects' },
   { icon: Database, label: 'Knowledge Base', path: '/knowledge' },
 ];
@@ -56,12 +56,12 @@ export const Sidebar: React.FC = () => {
 
   const handleOpenChat = (id: string) => {
      openConversation(id);
-     navigate('/chat');
+     navigate('/');
   };
 
   const handleNewChat = () => {
      startNewConversation();
-     navigate('/chat');
+     navigate('/');
   };
 
   const handleLogout = async () => {
