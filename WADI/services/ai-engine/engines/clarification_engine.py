@@ -2,7 +2,7 @@ def generate_questions(missing_dims: list, user_context: dict, pattern_context: 
     questions: list[str] = []
 
     if "goal" in missing_dims:
-        questions.append("¿Qué querés lograr con esta idea?")
+        questions.append("¿Qué querés lograr con esto? Sé específico, no me vengas con 'cambiar el mundo'.")
 
     if "target_user" in missing_dims:
         # Usa patrón colectivo si existe y aplica
@@ -12,22 +12,22 @@ def generate_questions(missing_dims: list, user_context: dict, pattern_context: 
                     questions.append(q)
                     break
             else:
-                questions.append("¿Para quién sería esto?")
+                questions.append("¿Para quién es esto? ¿Quién se supone que lo va a usar?")
         else:
-            questions.append("¿Para quién sería esto?")
+            questions.append("¿Para quién es esto? ¿Quién se supone que lo va a usar?")
 
     if "project_type" in missing_dims:
         # Usa memoria de usuario para personalizar
         if user_context and user_context.get("projects_count", 0) > 0:
-            questions.append("Como tus proyectos anteriores fueron de negocio, ¿esto también apunta a crear un negocio o es algo personal?")
+            questions.append("Como tus laburos anteriores fueron de negocio, ¿esto también es para facturar o es un hobby personal?")
         else:
-            questions.append("¿Esto es un negocio, proyecto personal, contenido o software?")
+            questions.append("¿Esto es un negocio, algo personal, contenido o solo software para jugar?")
 
     if "scale" in missing_dims:
-        questions.append("¿A qué escala te gustaría desarrollar esto?")
+        questions.append("¿A qué escala lo pensás? ¿Algo para vos o para que lo use el mundo entero?")
         
     if "constraints" in missing_dims:
-        questions.append("¿Tenés alguna limitación de tiempo o presupuesto?")
+        questions.append("¿Tenés límites de tiempo o presupuesto, o pensás que los recursos son infinitos?")
 
     res = []
     for q in questions:

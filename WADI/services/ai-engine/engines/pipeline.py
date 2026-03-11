@@ -49,7 +49,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             
             return build_response(
                 stage="clarification",
-                message="Necesito entender mejor tu idea.",
+                message="Tengo un par de ideas de por dónde ir, pero tu planteo es puro humo todavía. Decime qué tenés en mente realmente y le damos forma.",
                 questions=questions,
                 state=state
             )
@@ -92,7 +92,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             
             return build_response(
                 stage="clarification",
-                message="Sigamos afinando detalles.",
+                message="Sigamos afinando. No me hagas perder el tiempo con vaguedades.",
                 questions=[q],
                 state=state
             )
@@ -113,7 +113,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             
             return build_response(
                 stage="project_creation",
-                message="¡Proyecto generado exitosamente!",
+                message="Listo. El caos ahora es código. No lo rompas.",
                 state=state,
                 intent=intent,
                 project=project,
@@ -125,7 +125,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             state["intent_confidence"] -= 0.3 # Baja confianza lógica
             return build_response(
                 stage="clarification",
-                message="Entendido. Revisemos de nuevo.",
+                message="Entendido. Otra vuelta al barro. Decime qué querés corregir.",
                 questions=["¿Qué parte te gustaría cambiar o ajustar específicamente?"],
                 state=state
             )
@@ -159,12 +159,11 @@ def build_confirmation_response(intent: dict, state: dict):
     target = intent.get("target", "")
     
     confirmation_message = (
-        f"Si entendí bien tu idea es:\n"
+        f"A ver si te sigo:\n"
         f"• Proyecto: {idea_text}\n"
         f"• Enfoque de: {domain}\n"
-        f"• Dirigido a: {target}\n\n"
-        f"Tengo una estructura de proyecto lista.\n"
-        f"¿Querés que lo convierta en un proyecto y te dé el primer paso?"
+        f"• Para: {target}\n\n"
+        f"Es un plan decente. ¿Querés que lo baje a tierra y te dé el primer paso?"
     )
     
     return build_response(
