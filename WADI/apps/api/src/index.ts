@@ -42,6 +42,7 @@ app.use(helmet());
 app.use((req, res, next) => {
   const allowedOrigins = [
     'https://wadi-wxg7.onrender.com', 
+    'https://wadi-api-u2vx.onrender.com',
     'http://localhost:5173', 
     'http://localhost:3000'
   ];
@@ -49,14 +50,13 @@ app.use((req, res, next) => {
 
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    // Default to production if no match (or block, but for now we want to be safe)
-    // Actually, if we don't send the header, browser blocks it. 
-    // Let's allow specific origins only.
+  } else if (!origin) {
+    // Allow server-to-server or non-browser requests
+    res.header('Access-Control-Allow-Origin', '*');
   }
 
   res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, x-wadi-session');
   res.header('Access-Control-Allow-Credentials', 'true');
 
   // 2. Responder de inmediato a la "comprobación previa" (OPTIONS)
