@@ -67,6 +67,7 @@ interface ChatState {
   riskCount: number;
   fetchCriminalSummary: () => Promise<void>;
 
+  guestSessionId: string | null;
   // Deprecated/Legacy compatibility aliases
   isWadiThinking: boolean;
   conversationId: string | null;
@@ -96,6 +97,7 @@ export const useChatStore = create<ChatState>()(
       auditCount: 0,
       riskCount: 0,
       abortController: null,
+      guestSessionId: null,
 
       // Aliases
       get isWadiThinking() {
@@ -249,11 +251,18 @@ export const useChatStore = create<ChatState>()(
           } = await supabase.auth.getSession();
           const token = session?.access_token;
 
+          // Ensure guest session ID exists
+          let gSid = get().guestSessionId;
+          if (!gSid) {
+            gSid = crypto.randomUUID();
+            set({ guestSessionId: gSid });
+          }
+
           const response = await fetch(`${API_URL}/api/wadi/interpret`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(token ? { Authorization: `Bearer ${token}` } : { "x-wadi-session": gSid }),
             },
             body: JSON.stringify({ message: content }),
             signal: controller.signal,

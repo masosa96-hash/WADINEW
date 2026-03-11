@@ -17,11 +17,8 @@ export const handleWadiInterpret = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    throw new AppError("UNAUTHORIZED", "Se requiere autenticación para usar Wadi", 401);
-  }
+  // Fallback to session header for guests
+  const userId = req.user?.id || (req.headers["x-wadi-session"] as string) || "GUEST_SESSION";
 
   const { message } = req.body;
 
@@ -39,11 +36,7 @@ export const handleWadiReset = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    throw new AppError("UNAUTHORIZED", "Se requiere autenticación", 401);
-  }
+  const userId = req.user?.id || (req.headers["x-wadi-session"] as string) || "GUEST_SESSION";
 
   await resetConversationState(userId);
 

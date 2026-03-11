@@ -38,11 +38,22 @@ export interface WadiInterpretResult {
   state: WadiState;
 }
 
+const GUEST_STATE_CACHE = new Map<string, WadiState>();
+
+// Helper: es un UUID válido?
+function isUUID(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
 // ---------------------------------------------------------------------------
-// Cargar estado desde Supabase
+// Cargar estado
 // ---------------------------------------------------------------------------
 
 async function loadConversationState(userId: string): Promise<WadiState | null> {
+  if (!isUUID(userId)) {
+    return GUEST_STATE_CACHE.get(userId) ?? null;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from("wadi_conversation_states")
@@ -59,10 +70,15 @@ async function loadConversationState(userId: string): Promise<WadiState | null> 
 }
 
 // ---------------------------------------------------------------------------
-// Guardar estado en Supabase (upsert — una fila por usuario)
+// Guardar estado
 // ---------------------------------------------------------------------------
 
 async function saveConversationState(userId: string, state: WadiState): Promise<void> {
+  if (!isUUID(userId)) {
+    GUEST_STATE_CACHE.set(userId, state);
+    return;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from("wadi_conversation_states")
@@ -90,6 +106,7 @@ async function callAiEngine(
   userId: string,
   state: WadiState | null
 ): Promise<WadiInterpretResult> {
+  // Para el AI Engine, si no es UUID lo pasamos igual como identificador de sesión
   const response = await fetch(`${AI_ENGINE_URL}/wadi/interpret`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -112,39 +129,33 @@ export async function interpretMessage(
   message: string,
   userId: string
 ): Promise<WadiInterpretResult> {
-  // 1. Cargar estado previo del usuario
+  // 1. Cargar estado previo
   const currentState = await loadConversationState(userId);
 
   logger.info({
     msg: "wadi_interpret_start",
     userId,
+    isGuest: !isUUID(userId),
     stage: currentState?.stage ?? "new",
-    confidence: currentState?.intent_confidence ?? 0,
   });
 
-  // 2. Llamar al AI Engine con el estado completo
+  // 2. Llamar al AI Engine
   const result = await callAiEngine(message, userId, currentState);
 
-  // 3. Persistir el nuevo estado (siempre que el engine devuelva state)
+  // 3. Persistir
   if (result.state) {
     await saveConversationState(userId, result.state);
   }
 
-  logger.info({
-    msg: "wadi_interpret_done",
-    userId,
-    newStage: result.stage,
-    confidence: result.state?.intent_confidence ?? 0,
-  });
-
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Reset del estado conversacional (para cuando el usuario quiere empezar de cero)
-// ---------------------------------------------------------------------------
-
 export async function resetConversationState(userId: string): Promise<void> {
+  if (!isUUID(userId)) {
+    GUEST_STATE_CACHE.delete(userId);
+    return;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from("wadi_conversation_states")

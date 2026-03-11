@@ -265,7 +265,7 @@ router.post("/projects/:id/evolve", authenticate(), asyncHandler(triggerEvolutio
 // Procesar mensaje del usuario → AI Engine → Supabase
 router.post(
   "/wadi/interpret",
-  authenticate(),
+  authenticate(true),
   rateLimiter,
   asyncHandler(handleWadiInterpret)
 );
@@ -273,7 +273,7 @@ router.post(
 // Reiniciar estado conversacional del usuario
 router.post(
   "/wadi/reset",
-  authenticate(),
+  authenticate(true),
   asyncHandler(handleWadiReset)
 );
 
