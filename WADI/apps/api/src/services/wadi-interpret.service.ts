@@ -14,7 +14,7 @@
 import { supabase } from "../supabase";
 import { logger } from "../core/logger";
 
-const AI_ENGINE_URL = process.env.WADI_AI_ENGINE_URL || "http://localhost:8000";
+const AI_ENGINE_URL = process.env.AI_ENGINE_URL || process.env.WADI_AI_ENGINE_URL || "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
 // Tipos

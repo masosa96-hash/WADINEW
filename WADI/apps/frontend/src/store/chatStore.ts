@@ -252,7 +252,7 @@ export const useChatStore = create<ChatState>()(
           // Ensure guest session ID exists
           let gSid = get().guestSessionId;
           if (!gSid) {
-            gSid = crypto.randomUUID();
+            gSid = `guest-${crypto.randomUUID()}`;
             set({ guestSessionId: gSid });
           }
 
