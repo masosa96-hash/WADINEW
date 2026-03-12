@@ -92,7 +92,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             
             return build_response(
                 stage="clarification",
-                message="Sigamos afinando. No me hagas perder el tiempo con vaguedades.",
+                message="Sigamos afinando. No me hagas perder el tiempo con vueltas, decime la posta.",
                 questions=[q],
                 state=state
             )
@@ -113,7 +113,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             
             return build_response(
                 stage="project_creation",
-                message="Listo. El caos ahora es código. No lo rompas.",
+                message="Listo. El caos ahora es código. No lo rompas, mirá que te estoy observando.",
                 state=state,
                 intent=intent,
                 project=project,
@@ -125,7 +125,7 @@ def process_message(message: str, user_id: str, state: Optional[dict[str, Any]] 
             state["intent_confidence"] -= 0.3 # Baja confianza lógica
             return build_response(
                 stage="clarification",
-                message="Entendido. Otra vuelta al barro. Decime qué querés corregir.",
+                message="Entendido. Otra vuelta al barro. Decime qué querés corregir antes de que me arrepienta.",
                 questions=["¿Qué parte te gustaría cambiar o ajustar específicamente?"],
                 state=state
             )
@@ -159,7 +159,7 @@ def build_confirmation_response(intent: dict, state: dict):
     target = intent.get("target", "")
     
     confirmation_message = (
-        f"A ver si te sigo:\n"
+        f"A ver si te sigo el tren, porque venís medio descarrilado:\n"
         f"• Proyecto: {idea_text}\n"
         f"• Enfoque de: {domain}\n"
         f"• Para: {target}\n\n"

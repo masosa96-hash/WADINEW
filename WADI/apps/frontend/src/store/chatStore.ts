@@ -267,9 +267,8 @@ export const useChatStore = create<ChatState>()(
           });
 
           if (!response.ok) {
-            const errData = await response.json().catch(() => ({ error: "UNKNOWN_ERROR" }));
             set({ chatStatus: "error", streamingContent: "" });
-            useLogStore.getState().addLog(`WADI está ocupado o falló: ${errData.error || errData.message}`, "error");
+            useLogStore.getState().addLog("WADI se tomó un recreo o algo se rompió. Fijate qué hiciste y reintentá.", "error");
             return;
           }
 

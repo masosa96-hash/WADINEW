@@ -276,15 +276,15 @@ export default function Chat() {
               <div className="text-wadi-gray-500 max-w-md mx-auto leading-relaxed space-y-4 font-medium text-sm">
                 {isGuest ? (
                   <p>
-                    Describe tu idea, sin filtros. WADI se encarga de convertirla en un sistema escalable y funcional. Empecemos ahora.
+                    Si tenés una idea, escupila acá. Yo me encargo de que no sea solo humo y se convierta en algo que funcione de verdad. No me hagas perder el tiempo.
                   </p>
                 ) : projects.length > 0 ? (
                   <p>
-                    ¿Qué quieres construir hoy? Tienes proyectos en tu base de datos, modifícalos o genera un nuevo núcleo.
+                    ¿Qué vas a inventar hoy? Ya tenés cosas en la base, pero si querés arrancar algo nuevo de cero, soy todo oídos. Vos decime.
                   </p>
                 ) : (
                   <p>
-                    Sistema operativo. Detalla el problema y nosotros diseñaremos e implementaremos la arquitectura completa.
+                    WADI Engine. Soltá el problema acá arriba. Yo diseño y armo toda la arquitectura para que vos no tengas que mover un dedo. ¿Arrancamos?
                   </p>
                 )}
                 
