@@ -137,6 +137,7 @@ export async function interpretMessage(
     userId,
     isGuest: !isUUID(userId),
     stage: currentState?.stage ?? "new",
+    target_url: AI_ENGINE_URL
   });
 
   // 2. Llamar al AI Engine
