@@ -1,10 +1,32 @@
 services:
   - type: web
+    name: wadi-ai-engine
+    plan: free
+    region: oregon
+    rootDir: WADI/services/ai-engine
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: SUPABASE_URL
+        fromService:
+          type: web
+          name: wadi-api
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromService:
+          type: web
+          name: wadi-api
+          envVarKey: SUPABASE_ANON_KEY
+
+  - type: web
     name: wadi-api
     plan: free
     region: oregon
     rootDir: WADI
-    env: node
+    runtime: node
     buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @wadi/db-types build && pnpm --filter @wadi/core build && pnpm --filter @wadi/persona build && pnpm --filter wadi-api build
     startCommand: node apps/api/dist/index.js
     envVars:
@@ -12,3 +34,5 @@ services:
         value: true
       - key: PORT
         value: 10000
+      - key: WADI_AI_ENGINE_URL
+        value: "http://wadi-ai-engine:8000"
