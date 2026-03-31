@@ -106,19 +106,34 @@ async function callAiEngine(
   userId: string,
   state: WadiState | null
 ): Promise<WadiInterpretResult> {
-  // Para el AI Engine, si no es UUID lo pasamos igual como identificador de sesión
-  const response = await fetch(`${AI_ENGINE_URL}/wadi/interpret`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, user_id: userId, state }),
-    signal: AbortSignal.timeout(15_000), // 15s máximo
-  });
+  try {
+    // Para el AI Engine, si no es UUID lo pasamos igual como identificador de sesión
+    const response = await fetch(`${AI_ENGINE_URL}/wadi/interpret`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, user_id: userId, state }),
+      signal: AbortSignal.timeout(15_000), // 15s máximo
+    });
 
-  if (!response.ok) {
-    throw new Error(`AI Engine error: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      logger.error(`AI Engine HTTP Error: ${response.status} ${response.statusText}`);
+      return {
+        stage: state?.stage || "exploration",
+        message: `⚠️ Hubo un problema al conectar con el núcleo neuronal (HTTP ${response.status}). Asegurate de que el AI Engine esté levantado.`,
+        state: state || { stage: "exploration", questions_asked: 0, intent_confidence: 0, idea_vector: {}, missing_dims: [] }
+      };
+    }
+
+    return response.json() as Promise<WadiInterpretResult>;
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logger.error(`AI Engine Fetch Error: ${errMsg}`);
+    return {
+       stage: state?.stage || "exploration",
+       message: "⚠️ Imposible comunicar con el AI Engine local o remoto (Fetch falló). Revisá si FastAPI está corriendo en el puerto correspondiente.",
+       state: state || { stage: "exploration", questions_asked: 0, intent_confidence: 0, idea_vector: {}, missing_dims: [] }
+    };
   }
-
-  return response.json() as Promise<WadiInterpretResult>;
 }
 
 // ---------------------------------------------------------------------------

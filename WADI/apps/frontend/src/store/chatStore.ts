@@ -236,12 +236,17 @@ export const useChatStore = create<ChatState>()(
       sendMessageStream: async (content: string) => {
         get().cancelStream();
         const controller = new AbortController();
+        const now = new Date().toISOString();
 
-        set({
+        // Optimistically add user message
+        const userMsg: Message = { id: `user-${Date.now()}`, role: "user", content: content, created_at: now };
+
+        set((state) => ({
           chatStatus: "loading",
           streamingContent: "",
           abortController: controller,
-        });
+          messages: [...state.messages, userMsg],
+        }));
 
         try {
           const {
@@ -267,21 +272,27 @@ export const useChatStore = create<ChatState>()(
           });
 
           if (!response.ok) {
-            set({ chatStatus: "error", streamingContent: "" });
+            set((state) => ({ 
+              chatStatus: "error", 
+              streamingContent: "",
+              messages: [
+                 ...state.messages,
+                 { id: `system-${Date.now()}`, role: "assistant", content: { message: "⚠️ WADI está fuera de línea o hubo un error de conexión. Revisá consola." }, created_at: new Date().toISOString() }
+              ]
+            }));
             useLogStore.getState().addLog("WADI se tomó un recreo o algo se rompió. Fijate qué hiciste y reintentá.", "error");
             return;
           }
 
           const data = await response.json();
-          const now = new Date().toISOString();
 
           set((state) => ({
              chatStatus: "idle",
              abortController: null,
              messages: [
                ...state.messages,
-               { id: `user-${Date.now()}`, role: "user", content: content, created_at: now },
-               { id: `assistant-${Date.now()}`, role: "assistant", content: data, created_at: now }
+               // Note: User message already added above
+               { id: `assistant-${Date.now()}`, role: "assistant", content: data, created_at: new Date().toISOString() }
              ]
           }));
 
