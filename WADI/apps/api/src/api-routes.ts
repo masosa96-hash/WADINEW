@@ -262,6 +262,14 @@ router.post("/projects/:id/evolve", authenticate(), asyncHandler(triggerEvolutio
    WADI PIPELINE ROUTES
    ========================================= */
 
+// Health check / fallback para tests desde navegador
+router.get("/wadi/interpret", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Endpoint WADI Interpret activo. Usa un POST request para interactuar."
+  });
+});
+
 // Procesar mensaje del usuario → AI Engine → Supabase
 router.post(
   "/wadi/interpret",
@@ -269,6 +277,14 @@ router.post(
   rateLimiter,
   asyncHandler(handleWadiInterpret)
 );
+
+// Fallback para test desde navegador
+router.get("/wadi/reset", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Endpoint WADI Reset activo. Usa un POST request para interactuar."
+  });
+});
 
 // Reiniciar estado conversacional del usuario
 router.post(
