@@ -31,7 +31,7 @@ services:
     startCommand: node apps/api/dist/index.js
     envVars:
       - key: IS_RENDER
-        value: true
+        value: "true"
       - key: PORT
         value: 10000
       - key: WADI_AI_ENGINE_URL
