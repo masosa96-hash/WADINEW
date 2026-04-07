@@ -4,6 +4,7 @@ import { supabase } from "../config/supabase";
 import { useLogStore } from "./logStore";
 import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 import imageCompression from "browser-image-compression";
+import type { WadiStage } from "@wadi/db-types";
 
 import { API_URL } from "../config/api";
 
@@ -38,7 +39,7 @@ interface ChatState {
   isSidebarOpen: boolean;
   selectedIds: string[]; // For bulk actions
   abortController: AbortController | null;
-  stage: "exploration" | "clarification" | "confirmation" | "project_creation";
+  stage: WadiStage;
   readonly isStreaming: boolean;
   readonly isLoading: boolean;
 

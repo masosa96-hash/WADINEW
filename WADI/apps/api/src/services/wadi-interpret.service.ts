@@ -11,32 +11,15 @@
  * El AI Engine NO persiste estado. Node es el responsable de la memoria.
  */
 
+import { WadiState, WadiInterpretResult, WadiStage } from "@wadi/db-types";
 import { supabase } from "../supabase";
 import { logger } from "../core/logger";
 
 const AI_ENGINE_URL = process.env.AI_ENGINE_URL || process.env.WADI_AI_ENGINE_URL || "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
-// Tipos
+// Pipeline WADI - State Machine logic is in AI Engine, Node persists.
 // ---------------------------------------------------------------------------
-
-export interface WadiState {
-  stage: "exploration" | "clarification" | "confirmation" | "project_creation";
-  questions_asked: number;
-  intent_confidence: number;
-  idea_vector: Record<string, unknown>;
-  missing_dims: string[];
-}
-
-export interface WadiInterpretResult {
-  stage: string;
-  questions?: string[];
-  message?: string;
-  intent?: Record<string, unknown>;
-  project?: Record<string, unknown>;
-  first_step?: string;
-  state: WadiState;
-}
 
 const GUEST_STATE_CACHE = new Map<string, WadiState>();
 
