@@ -4,7 +4,7 @@ import { supabase } from "../config/supabase";
 import { useLogStore } from "./logStore";
 import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 import imageCompression from "browser-image-compression";
-import type { WadiStage, WadiInterpretResult } from "@wadi/db-types";
+import type { WadiStage, WadiProjectContext } from "@wadi/db-types";
 
 import { API_URL } from "../config/api";
 
@@ -40,7 +40,7 @@ interface ChatState {
   selectedIds: string[]; // For bulk actions
   abortController: AbortController | null;
   stage: WadiStage;
-  currentProjectContext: WadiInterpretResult | null;
+  currentProjectContext: WadiProjectContext | null;
   readonly isStreaming: boolean;
   readonly isLoading: boolean;
 
@@ -220,6 +220,8 @@ export const useChatStore = create<ChatState>()(
           conversationTitle: initialTitle || null,
           messages: [],
           chatStatus: "idle",
+          currentProjectContext: null,
+          stage: "exploration",
         });
         return null;
       },
@@ -231,6 +233,8 @@ export const useChatStore = create<ChatState>()(
           conversationTitle: null,
           messages: [],
           chatStatus: "idle",
+          currentProjectContext: null,
+          stage: "exploration",
         });
       },
 
@@ -323,6 +327,12 @@ export const useChatStore = create<ChatState>()(
                     set({ stage: nextStage });
                     console.log(`[WADI_SYNC]: Transición a etapa ${nextStage}`);
                   }
+                  
+                  // Optimización: Sync de Blueprint (ProjectContext)
+                  if (parsed.project_context) {
+                    set({ currentProjectContext: parsed.project_context as WadiProjectContext });
+                    console.log(`[WADI_SYNC]: Blueprint Context actualizado`);
+                  }
 
                   // Si es contenido para el chat
                   if (parsed.content) {
@@ -333,7 +343,6 @@ export const useChatStore = create<ChatState>()(
                   // Si es la meta-data completa del pipeline (para los mensajes)
                   if (parsed.state) {
                     finalData = parsed;
-                    set({ currentProjectContext: parsed as WadiInterpretResult });
                   }
                 } catch (e) {
                   console.warn("[WADI_CHAT]: Sync parse error", e);
@@ -468,7 +477,13 @@ export const useChatStore = create<ChatState>()(
       },
 
       resetChat: () => {
-        set({ activeId: null, messages: [], conversationTitle: null });
+        set({ 
+          activeId: null, 
+          messages: [], 
+          conversationTitle: null,
+          currentProjectContext: null,
+          stage: "exploration"
+        });
       },
 
       wipeChatData: async () => {
@@ -477,7 +492,13 @@ export const useChatStore = create<ChatState>()(
         } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("conversations").delete().eq("user_id", user.id);
-          set({ conversations: [], messages: [], activeId: null });
+          set({ 
+            conversations: [], 
+            messages: [], 
+            activeId: null,
+            currentProjectContext: null,
+            stage: "exploration"
+          });
         }
       },
 

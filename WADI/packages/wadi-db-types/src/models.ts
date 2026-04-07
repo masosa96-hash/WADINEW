@@ -14,6 +14,19 @@ export interface WadiState {
   missing_dims: string[];
 }
 
+export interface ProjectMilestone {
+  title: string;
+  description: string;
+}
+
+export interface WadiProjectContext {
+  project_name: string;
+  summary: string;
+  tech_stack: string[];
+  milestones: ProjectMilestone[];
+  priority: "High" | "Medium" | "Low";
+}
+
 export interface WadiInterpretResult {
   stage: WadiStage;
   ui_hint?: string;
@@ -21,6 +34,7 @@ export interface WadiInterpretResult {
   message?: string;
   intent?: Record<string, unknown>;
   project?: Record<string, unknown>;
+  project_context?: WadiProjectContext;
   first_step?: string;
   state: WadiState;
   content?: string; // SSE support
