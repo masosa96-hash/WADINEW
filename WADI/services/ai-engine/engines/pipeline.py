@@ -1,4 +1,5 @@
 from typing import Optional, Any
+from evolution.project_models import WadiProjectContext
 
 from engines.idea_engine import extract_idea  # type: ignore
 from engines.ambiguity_detector import detect_missing  # type: ignore
@@ -144,6 +145,24 @@ def build_response(stage: str, questions: Optional[list] = None, message: Option
         "ui_hint": ui_map.get(stage, "chat"),
         "state": state
     }
+    
+    # Inyección de Project Context (Blueprint) para el Frontend
+    if stage in ["clarification", "confirmation", "project_creation"]:
+        # Mapeamos lo que tenemos al esquema de Pydantic
+        mapping = {
+            "project_name": (intent or {}).get("idea") or (state or {}).get("idea_vector", {}).get("idea"),
+            "summary": (intent or {}).get("target") or (state or {}).get("idea_vector", {}).get("target"),
+            "tech_stack": [(intent or {}).get("domain", "TypeScript")] if (intent or {}).get("domain") else [],
+            "priority": "Medium"
+        }
+        
+        # Si estamos en project_creation, podemos meter hitos reales si existen
+        if project and "phase_1" in project:
+            mapping["milestones"] = [{"title": "Fase 1", "description": project["phase_1"][0]}]
+            
+        # Sanitizar siempre antes de enviar
+        res["project_context"] = WadiProjectContext.sanitize(mapping).dict()
+
     if message: res["message"] = message
     if questions is not None: res["questions"] = questions
     if intent is not None: res["intent"] = intent
