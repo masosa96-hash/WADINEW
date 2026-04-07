@@ -127,23 +127,29 @@ export async function interpretMessage(
   message: string,
   userId: string
 ): Promise<WadiInterpretResult> {
+  const isGuest = !isUUID(userId);
+
   // 1. Cargar estado previo
   const currentState = await loadConversationState(userId);
 
   logger.info({
     msg: "wadi_interpret_start",
     userId,
-    isGuest: !isUUID(userId),
+    isGuest,
     stage: currentState?.stage ?? "new",
-    target_url: AI_ENGINE_URL
   });
 
-  // 2. Llamar al AI Engine
+  // 2. Llamar al AI Engine (FastAPI)
   const result = await callAiEngine(message, userId, currentState);
 
-  // 3. Persistir
+  // 3. Persistencia Atómica (Antes de devolver al controlador de streaming)
   if (result.state) {
-    await saveConversationState(userId, result.state);
+    try {
+      await saveConversationState(userId, result.state);
+    } catch (saveErr) {
+      logger.error({ msg: "wadi_state_persistence_failed", userId, error: saveErr });
+      // No fallar el flujo completo si falla la persistencia, pero avisar
+    }
   }
 
   return result;

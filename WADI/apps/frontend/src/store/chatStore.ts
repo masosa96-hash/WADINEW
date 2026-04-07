@@ -309,21 +309,30 @@ export const useChatStore = create<ChatState>()(
                 if (data === "[DONE]") continue;
 
                 try {
-                  const parsed = JSON.parse(data);
+                  const dataTrimmed = data.trim();
+                  if (!dataTrimmed) continue;
                   
-                  // If it's a content chunk (streaming message)
+                  const parsed = JSON.parse(dataTrimmed);
+                  
+                  // Optimización: Transition inmediata si llega un stage/new_stage
+                  if (parsed.stage || parsed.new_stage) {
+                    const nextStage = parsed.stage || parsed.new_stage;
+                    set({ stage: nextStage });
+                    console.log(`[WADI_SYNC]: Transición a etapa ${nextStage}`);
+                  }
+
+                  // Si es contenido para el chat
                   if (parsed.content) {
                     fullContent += parsed.content;
                     set({ streamingContent: fullContent });
                   }
                   
-                  // If it's the final metadata (stage, intent, etc)
-                  if (parsed.stage) {
+                  // Si es la meta-data completa del pipeline (para los mensajes)
+                  if (parsed.state) {
                     finalData = parsed;
-                    set({ stage: parsed.stage });
                   }
                 } catch (e) {
-                  console.warn("[WADI_CHAT]: Chunk parse error", e);
+                  console.warn("[WADI_CHAT]: Sync parse error", e);
                 }
               }
             }
