@@ -11,7 +11,7 @@
  * El AI Engine NO persiste estado. Node es el responsable de la memoria.
  */
 
-import { WadiState, WadiInterpretResult, WadiStage } from "@wadi/db-types";
+import type { WadiState, WadiInterpretResult, WadiStage } from "@wadi/db-types";
 import { supabase } from "../supabase";
 import { logger } from "../core/logger";
 
