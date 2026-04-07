@@ -4,7 +4,7 @@ import { supabase } from "../config/supabase";
 import { useLogStore } from "./logStore";
 import { handleSupabaseError } from "../utils/supabaseErrorHandler";
 import imageCompression from "browser-image-compression";
-import type { WadiStage } from "@wadi/db-types";
+import type { WadiStage, WadiInterpretResult } from "@wadi/db-types";
 
 import { API_URL } from "../config/api";
 
@@ -40,6 +40,7 @@ interface ChatState {
   selectedIds: string[]; // For bulk actions
   abortController: AbortController | null;
   stage: WadiStage;
+  currentProjectContext: WadiInterpretResult | null;
   readonly isStreaming: boolean;
   readonly isLoading: boolean;
 
@@ -77,6 +78,7 @@ interface ChatState {
   loadConversations: () => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
   cancelStream: () => void;
+  finalizeProject: () => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -92,6 +94,7 @@ export const useChatStore = create<ChatState>()(
       conversationTitle: null,
       chatStatus: "idle",
       stage: "exploration",
+      currentProjectContext: null,
       isTyping: false,
       streamingContent: "",
       isUploading: false,
@@ -330,6 +333,7 @@ export const useChatStore = create<ChatState>()(
                   // Si es la meta-data completa del pipeline (para los mensajes)
                   if (parsed.state) {
                     finalData = parsed;
+                    set({ currentProjectContext: parsed as WadiInterpretResult });
                   }
                 } catch (e) {
                   console.warn("[WADI_CHAT]: Sync parse error", e);
@@ -604,6 +608,13 @@ export const useChatStore = create<ChatState>()(
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+      },
+      finalizeProject: async () => {
+        set({ chatStatus: "loading", stage: "project_creation" });
+        // Simular orquestación de construcción
+        await new Promise(r => setTimeout(r, 2500));
+        set({ chatStatus: "idle" });
+        useLogStore.getState().addLog("Proyecto cristalizado con éxito. El caos ahora tiene estructura.", "success");
       },
     }),
     {
