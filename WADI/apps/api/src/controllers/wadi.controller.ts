@@ -26,9 +26,37 @@ export const handleWadiInterpret = async (
     throw new AppError("BAD_REQUEST", "El campo 'message' es requerido", 400);
   }
 
-  const result = await interpretMessage(message.trim(), userId);
+  // Set headers for SSE
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
-  return res.json(result);
+  try {
+    const result = await interpretMessage(message.trim(), userId);
+
+    // Simulate streaming for the message part to give a better UX
+    const fullMessage = result.message || "";
+    const words = fullMessage.split(" ");
+    
+    // Send message content in small chunks
+    for (let i = 0; i < words.length; i++) {
+        const chunk = words[i] + (i === words.length - 1 ? "" : " ");
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+        // Tiny delay for UX
+        await new Promise(r => setTimeout(r, 15));
+    }
+
+    // Send the final result with all metadata (stage, intent, etc) and done signal
+    res.write(`data: ${JSON.stringify(result)}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  } catch (error: any) {
+    if (!res.headersSent) {
+      return next(error);
+    }
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
 };
 
 export const handleWadiReset = async (

@@ -38,6 +38,7 @@ interface ChatState {
   isSidebarOpen: boolean;
   selectedIds: string[]; // For bulk actions
   abortController: AbortController | null;
+  stage: "exploration" | "clarification" | "confirmation" | "project_creation";
   readonly isStreaming: boolean;
   readonly isLoading: boolean;
 
@@ -89,6 +90,7 @@ export const useChatStore = create<ChatState>()(
       },
       conversationTitle: null,
       chatStatus: "idle",
+      stage: "exploration",
       isTyping: false,
       streamingContent: "",
       isUploading: false,
@@ -277,33 +279,78 @@ export const useChatStore = create<ChatState>()(
               streamingContent: "",
               messages: [
                  ...state.messages,
-                 { id: `system-${Date.now()}`, role: "assistant", content: { message: "⚠️ WADI está fuera de línea o hubo un error de conexión. Revisá consola." }, created_at: new Date().toISOString() }
+                 { id: `system-${Date.now()}`, role: "assistant", content: { message: "⚠️ WADI está fuera de línea o hubo un error de conexión." }, created_at: new Date().toISOString() }
               ]
             }));
-            useLogStore.getState().addLog("WADI se tomó un recreo o algo se rompió. Fijate qué hiciste y reintentá.", "error");
             return;
           }
 
-          const data = await response.json();
+          // --- SSE Streaming Reader ---
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = "";
+          let finalData: Record<string, unknown> | null = null;
 
+          if (!reader) throw new Error("No reader available");
+
+          set({ chatStatus: "streaming" });
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6).trim();
+                if (data === "[DONE]") continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  
+                  // If it's a content chunk (streaming message)
+                  if (parsed.content) {
+                    fullContent += parsed.content;
+                    set({ streamingContent: fullContent });
+                  }
+                  
+                  // If it's the final metadata (stage, intent, etc)
+                  if (parsed.stage) {
+                    finalData = parsed;
+                    set({ stage: parsed.stage });
+                  }
+                } catch (e) {
+                  console.warn("[WADI_CHAT]: Chunk parse error", e);
+                }
+              }
+            }
+          }
+
+          // Finish streaming
           set((state) => ({
              chatStatus: "idle",
              abortController: null,
+             streamingContent: "",
              messages: [
                ...state.messages,
-               // Note: User message already added above
-               { id: `assistant-${Date.now()}`, role: "assistant", content: data, created_at: new Date().toISOString() }
+               { 
+                 id: `assistant-${Date.now()}`, 
+                 role: "assistant", 
+                 content: finalData || { message: fullContent }, 
+                 created_at: new Date().toISOString() 
+               }
              ]
           }));
 
         } catch (error: unknown) {
           if (error instanceof Error && error.name === "AbortError") {
-            console.log("[WADI_CHAT]: Request cancelado por el usuario.");
+            console.log("[WADI_CHAT]: Request cancelado.");
             return;
           }
           console.error("Error in sendMessageStream:", error);
           set({ chatStatus: "error", streamingContent: "", abortController: null });
-          useLogStore.getState().addLog("Fallo crítico en Wadi Interpret.", "error");
         }
       },
 
