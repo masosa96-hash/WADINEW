@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "../store/chatStore";
-import type { WadiInterpretResult, WadiState } from "@wadi/db-types";
+import type { WadiInterpretResult } from "@wadi/db-types";
 import { 
   Rocket, 
   HelpCircle, 
@@ -11,6 +11,16 @@ import {
   Construction,
   ChevronRight
 } from "lucide-react";
+
+interface WadiIntent {
+  idea?: string;
+  target?: string;
+  domain?: string;
+}
+
+interface WadiProject {
+  phase_1?: string[];
+}
 
 /**
  * CrystallizationView
@@ -124,7 +134,7 @@ const ClarificationPhase = ({ context }: { context: WadiInterpretResult | null }
 
 const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null }) => {
   const { finalizeProject } = useChatStore();
-  const intent = (context?.intent as Record<string, any>) || {};
+  const intent = (context?.intent as WadiIntent) || {};
   const idea = intent.idea || "Proyecto sin nombre";
 
   return (
@@ -174,7 +184,7 @@ const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null })
 };
 
 const CreationPhase = ({ context }: { context: WadiInterpretResult | null }) => {
-  const project = (context?.project as Record<string, any>) || {};
+  const project = (context?.project as WadiProject) || {};
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center space-y-6">

@@ -11,6 +11,12 @@ import {
   ArrowRight
 } from "lucide-react";
 
+interface WadiIntent {
+  idea?: string;
+  target?: string;
+  domain?: string;
+}
+
 /**
  * ProjectBlueprint
  * Una tarjeta elegante que muestra el resumen estructurado de la idea 
@@ -21,7 +27,7 @@ export const ProjectBlueprint: React.FC = () => {
 
   if (stage !== "confirmation" || !currentProjectContext) return null;
 
-  const intent = (currentProjectContext.intent as any) || {};
+  const intent = (currentProjectContext.intent as WadiIntent) || {};
   const ideaName = intent.idea || "Nuevo Proyecto WADI";
   const target = intent.target || "Por definir en la fase inicial";
   const domain = intent.domain || "Desconocido";
