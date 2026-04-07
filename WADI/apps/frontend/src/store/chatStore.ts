@@ -41,6 +41,7 @@ interface ChatState {
   abortController: AbortController | null;
   stage: WadiStage;
   currentProjectContext: WadiProjectContext | null;
+  isTyping: boolean;
   readonly isStreaming: boolean;
   readonly isLoading: boolean;
 
@@ -78,7 +79,7 @@ interface ChatState {
   loadConversations: () => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
   cancelStream: () => void;
-  finalizeProject: () => Promise<void>;
+  finalizeAndSaveProject: () => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -95,7 +96,9 @@ export const useChatStore = create<ChatState>()(
       chatStatus: "idle",
       stage: "exploration",
       currentProjectContext: null,
-      isTyping: false,
+      get isTyping() {
+        return get().chatStatus === "loading" || get().chatStatus === "streaming";
+      },
       streamingContent: "",
       isUploading: false,
       isSidebarOpen: false,
@@ -630,12 +633,55 @@ export const useChatStore = create<ChatState>()(
         link.click();
         document.body.removeChild(link);
       },
-      finalizeProject: async () => {
-        set({ chatStatus: "loading", stage: "project_creation" });
-        // Simular orquestación de construcción
-        await new Promise(r => setTimeout(r, 2500));
-        set({ chatStatus: "idle" });
-        useLogStore.getState().addLog("Proyecto cristalizado con éxito. El caos ahora tiene estructura.", "success");
+      finalizeAndSaveProject: async () => {
+        const { currentProjectContext } = get();
+        if (!currentProjectContext) {
+          useLogStore.getState().addLog("Error: No hay un blueprint activo para guardar.", "error");
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        // --- GUEST HANDLING ---
+        if (!token) {
+          console.warn("[WADI_SYNC]: Guest detected. Saving blueprint to localStorage.");
+          localStorage.setItem("wadi_pending_blueprint", JSON.stringify(currentProjectContext));
+          set({ chatStatus: "idle" });
+          alert("¡Blueprint cristalizado! Registrate o inicia sesión para guardarlo definitivamente en tu Dashboard.");
+          useLogStore.getState().addLog("Sesión de Guest: Blueprint guardado localmente.", "warning");
+          return;
+        }
+
+        set({ chatStatus: "loading" });
+        try {
+          const res = await fetch(`${API_URL}/api/projects/save`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(currentProjectContext)
+          });
+
+          if (!res.ok) throw new Error("Error al persistir el proyecto");
+
+          const data = await res.json();
+          console.log("[WADI_SYNC]: Proyecto guardado con éxito", data);
+
+          useLogStore.getState().addLog(`Proyecto '${currentProjectContext.project_name}' guardado en base de datos.`, "success");
+
+          // Transición a estado de éxito
+          set({ 
+            stage: "project_saved", 
+            chatStatus: "idle",
+          });
+          
+        } catch (e) {
+          console.error("[WADI_SAVE_ERROR]:", e);
+          set({ chatStatus: "error" });
+          useLogStore.getState().addLog("Error crítico al persistir el proyecto.", "error");
+        }
       },
     }),
     {

@@ -153,7 +153,9 @@ def build_response(stage: str, questions: Optional[list] = None, message: Option
             "project_name": (intent or {}).get("idea") or (state or {}).get("idea_vector", {}).get("idea"),
             "summary": (intent or {}).get("target") or (state or {}).get("idea_vector", {}).get("target"),
             "tech_stack": [(intent or {}).get("domain", "TypeScript")] if (intent or {}).get("domain") else [],
-            "priority": "Medium"
+            "priority": "Medium",
+            "missing_dims": (state or {}).get("missing_dims", []),
+            "questions": questions if questions else []
         }
         
         # Si estamos en project_creation, podemos meter hitos reales si existen

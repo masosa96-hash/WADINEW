@@ -18,7 +18,7 @@ import {
  * destilada por WADI antes de la creación final.
  */
 export const ProjectBlueprint: React.FC = () => {
-  const { currentProjectContext, stage, finalizeProject } = useChatStore();
+  const { currentProjectContext, stage, finalizeAndSaveProject, chatStatus } = useChatStore();
 
   // Si no estamos en confirmación, no mostramos nada.
   if (stage !== "confirmation") return null;
@@ -109,12 +109,24 @@ export const ProjectBlueprint: React.FC = () => {
 
       {/* Acción Final */}
       <button 
-        onClick={finalizeProject}
-        className="group w-full py-5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 rounded-3xl font-black text-lg transition-all flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(79,70,229,0.3)] ring-1 ring-white/20"
+        onClick={finalizeAndSaveProject}
+        disabled={chatStatus === "loading"}
+        className={`group w-full py-5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 rounded-3xl font-black text-lg transition-all flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(79,70,229,0.3)] ring-1 ring-white/20 ${
+          chatStatus === "loading" ? "opacity-70 cursor-not-allowed" : ""
+        }`}
       >
-        <Zap size={22} className="text-yellow-300 fill-current" /> 
-        CRISTALIZAR Y CONSTRUIR
-        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+        {chatStatus === "loading" ? (
+          <>
+            <Loader2 size={22} className="text-white animate-spin" /> 
+            PERSISTIENDO ESTRUCTURA...
+          </>
+        ) : (
+          <>
+            <Zap size={22} className="text-yellow-300 fill-current" /> 
+            CRISTALIZAR Y CONSTRUIR
+            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          </>
+        )}
       </button>
 
       <p className="text-center text-[9px] text-slate-500 mt-6 px-10 leading-relaxed uppercase tracking-[0.2em]">

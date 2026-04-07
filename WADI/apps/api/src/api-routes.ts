@@ -10,6 +10,7 @@ import {
   crystallizeProject,
   updateProjectStructure,
   bulkDeleteProjects,
+  saveWadiProject,
 } from "./controllers/project.controller";
 import {
   listConversations,
@@ -55,6 +56,12 @@ router.post(
   globalBudgetGuard,
   expensiveRateLimiter,
   asyncHandler(crystallizeProject)
+);
+
+router.post(
+  "/projects/save",
+  authenticate(),
+  asyncHandler(saveWadiProject)
 );
 
 router.delete(

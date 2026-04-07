@@ -44,7 +44,10 @@ export interface Database {
           user_id: string;
           name: string;
           description: string;
+          structure: any | null;
+          status: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["projects"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["projects"]["Row"]>;

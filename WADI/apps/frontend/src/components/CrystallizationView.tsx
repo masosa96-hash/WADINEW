@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "../store/chatStore";
-import type { WadiInterpretResult } from "@wadi/db-types";
+import type { WadiProjectContext } from "@wadi/db-types";
 import { 
   Rocket, 
   HelpCircle, 
@@ -11,16 +11,9 @@ import {
   Construction,
   ChevronRight
 } from "lucide-react";
+import { CrystallizingLoader } from "./CrystallizingLoader";
 
-interface WadiIntent {
-  idea?: string;
-  target?: string;
-  domain?: string;
-}
 
-interface WadiProject {
-  phase_1?: string[];
-}
 
 /**
  * CrystallizationView
@@ -82,6 +75,7 @@ export const CrystallizationView: React.FC<{ children: React.ReactNode }> = ({ c
 
             {/* Renderizado dinámico según etapa */}
             <div className="flex-1">
+              <CrystallizingLoader />
               {stage === "clarification" && (
                 <ClarificationPhase context={currentProjectContext} />
               )}
@@ -101,8 +95,8 @@ export const CrystallizationView: React.FC<{ children: React.ReactNode }> = ({ c
 
 /* --- Sub-componentes por Etapa --- */
 
-const ClarificationPhase = ({ context }: { context: WadiInterpretResult | null }) => {
-  const missing = context?.state?.missing_dims || [];
+const ClarificationPhase = ({ context }: { context: WadiProjectContext | null }) => {
+  const missing = context?.missing_dims || [];
   const questions = context?.questions || [];
 
   return (
@@ -132,10 +126,9 @@ const ClarificationPhase = ({ context }: { context: WadiInterpretResult | null }
   );
 };
 
-const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null }) => {
+const ConfirmationPhase = ({ context }: { context: WadiProjectContext | null }) => {
   const { finalizeProject } = useChatStore();
-  const intent = (context?.intent as WadiIntent) || {};
-  const idea = intent.idea || "Proyecto sin nombre";
+  const idea = context?.project_name || "Proyecto sin nombre";
 
   return (
     <div className="space-y-6">
@@ -150,7 +143,7 @@ const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null })
             <Target size={18} />
             <span className="text-sm font-bold">Objetivo / Target</span>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{intent.target || "Por definir"}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{context?.summary || "Por definir"}</p>
         </div>
 
         <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -159,9 +152,11 @@ const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null })
             <span className="text-sm font-bold">Tech Stack Recomendado</span>
           </div>
           <div className="flex flex-wrap gap-2">
-             <span className="px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded text-xs font-medium uppercase">
-               {intent.domain || "Fullstack"}
-             </span>
+             {context?.tech_stack?.map((tech: string, i: number) => (
+               <span key={i} className="px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded text-xs font-medium uppercase">
+                 {tech}
+               </span>
+             ))}
              {/* Mock de tags */}
              <span className="px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-xs">TypeScript</span>
           </div>
@@ -183,8 +178,7 @@ const ConfirmationPhase = ({ context }: { context: WadiInterpretResult | null })
   );
 };
 
-const CreationPhase = ({ context }: { context: WadiInterpretResult | null }) => {
-  const project = (context?.project as WadiProject) || {};
+const CreationPhase = ({ context }: { context: WadiProjectContext | null }) => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
@@ -201,10 +195,10 @@ const CreationPhase = ({ context }: { context: WadiInterpretResult | null }) => 
         <p className="text-sm text-slate-500 max-w-xs">Instanciando repositorio y generando el Roadmap estratégico.</p>
       </div>
 
-      {project.phase_1 && (
+      {context?.milestones && context.milestones.length > 0 && (
         <div className="w-full mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border-t-2 border-indigo-500 text-left">
           <h4 className="text-xs font-bold text-indigo-600 uppercase mb-3 tracking-widest">Hito 1 Detectado</h4>
-          <p className="text-sm font-medium">{project.phase_1[0]}</p>
+          <p className="text-sm font-medium">{context.milestones[0].title}: {context.milestones[0].description}</p>
         </div>
       )}
     </div>

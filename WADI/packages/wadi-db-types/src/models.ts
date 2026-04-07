@@ -4,7 +4,7 @@
  * Common domain models for WADI.
  */
 
-export type WadiStage = "exploration" | "clarification" | "confirmation" | "project_creation";
+export type WadiStage = "exploration" | "clarification" | "confirmation" | "project_creation" | "project_saved";
 
 export interface WadiState {
   stage: WadiStage;
@@ -25,6 +25,8 @@ export interface WadiProjectContext {
   tech_stack: string[];
   milestones: ProjectMilestone[];
   priority: "High" | "Medium" | "Low";
+  missing_dims: string[];
+  questions: string[];
 }
 
 export interface WadiInterpretResult {

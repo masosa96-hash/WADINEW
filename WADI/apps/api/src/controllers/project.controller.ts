@@ -6,6 +6,7 @@ import { generateCrystallizeStructure, CRYSTALLIZE_PROMPT_VERSION } from "../wad
 import { logProjectEdit, updateCognitiveProfile, getCognitiveProfileSummary } from "../services/cognitive-service";
 import { incrementGlobalBudget } from "../middleware/rateLimiter";
 import { z } from "zod";
+import { WadiProjectContext } from "@wadi/db-types";
 
 // Helper: Generate Technical Project Name
 export function generateProjectName(description: string): string {
@@ -347,4 +348,47 @@ export const generatePRD = async (
   } catch (err) {
     next(err);
   }
+};
+
+export const saveWadiProject = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user!.id as any;
+  const projectContext = req.body as WadiProjectContext;
+
+  if (!projectContext || !projectContext.project_name) {
+    return res.status(400).json({ error: "Contexto de proyecto inválido. Se requiere un nombre." });
+  }
+
+  // Mapeamos el contexto del blueprint al esquema de la tabla de proyectos
+  const insertData = {
+    user_id: userId,
+    name: projectContext.project_name,
+    description: projectContext.summary,
+    status: "READY",
+    structure: {
+      tech_stack: projectContext.tech_stack || [],
+      milestones: projectContext.milestones || [],
+      priority: projectContext.priority || "Medium",
+      missing_dims: projectContext.missing_dims || [],
+      questions: projectContext.questions || []
+    },
+    updated_at: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from("projects")
+    .insert([insertData] as any)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[WADI_DB_ERROR]: Fallo al guardar el proyecto cristalizado", error);
+    throw new AppError("DB_ERROR", error.message);
+  }
+
+  console.log(`[WADI_SYNC]: Proyecto '${projectContext.project_name}' guardado para usuario ${userId}`);
+  res.status(201).json({ project: data });
 };

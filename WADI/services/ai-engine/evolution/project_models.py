@@ -15,6 +15,8 @@ class WadiProjectContext(BaseModel):
     tech_stack: List[str] = Field(default_factory=list, description="Recommended technology stack")
     milestones: List[ProjectMilestone] = Field(default_factory=list, description="Roadmap milestones")
     priority: Literal["High", "Medium", "Low"] = Field(default="Medium")
+    missing_dims: List[str] = Field(default_factory=list, description="Missing idea dimensions")
+    questions: List[str] = Field(default_factory=list, description="Clarification questions")
     
     @classmethod
     def sanitize(cls, data: dict) -> "WadiProjectContext":
@@ -36,6 +38,11 @@ class WadiProjectContext(BaseModel):
         data.setdefault("project_name", "WADI Vision Evolution")
         data.setdefault("summary", "A distilled vision of your innovative project idea.")
         
+        # Ensure lists are lists
+        for list_field in ["tech_stack", "milestones", "missing_dims", "questions"]:
+            if list_field not in data or not isinstance(data[list_field], list):
+                data[list_field] = []
+
         # Ensure priority is one of the allowed literals
         if data.get("priority") not in ["High", "Medium", "Low"]:
             data["priority"] = "Medium"
