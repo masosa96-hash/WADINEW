@@ -113,7 +113,7 @@ async function callAiEngine(
     logger.error(`AI Engine Fetch Error: ${errMsg}`);
     return {
        stage: state?.stage || "exploration",
-       message: "⚠️ Imposible comunicar con el AI Engine local o remoto (Fetch falló). Revisá si FastAPI está corriendo en el puerto correspondiente.",
+       message: `⚠️ Fallo de conexión con el AI Engine: ${errMsg}. Verificá el servicio en el puerto 8000.`,
        state: state || { stage: "exploration", questions_asked: 0, intent_confidence: 0, idea_vector: {}, missing_dims: [] }
     };
   }

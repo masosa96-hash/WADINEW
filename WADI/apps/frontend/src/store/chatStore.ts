@@ -326,9 +326,9 @@ export const useChatStore = create<ChatState>()(
                   
                   // Optimización: Transition inmediata si llega un stage/new_stage
                   if (parsed.stage || parsed.new_stage) {
-                    const nextStage = parsed.stage || parsed.new_stage;
-                    set({ stage: nextStage });
-                    console.log(`[WADI_SYNC]: Transición a etapa ${nextStage}`);
+                    const b = parsed.stage || parsed.new_stage;
+                    set({ stage: b });
+                    console.log(`[WADI_SYNC]: Transición a etapa ${b}`);
                   }
                   
                   // Optimización: Sync de Blueprint (ProjectContext)

@@ -4,7 +4,8 @@ import os
 # Ajuste temporal para resolver problemas de búsqueda en linters que no reconocen la carpeta como root
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI # pyre-ignore # type: ignore
+from fastapi import FastAPI, Request # pyre-ignore # type: ignore
+from fastapi.responses import JSONResponse # pyre-ignore # type: ignore
 from pydantic import BaseModel # pyre-ignore # type: ignore
 from engines.pipeline import process_message # pyre-ignore # type: ignore
 
@@ -13,6 +14,18 @@ from workers.idea_analysis_worker import analyze_idea # pyre-ignore
 from generator.project_generator import generate_project # pyre-ignore
 
 app = FastAPI()
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"[CRITICAL ERROR]: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "message": "⚠️ WADI Engine Error Interno",
+            "detail": str(exc),
+            "stage": "error"
+        }
+    )
 
 from typing import List, Optional
 
