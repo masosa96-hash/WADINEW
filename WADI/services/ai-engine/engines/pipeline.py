@@ -148,19 +148,34 @@ def build_response(stage: str, questions: Optional[list] = None, message: Option
     
     # Inyección de Project Context (Blueprint) para el Frontend
     if stage in ["clarification", "confirmation", "project_creation"]:
+        # Determinar Tech Stack (preferencia a lo que diga el Roadmap real)
+        suggested_stack = (project or {}).get("tech_stack", [])
+        if not suggested_stack and intent:
+            suggested_stack = [intent.get("domain", "TypeScript")]
+
         # Mapeamos lo que tenemos al esquema de Pydantic
         mapping = {
-            "project_name": (intent or {}).get("idea") or (state or {}).get("idea_vector", {}).get("idea"),
-            "summary": (intent or {}).get("target") or (state or {}).get("idea_vector", {}).get("target"),
-            "tech_stack": [(intent or {}).get("domain", "TypeScript")] if (intent or {}).get("domain") else [],
+            "project_name": (intent or {}).get("idea") or (state or {}).get("idea_vector", {}).get("idea") or "Nuevo Proyecto WADI",
+            "summary": (intent or {}).get("target") or (state or {}).get("idea_vector", {}).get("target") or "Destilando visión...",
+            "tech_stack": suggested_stack,
             "priority": "Medium",
             "missing_dims": (state or {}).get("missing_dims", []),
             "questions": questions if questions else []
         }
         
-        # Si estamos en project_creation, podemos meter hitos reales si existen
-        if project and "phase_1" in project:
-            mapping["milestones"] = [{"title": "Fase 1", "description": project["phase_1"][0]}]
+        # Mapeo de Hitos dinámicos (Phases)
+        if project:
+            milestones = []
+            for i in range(1, 4):
+                phase_key = f"phase_{i}"
+                if phase_key in project:
+                    phase_data = project[phase_key]
+                    milestones.append({
+                        "title": phase_data.get("title", f"Fase {i}"),
+                        "description": phase_data.get("description", "")
+                    })
+            if milestones:
+                mapping["milestones"] = milestones
             
         # Sanitizar siempre antes de enviar
         res["project_context"] = WadiProjectContext.sanitize(mapping).model_dump()
