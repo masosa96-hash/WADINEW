@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { CrystallizingLoader } from "./CrystallizingLoader";
+import { SuccessProjectView } from "./SuccessProjectView";
 
 
 
@@ -89,6 +90,9 @@ export const CrystallizationView: React.FC<{ children: React.ReactNode }> = ({ c
           </motion.aside>
         )}
       </AnimatePresence>
+
+      {/* Success View Overlay */}
+      <SuccessProjectView />
     </div>
   );
 };
@@ -108,7 +112,7 @@ const ClarificationPhase = ({ context }: { context: WadiProjectContext | null })
         <ul className="space-y-2">
           {missing.map((dim: string, idx: number) => (
              <li key={idx} className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
-               <ChevronRight size={14} className="text-amber-500" /> {dim}
+                <ChevronRight size={14} className="text-amber-500" /> {dim}
              </li>
           ))}
         </ul>
@@ -127,7 +131,7 @@ const ClarificationPhase = ({ context }: { context: WadiProjectContext | null })
 };
 
 const ConfirmationPhase = ({ context }: { context: WadiProjectContext | null }) => {
-  const { finalizeProject } = useChatStore();
+  const { finalizeAndSaveProject } = useChatStore();
   const idea = context?.project_name || "Proyecto sin nombre";
 
   return (
@@ -165,7 +169,7 @@ const ConfirmationPhase = ({ context }: { context: WadiProjectContext | null }) 
 
       <div className="pt-4">
         <button 
-          onClick={finalizeProject}
+          onClick={finalizeAndSaveProject}
           className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
         >
           Confirmar y Construir <Rocket size={20} />

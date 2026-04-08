@@ -648,8 +648,7 @@ export const useChatStore = create<ChatState>()(
           console.warn("[WADI_SYNC]: Guest detected. Saving blueprint to localStorage.");
           localStorage.setItem("wadi_pending_blueprint", JSON.stringify(currentProjectContext));
           set({ chatStatus: "idle" });
-          alert("¡Blueprint cristalizado! Registrate o inicia sesión para guardarlo definitivamente en tu Dashboard.");
-          useLogStore.getState().addLog("Sesión de Guest: Blueprint guardado localmente.", "warning");
+          useLogStore.getState().addLog("¡Blueprint cristalizado! Registrate o inicia sesión para guardarlo definitivamente en tu Dashboard.", "warning");
           return;
         }
 
