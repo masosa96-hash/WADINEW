@@ -487,6 +487,7 @@ export const useChatStore = create<ChatState>()(
           currentProjectContext: null,
           stage: "exploration"
         });
+        localStorage.removeItem("wadi_pending_blueprint");
       },
 
       wipeChatData: async () => {
@@ -647,8 +648,13 @@ export const useChatStore = create<ChatState>()(
         if (!token) {
           console.warn("[WADI_SYNC]: Guest detected. Saving blueprint to localStorage.");
           localStorage.setItem("wadi_pending_blueprint", JSON.stringify(currentProjectContext));
-          set({ chatStatus: "idle" });
+          
           useLogStore.getState().addLog("¡Blueprint cristalizado! Registrate o inicia sesión para guardarlo definitivamente en tu Dashboard.", "warning");
+          
+          set({ 
+            stage: "project_saved",
+            chatStatus: "idle" 
+          });
           return;
         }
 
