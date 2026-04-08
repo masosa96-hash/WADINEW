@@ -163,7 +163,7 @@ def build_response(stage: str, questions: Optional[list] = None, message: Option
             mapping["milestones"] = [{"title": "Fase 1", "description": project["phase_1"][0]}]
             
         # Sanitizar siempre antes de enviar
-        res["project_context"] = WadiProjectContext.sanitize(mapping).dict()
+        res["project_context"] = WadiProjectContext.sanitize(mapping).model_dump()
 
     if message: res["message"] = message
     if questions is not None: res["questions"] = questions

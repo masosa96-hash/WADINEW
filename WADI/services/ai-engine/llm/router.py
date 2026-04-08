@@ -60,7 +60,7 @@ def get_client_and_model(task: str) -> tuple[OpenAI, str]:
 # ---------------------------------------------------------------------------
 # Llamada central con reintentos automáticos
 # ---------------------------------------------------------------------------
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=8))
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10))
 def call_llm(system_prompt: str, user_message: str, task: str = "default") -> str:
     """
     Envía un mensaje al LLM correspondiente según la tarea.
@@ -68,13 +68,16 @@ def call_llm(system_prompt: str, user_message: str, task: str = "default") -> st
     """
     client, model = get_client_and_model(task)
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_message}
-        ],
-        temperature=0.3,  # Bajo: respuestas más predecibles y estructuradas
-    )
-
-    return response.choices[0].message.content or ""
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_message}
+            ],
+            temperature=0.3,  # Bajo: respuestas más predecibles y estructuradas
+        )
+        return response.choices[0].message.content or ""
+    except Exception as e:
+        print(f"[ERROR WADI] call_llm falló en {model}: {str(e)}")
+        raise e
