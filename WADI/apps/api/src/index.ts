@@ -2,7 +2,7 @@
 
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
 import routes from "./api-routes"; // TS file
 // import kivoRoutes from "./routes/kivo";

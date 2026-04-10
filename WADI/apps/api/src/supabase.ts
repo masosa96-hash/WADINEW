@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import type { Database } from "@wadi/db-types";
 dotenv.config({ path: "../../.env" });
 
