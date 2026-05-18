@@ -7,6 +7,7 @@ import * as dotenv from "dotenv";
 import routes from "./api-routes"; // TS file
 // import kivoRoutes from "./routes/kivo";
 import monitoringRoutes from "./routes/monitoring";
+import dashboardRoutes from "./routes/dashboard.routes";
 import healthRouter from "./routes/health.routes";
 import swaggerRouter from "./routes/swagger.routes";
 
@@ -14,6 +15,7 @@ import { requestLogger } from "./middleware/requestLogger";
 import { requestIdMiddleware } from "./middleware/requestId.middleware";
 import { responseFormatter } from "./middleware/responseFormatter";
 import { metricsMiddleware } from "./middleware/metrics.middleware";
+import { monitoringMiddleware } from "./middleware/monitoring.middleware";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { errorHandler, AppError } from "./middleware/error.middleware";
 import { initSentry, sentryRequestHandler, sentryTracingHandler, sentryErrorHandler } from "./services/sentry.service";
@@ -91,6 +93,7 @@ app.use(healthRouter);
 app.use(express.json());
 app.use(responseFormatter);
 app.use(metricsMiddleware);
+app.use(monitoringMiddleware);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use(requestLogger as any);
@@ -125,6 +128,7 @@ app.get("/system/debug-files", (req, res) => {
 import systemRoutes from "./routes/system.routes";
 app.use(systemRoutes);
 app.use("/monitoring", monitoringRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes

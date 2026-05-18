@@ -1,10 +1,11 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../middleware/auth-beta";
 import { supabase } from "../config/supabase";
 import { getChatCompletion } from "../services/openai";
 import { extractAndSaveKnowledge } from "../services/knowledge-service";
+import { AppError } from "../middleware/error.middleware";
 
-export const listRuns = async (req: AuthenticatedRequest, res: Response) => {
+export const listRuns = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const projectId = req.params.id;
@@ -24,21 +25,20 @@ export const listRuns = async (req: AuthenticatedRequest, res: Response) => {
 
     res.json(data);
   } catch (error: any) {
-    console.error("Error listing runs:", error);
-    res.status(500).json({ error: "Failed to list runs" });
+    throw new AppError("DB_ERROR", "Failed to list runs", 500, { cause: error });
   }
 };
 
 import { generateSystemPrompt } from "../wadi-brain";
 
-export const createRun = async (req: AuthenticatedRequest, res: Response) => {
+export const createRun = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const projectId = req.params.id;
     const { input, model } = req.body;
 
     if (!input) {
-      return res.status(400).json({ error: "Input is required" });
+      throw new AppError("BAD_REQUEST", "Input is required", 400);
     }
 
     // 1. Verify project ownership
@@ -50,7 +50,7 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (projError || !project) {
-      return res.status(404).json({ error: "Project not found" });
+      throw new AppError("NOT_FOUND", "Project not found", 404);
     }
 
     // 2. Call OpenAI using UNIFIED BRAIN
@@ -64,7 +64,7 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
         // Pass systemPrompt explicitly to use the unified one
         output = await getChatCompletion(input, aiModel, systemPrompt) || "";
     } catch (aiErr) {
-        return res.status(502).json({ error: "AI Service Unavailable" });
+        throw new AppError("SERVICE_UNAVAILABLE", "AI Service Unavailable", 502, { cause: aiErr });
     }
 
     // 3. Store Run
@@ -92,7 +92,6 @@ export const createRun = async (req: AuthenticatedRequest, res: Response) => {
 
     res.status(201).json(run);
   } catch (error: any) {
-    console.error("Error creating run:", error);
-    res.status(500).json({ error: "Failed to create run" });
+    next(error);
   }
 };

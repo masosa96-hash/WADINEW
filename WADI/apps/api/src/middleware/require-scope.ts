@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { Scope } from "@wadi/core";
 import { AuthenticatedRequest } from "./auth";
+import { AppError } from "./error.middleware";
 
 export function requireScope(scope: Scope) {
   return (req: Request, res: Response, next: NextFunction) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const user = authReq.user;
     if (!user) {
-      return res.status(401).json({ error: "Unauthenticated" });
+      throw new AppError("UNAUTHORIZED", "Unauthenticated", 401);
     }
 
     if (
@@ -17,6 +18,6 @@ export function requireScope(scope: Scope) {
       return next();
     }
 
-    return res.status(403).json({ error: "Forbidden" });
+    throw new AppError("FORBIDDEN", "Forbidden", 403);
   };
 }

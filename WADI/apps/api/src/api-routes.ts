@@ -3,6 +3,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { authenticate, AuthenticatedRequest } from "./middleware/auth";
 import { requireScope } from "./middleware/require-scope";
 import { supabase } from "./supabase";
+import { AppError } from "./middleware/error.middleware";
 
 import {
   listProjects,
@@ -136,7 +137,7 @@ router.post(
       .single();
 
     if (!ghAccount || !ghAccount.access_token) {
-      return res.status(400).json({ error: "No GitHub token mapped to this user. Please connect GitHub first." });
+      throw new AppError("BAD_REQUEST", "No GitHub token mapped to this user. Please connect GitHub first.", 400);
     }
 
     // Creating the repo using the idea title or a fallback naming convention
@@ -231,7 +232,7 @@ router.get(
         .eq("id", id)
         .single();
         
-     if (!deployment) return res.status(404).json({ error: "Deploy not found" });
+     if (!deployment) throw new AppError("NOT_FOUND", "Deploy not found", 404);
 
      // Basic pass-through (if vercel is the provider, we could fetch from VERCEL directly if we saved the Vercel internal ID)
      // Right now just returning our DB snapshot.

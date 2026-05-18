@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { supabase } from "../supabase";
 import { logger } from "../core/logger";
+import { AppError } from "../middleware/error.middleware";
 
 /**
  * Fetches consolidated business metrics for the admin dashboard
  */
-export const getAdminMetrics = async (req: Request, res: Response) => {
+export const getAdminMetrics = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // 1. Availability (Breaker Metrics)
     const { data: breakerData } = await (supabase as any)
@@ -34,7 +35,6 @@ export const getAdminMetrics = async (req: Request, res: Response) => {
       : 0;
 
     return res.json({
-      success: true,
       metrics: {
         totalTokensTracked: totalTokens,
         avgConversionTimeMs: Math.round(avgConversionTime),
@@ -44,6 +44,6 @@ export const getAdminMetrics = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error({ msg: "failed_to_fetch_metrics", error: error.message });
-    return res.status(500).json({ success: false, error: "METRICS_FETCH_FAILED" });
+    throw new AppError("DB_ERROR", "Failed to fetch metrics", 500, { cause: error });
   }
 };

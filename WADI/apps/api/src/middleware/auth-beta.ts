@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { supabase } from "../config/supabase";
+import { AppError } from "./error.middleware";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -28,7 +29,7 @@ export const authenticate = () => {
 
       if (error || !user) {
         console.error("Auth Middleware Failed:", { error: error?.message, userFound: !!user });
-        return res.status(401).json({ error: "Invalid token", details: error?.message });
+        throw new AppError("UNAUTHORIZED", "Invalid token", 401, { details: error?.message });
       }
 
       (req as AuthenticatedRequest).user = {
@@ -39,7 +40,10 @@ export const authenticate = () => {
       next();
     } catch (err: any) {
       console.error("Auth error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      if (err instanceof AppError) {
+        return next(err);
+      }
+      throw new AppError("AUTH_ERROR", "Authentication failed", 500, { cause: err });
     }
   };
 };

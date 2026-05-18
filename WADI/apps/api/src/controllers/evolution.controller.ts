@@ -144,7 +144,7 @@ export const triggerEvolution = async (
     .single();
 
   if (!ghAccount || !ghAccount.access_token) {
-    return res.status(400).json({ error: "No GitHub token mapped to this user. Connect GitHub first." });
+    throw new AppError("BAD_REQUEST", "No GitHub token mapped to this user. Connect GitHub first.", 400);
   }
 
   // Assuming github repo name follows convention:

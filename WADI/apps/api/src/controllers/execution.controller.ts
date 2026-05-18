@@ -35,7 +35,7 @@ export const materializeProject = async (
   const result = await materializer.materialize(id, { dryRun });
 
   if (!result.success) {
-    return res.status(500).json({ success: false, error: "MATERIALIZATION_FAILED" });
+    throw new AppError("EXECUTION_FAILED", "Materialization failed", 500, { details: result });
   }
 
   res.json({ 
