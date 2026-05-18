@@ -8,6 +8,8 @@ import routes from "./api-routes"; // TS file
 // import kivoRoutes from "./routes/kivo";
 import monitoringRoutes from "./routes/monitoring";
 import dashboardRoutes from "./routes/dashboard.routes";
+import prometheusRoutes from "./routes/prometheus.routes";
+import configRoutes from "./routes/config.routes";
 import healthRouter from "./routes/health.routes";
 import swaggerRouter from "./routes/swagger.routes";
 
