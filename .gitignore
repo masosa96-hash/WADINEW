@@ -7,3 +7,33 @@ apps/api/node_modules/
 dist/
 build/
 .pnpm-debug.log
+
+# Generated/Temporary files
+temp_check.js
+out.txt
+listado.txt
+lint_report.txt
+*.log
+.DS_Store
+
+# Build outputs
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary test directories
+projects/deploy-test-*
+projects/stress-standard-*
+projects/phase15a-*
+projects/phase15b-*
+projects/pmc-01-*/
+projects/pro-feat-override-*
+
+# IDE & OS
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~

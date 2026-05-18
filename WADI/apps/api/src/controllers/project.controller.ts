@@ -76,13 +76,13 @@ export const crystallizeProject = async (
   
   // 1. Initial length guard
   if (req.body?.description?.length > 5000) {
-    return res.status(400).json({ error: "Description is too large (max 5000 chars)" });
+    throw new AppError("BAD_REQUEST", "Description is too large (max 5000 chars)", 400);
   }
 
   const validated = CrystallizeSchema.safeParse(req.body);
   
   if (!validated.success) {
-    return res.status(400).json({ error: "Invalid input", details: validated.error.format() });
+    throw new AppError("VALIDATION_ERROR", "Invalid input", 400, { details: validated.error.format() });
   }
 
   let { name, description, suggestionContent, firstMessageAt } = validated.data;
@@ -225,7 +225,7 @@ export const updateProjectStructure = async (
 
   const validated = ProjectStructureSchema.safeParse(structure);
   if (!validated.success) {
-    return res.status(400).json({ error: "Invalid structure data", details: validated.error.format() });
+    throw new AppError("VALIDATION_ERROR", "Invalid structure data", 400, { details: validated.error.format() });
   }
 
   // 1. Fetch current (also serves as ownership check)
@@ -240,7 +240,7 @@ export const updateProjectStructure = async (
 
   // Concurrency Lock: Prevent editing while generating
   if (current.status === "GENERATING_STRUCTURE") {
-    return res.status(409).json({ error: "No se puede editar mientras se genera la estructura" });
+    throw new AppError("CONFLICT", "No se puede editar mientras se genera la estructura", 409);
   }
 
   // Verify ownership again explicitly just in case PGRST116 is handled differently
@@ -297,7 +297,7 @@ export const bulkDeleteProjects = async (
   const { projectIds } = req.body;
 
   if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
-    return res.status(400).json({ error: "No project IDs provided" });
+    throw new AppError("BAD_REQUEST", "No project IDs provided", 400);
   }
 
   const { error } = await supabase
@@ -359,7 +359,7 @@ export const saveWadiProject = async (
   const projectContext = req.body as WadiProjectContext;
 
   if (!projectContext || !projectContext.project_name) {
-    return res.status(400).json({ error: "Contexto de proyecto inválido. Se requiere un nombre." });
+    throw new AppError("BAD_REQUEST", "Contexto de proyecto inválido. Se requiere un nombre.", 400);
   }
 
   // Mapeamos el contexto del blueprint al esquema de la tabla de proyectos

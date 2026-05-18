@@ -25,19 +25,22 @@ export const errorHandler = (
   const statusCode = err.statusCode || err.status || 500;
   const requestId = (req as unknown as { requestId?: string }).requestId;
 
-  // Structured logging with Pino
+  if (requestId) {
+    res.setHeader("X-Request-ID", requestId);
+  }
+
   logger.error({
     msg: "uncaught_exception",
+    requestId,
     error: {
       message: err.message,
-      code: err.code || "INTERNAL_ERROR",
+      code: err.code || "INTERNAL_SERVER_ERROR",
       stack: isProduction ? undefined : err.stack,
       meta: err.meta,
     },
     context: {
       path: req.path,
       method: req.method,
-      requestId,
       userId: (req as any).user?.id,
     }
   });

@@ -6,11 +6,17 @@ import * as dotenv from "dotenv";
 
 import routes from "./api-routes"; // TS file
 // import kivoRoutes from "./routes/kivo";
-// import monitoringRoutes from "./routes/monitoring";
+import monitoringRoutes from "./routes/monitoring";
+import healthRouter from "./routes/health.routes";
+import swaggerRouter from "./routes/swagger.routes";
 
 import { requestLogger } from "./middleware/requestLogger";
+import { requestIdMiddleware } from "./middleware/requestId.middleware";
+import { responseFormatter } from "./middleware/responseFormatter";
+import { metricsMiddleware } from "./middleware/metrics.middleware";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { errorHandler, AppError } from "./middleware/error.middleware";
+import { initSentry, sentryRequestHandler, sentryTracingHandler, sentryErrorHandler } from "./services/sentry.service";
 // import { startWorker } from "./queue/worker";
 // import "./queue/aiWorker"; // Start AI Worker side-effect
 
@@ -36,7 +42,14 @@ import helmet from "helmet";
 export const app = express();
 
 // Apply security headers
+initSentry();
+
 app.use(helmet());
+app.use(sentryRequestHandler());
+app.use(sentryTracingHandler());
+
+// Add Request ID to all requests for correlation/tracing
+app.use(requestIdMiddleware);
 
 // 1. EL "FIX" TOTAL: Configuración manual y estricta
 app.use((req, res, next) => {
@@ -72,21 +85,16 @@ app.set('trust proxy', 1);
 // --------------------------------------------------
 // PRIORITY 0: Health Check (Render) - Must be first
 // --------------------------------------------------
-// Health Check
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: 'WADI ONLINE' });
-});
-// Health Check Alias for Frontend (VITE_API_URL often includes /api)
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: 'WADI ONLINE (API Alias)' });
-});
+// Professional health check routes (liveness, readiness, startup)
+app.use(healthRouter);
 
 app.use(express.json());
-
-
+app.use(responseFormatter);
+app.use(metricsMiddleware);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use(requestLogger as any);
+app.use(swaggerRouter);
 
 // TOP PRIORITY DEBUG ROUTE
 app.get("/system/debug-files", (req, res) => {
@@ -116,6 +124,7 @@ app.get("/system/debug-files", (req, res) => {
 // System Routes (Temporary Debug)
 import systemRoutes from "./routes/system.routes";
 app.use(systemRoutes);
+app.use("/monitoring", monitoringRoutes);
 
 // --------------------------------------------------
 // PRIORITY 1: API & System Routes
@@ -157,6 +166,7 @@ app.get("*splat", (req, res) => {
 });
 
 // Error Handler
+app.use(sentryErrorHandler());
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 app.use(errorHandler as any);
 

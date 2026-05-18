@@ -4,6 +4,7 @@ import * as crypto from "crypto";
 import { runBrainStream } from "../wadi-brain";
 import { metricsService, MetricEvent } from "../services/metrics.service";
 import { logger } from "../core/logger";
+import { AppError } from "../middleware/error.middleware";
 
 // In-memory cache for persona stability per conversation
 // Structure: { [conversationId]: { personaId: string; turnsActive: number; messageCount: number } }
@@ -36,7 +37,7 @@ export const handleChatStream = async (req: Request, res: Response) => {
   const { id } = req.params; // Project ID
 
   if (streamLocks.has(id)) {
-    return res.status(429).json({ error: "CONCURRENT_STREAM_NOT_ALLOWED" });
+    throw new AppError("CONCURRENT_STREAM_NOT_ALLOWED", "Concurrent stream is already active for this project", 429);
   }
 
   streamLocks.add(id);
@@ -131,14 +132,14 @@ export const handleChatStream = async (req: Request, res: Response) => {
 
     if (err.name === "AbortError" || err.message?.includes("user aborted")) {
       if (!res.headersSent) {
-        return res.status(504).json({ success: false, error: "LLM_TIMEOUT" });
+        throw new AppError("LLM_TIMEOUT", "AI stream aborted due to timeout or cancellation", 504, { cause: err });
       }
       res.end();
       return;
     }
 
     if (!res.headersSent) {
-      res.status(500).json({ success: false, error: "STREAMING_ERROR" });
+      throw new AppError("STREAMING_ERROR", "An unexpected streaming error occurred", 500, { cause: err });
     } else {
       res.end();
     }

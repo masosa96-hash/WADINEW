@@ -9,8 +9,9 @@ export const requestLogger = (
 ) => {
   const start = Date.now();
   const headerId = req.headers["x-request-id"] || req.headers["rndr-id"];
-  const requestId = (Array.isArray(headerId) ? headerId[0] : headerId) || crypto.randomUUID();
+  const requestId = (req as unknown as { requestId?: string }).requestId || (Array.isArray(headerId) ? headerId[0] : headerId) || crypto.randomUUID();
   (req as unknown as { requestId: string }).requestId = requestId;
+  res.setHeader("X-Request-ID", requestId);
 
   res.on("finish", () => {
     const duration = Date.now() - start;

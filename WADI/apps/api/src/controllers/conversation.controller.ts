@@ -96,7 +96,7 @@ export const bulkDeleteConversations = async (
     !Array.isArray(conversationIds) ||
     conversationIds.length === 0
   ) {
-    return res.status(400).json({ error: "No IDs provided for bulk delete." });
+    throw new AppError("BAD_REQUEST", "No IDs provided for bulk delete.", 400);
   }
 
   const { error } = await supabase
@@ -108,9 +108,7 @@ export const bulkDeleteConversations = async (
 
   if (error) {
     console.error("Bulk Delete Error:", error);
-    return res
-      .status(500)
-      .json({ error: "F en el chat: No se pudo limpiar el caos." });
+    throw new AppError("DB_ERROR", "Could not delete the selected conversations", 500, { cause: error });
   }
 
   // User specified success message
